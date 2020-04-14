@@ -335,7 +335,8 @@ t. In this case, the perspective will be switched to the org-roam
 notes project before calling any org-roam functions."
   (unless org-roam-mode
     (org-roam-mode +1))
-  (let ((note-info (list (cons 'ref citekey))))
+  (let* ((citekey-formatted (format "cite:%s" citekey))
+         (note-info (list (cons 'ref citekey-formatted))))
     ;; Optionally switch to the notes perspective
     (when org-roam-bibtex-switch-persp
       (org-roam-bibtex--switch-perspective))
@@ -361,7 +362,7 @@ notes project before calling any org-roam functions."
                   "Title not found for this entry (Check your bibtex file)"))
              (org-roam-capture--context 'ref)
              (org-roam-capture--info (list (cons 'title title)
-                                           (cons 'ref (format "cite:%s" citekey))
+                                           (cons 'ref citekey-formatted)
                                            (cons 'slug (org-roam--title-to-slug citekey)))))
         (if custom?
             (org-roam--capture)
