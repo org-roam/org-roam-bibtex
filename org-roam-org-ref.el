@@ -305,8 +305,10 @@ notes project before calling any org-roam functions."
                      (pushnew (org-roam-org-ref--preformat-template template entry) result))))
                org-roam-capture-templates))
              (title
-              (or (s-format "${title}" 'bibtex-completion-apa-get-value entry)
-                  "Title not found for this entry. Check your bibtex file.")))
+              (format "%s: %s"
+                      citekey
+                      (or (s-format "${title}" 'bibtex-completion-apa-get-value entry)
+                          "Title not found for this entry (Check your bibtex file)"))))
         (org-roam-find-file title)))))
 
 (provide 'org-roam-org-ref)
