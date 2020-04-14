@@ -82,10 +82,10 @@ alist, where each element is (STRING . STRING).
 Use only alphanumerical characters, dash and underscore. See
 `org-roam-org-ref-edit-notes' for implementation details.
 
-1. If the value is a string, a single keyword, it is treated as a
-bibtex field name, such as such as =key=. In the following
-example all the prompts with =key= keyword will be preformatted,
-as well as the corresponding match group %\\1.
+1. If the value is a string, a single keyword, it is treated as
+a bibtex field name, such as =key=. In the following example all
+the prompts with =key= keyword will be preformatted, as well as
+the corresponding match group %\\1.
 
 \(setq org-roam-org-ref-preformat-keywords \"=key=\")
 \(setq org-roam-capture-templates
@@ -108,9 +108,9 @@ bibtex field names. The respective prompts will be preformatted.
 
 3. If the value is a list of cons cells, then the car of the cons
 cell is treated as a prompt keyword and the cdr as a bibtex field
-name, and the latter will be used to retrieve relevenat value
-from the bibtex entry. If cdr is omitted, then the car is treated
-as the field name.
+name, and the latter will be used to retrieve relevant value from
+the bibtex entry. If cdr is omitted, then the car is treated as
+the field name.
 
 \(setq org-roam-org-ref-preformat-keywords
       '((\"citekey\" . \"=key=\")
