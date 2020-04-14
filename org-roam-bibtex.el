@@ -83,6 +83,7 @@ See `org-roam-bibtex-edit-notes' for details."
      :unnarrowed t))
   "Template to use when creating a new note.
 See `org-roam-bibtex-edit-notes' for details."
+  :type '(list)
   :group 'org-roam-bibtex)
 
 (defcustom org-roam-bibtex-include-citekey-in-titles nil
