@@ -322,8 +322,12 @@ The prompt presented by `org-roam-find-file' will thus be
 pre-populated with the record title.
 
 3. The template used to create the note is stored in
-`org-roam-bibtex-template'.  If the variable is not defined,
-revert to using `org-roam-capture-templates'.
+`org-roam-bibtex-template'. If the variable is not defined,
+revert to using `org-roam-capture-templates'. In the former case,
+a new file will be created and filled according to the template,
+possibly preformatted (see below) without additional user
+interaction. In the latter case, an interactive `org-capture'
+process will be run.
 
 4. Optionally, when `org-roam-bibtex-preformat-templates' is
 non-nil, any prompt wildcards in `org-roam-bibtex-template' or
@@ -369,7 +373,7 @@ notes project before calling any org-roam functions."
                  (let* ((tmpls (copy-tree templates))
                         result)
                    (dolist (tmpl tmpls result)
-                     (pushnew (org-roam-bibtex--preformat-template tmp entry) result))))
+                     (pushnew (org-roam-bibtex--preformat-template tmpl entry) result))))
                templates))
              (title
               (or (s-format "${title}" 'bibtex-completion-apa-get-value entry)
