@@ -73,6 +73,14 @@ See `org-roam-org-ref-edit-notes' for details."
           (const :tag "No" nil))
   :group 'org-roam-org-ref)
 
+(defcustom org-roam-org-ref-include-citekey-in-titles nil
+  "Non-nil to include the citekey in titles.
+See `org-roam-org-ref-edit-notes' for details."
+  :type '(choice
+          (const :tag "Yes" t)
+          (const :tag "No" nil))
+  :group 'org-roam-org-ref)
+
 (defcustom org-roam-org-ref-preformat-keywords "=key="
   "The template prompt wildcards for preformatting.
 Only relevant when `org-roam-org-ref-preformat-templates' is set
@@ -305,11 +313,13 @@ notes project before calling any org-roam functions."
                      (pushnew (org-roam-org-ref--preformat-template template entry) result))))
                org-roam-capture-templates))
              (title
-              (format "%s: %s"
-                      citekey
-                      (or (s-format "${title}" 'bibtex-completion-apa-get-value entry)
-                          "Title not found for this entry (Check your bibtex file)"))))
-        (org-roam-find-file title)))))
+              (or (s-format "${title}" 'bibtex-completion-apa-get-value entry)
+                  "Title not found for this entry (Check your bibtex file)"))
+             (title-formatted
+              (if org-roam-org-ref-include-citekey-in-titles
+                  (format "%s: %s" citekey title)
+                title)))
+        (org-roam-find-file title-formatted)))))
 
 (provide 'org-roam-org-ref)
 ;;; org-roam-org-ref.el ends here
