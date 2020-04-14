@@ -255,11 +255,7 @@ returned by `bibtex-completion-get-entry'."
   "Open an org-roam note associated with the first key from KEYS or create a new one.
 This function replaces `bibtex-edit-notes'. Only the first key
 from KEYS will actually be used."
-  (let ((helm? (ignore-errors (helm--alive-p))))
-    (if helm?
-        (with-helm-current-buffer
-          (org-roam-bibtex-edit-notes (car keys)))
-      (org-roam-bibtex-edit-notes keys))))
+  (org-roam-org-ref-edit-notes (car keys)))
 
 ;;;###autoload
 (define-minor-mode org-roam-bibtex
