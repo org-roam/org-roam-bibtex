@@ -251,28 +251,36 @@ is a bibtex entry as returned by `bibtex-completion-get-entry'."
       (setf (nth 4 template) tp))
     template))
 
-;;;###autoload
-(defun org-roam-bibtex-helm-bibtex-edit-notes (keys)
+(defun org-roam-bibtex-edit-notes-ad (keys)
   "Open an org-roam note associated with the first key from KEYS.
-This function replaces `bibtex-edit-notes'. Only the first key
+This function replaces `bibtex-completion-edit-notes'. Only the first key
 from KEYS will actually be used."
   (org-roam-bibtex-edit-notes (car keys)))
 
 ;;;###autoload
-(define-minor-mode org-roam-bibtex
-  "Mode for toggling ‘print-circle’ globally."
+(define-minor-mode org-roam-bibtex-mode
+  "Sets `org-roam-bibtex-edit-notes' as a function for editing bibliography notes.
+Affects `org-ref' and `helm-bibtex'/`ivy-bibtex'.
+
+When called interactively, toggle `org-roam-bibtex-mode'. with prefix
+ARG, enable `org-roam-bibtex-mode' if ARG is positive, otherwise disable
+it.
+
+When called from Lisp, enable `org-roam-mode' if ARG is omitted,
+nil, or positive. If ARG is `toggle', toggle `org-roam-mode'.
+Otherwise, behave as if called interactively."
   :lighter " orb"
-  :group 'org-roam
-  :require 'org-roam
+  :group 'org-roam-bibtex
+  :require 'org-roam-bibtex
   :global t
   (cond (org-roam-bibtex
          (setq org-ref-notes-function 'org-roam-bibtex-notes-fn)
          (advice-add 'bibtex-completion-edit-notes
-                     :override #'org-roam-bibtex-helm-bibtex-edit-notes))
+                     :override #'org-roam-bibtex-edit-notes-ad))
         (t
          (setq org-ref-notes-function 'org-ref-notes-function-one-file)
          (advice-remove 'bibtex-completion-edit-notes
-                        #'org-roam-bibtex-helm-bibtex-edit-notes))))
+                        #'org-roam-bibtex-edit-notes-ad))))
 
 ;;;###autoload
 (defun org-roam-bibtex-notes-fn (citekey)
