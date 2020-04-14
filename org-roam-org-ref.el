@@ -2,10 +2,12 @@
 
 ;; Copyright © 2020 Jethro Kuan <jethrokuan95@gmail.com>
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
+;; Copyright © 2020 Leo Vivier <leo.vivier+org@gmail.com>
 
 ;; Author: Jethro Kuan <jethrokuan95@gmail.com>
-;; Contributor: Mykhailo Shevchuk <mail@mshevchuk.com>
-;; URL: https://github.com/jethrokuan/org-roam
+;; 	Mykhailo Shevchuk <mail@mshevchuk.com>
+;; 	Leo Vivier <leo.vivier+org@gmail.com>
+;; URL: https://github.com/zaeph/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "26.1") (s "1.12.0") (org "9.3") (org-roam "1.0.0") (helm-bibtex "2.0.0")
