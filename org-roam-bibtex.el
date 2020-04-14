@@ -36,10 +36,10 @@
 ;; installing into `org-ref-notes-function' will enable org-ref to use
 ;; org-roam as a backend for managing bibliography notes.
 ;;
-;; Use it like this:
+;; To use it:
 ;;
-;; (setq org-ref-notes-function #'org-roam-bibtex-notes-fn
-;;       org-ref-notes-directory "path/to/org-roam-directory")
+;; call interactively `org-roam-bibtex-mode' or
+;; (org-roam-bibtex-mode +1) from Lisp.
 ;;
 ;; Optionally, `org-roam-capture-templates' can be dynamically
 ;; preformatted with bibtex field values.  See
@@ -273,7 +273,7 @@ Otherwise, behave as if called interactively."
   :group 'org-roam-bibtex
   :require 'org-roam-bibtex
   :global t
-  (cond (org-roam-bibtex
+  (cond (org-roam-bibtex-mode
          (setq org-ref-notes-function 'org-roam-bibtex-notes-fn)
          (advice-add 'bibtex-completion-edit-notes
                      :override #'org-roam-bibtex-edit-notes-ad))
