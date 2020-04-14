@@ -251,6 +251,31 @@ returned by `bibtex-completion-get-entry'."
     template))
 
 ;;;###autoload
+(defun org-roam-bibtex-helm-bibtex-edit-notes (keys)
+  "Open an org-roam note associated with the first key from KEYS or create a new one.
+This function replaces `bibtex-edit-notes'. Only the first key
+from KEYS will actually be used."
+  (let ((helm? (ignore-errors (helm--alive-p))))
+    (if helm?
+        (with-helm-current-buffer
+          (org-roam-bibtex-edit-notes (car keys)))
+      (org-roam-bibtex-edit-notes keys))))
+
+;;;###autoload
+(define-minor-mode org-roam-bibtex
+  "Mode for toggling ‘print-circle’ globally."
+  :lighter " orb"
+  :group 'org-roam
+  :require 'org-roam
+  :global t
+  (cond (org-roam-bibtex
+         (advice-add 'bibtex-completion-edit-notes
+                     :override #'org-roam-bibtex-helm-bibtex-edit-notes))
+        (t
+         (advice-remove 'bibtex-completion-edit-notes
+                        #'org-roam-bibtex-helm-bibtex-edit-notes))))
+
+;;;###autoload
 (defun org-roam-bibtex-notes-fn (citekey)
   "Open an org-roam note associated with the CITEKEY or create a new one.
 Set `org-ref-notes-function' to this function if your
