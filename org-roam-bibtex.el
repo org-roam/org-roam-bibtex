@@ -266,9 +266,11 @@ from KEYS will actually be used."
   :require 'org-roam
   :global t
   (cond (org-roam-bibtex
+         (setq org-ref-notes-function 'org-roam-bibtex-notes-fn)
          (advice-add 'bibtex-completion-edit-notes
                      :override #'org-roam-bibtex-helm-bibtex-edit-notes))
         (t
+         (setq org-ref-notes-function 'org-ref-notes-function-one-file)
          (advice-remove 'bibtex-completion-edit-notes
                         #'org-roam-bibtex-helm-bibtex-edit-notes))))
 
