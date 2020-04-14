@@ -295,7 +295,7 @@ Implementation details and features:
 
 1. This function first calls `org-roam-find-ref' trying to find the
 note file associated with the CITEKEY. The org-roam key can be
-set with \'#+ROAM_KEY:\' in-buffer keyword.
+set with '#+ROAM_KEY:' in-buffer keyword.
 
 2. If the org-roam reference has not been found, the function
 calls `org-roam-find-file' passing to it the title associated
