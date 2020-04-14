@@ -4,9 +4,9 @@
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; Copyright © 2020 Leo Vivier <leo.vivier+org@gmail.com>
 
-;; Author: Jethro Kuan <jethrokuan95@gmail.com>
+;; Author: Leo Vivier <leo.vivier+org@gmail.com>
 ;; 	Mykhailo Shevchuk <mail@mshevchuk.com>
-;; 	Leo Vivier <leo.vivier+org@gmail.com>
+;; 	Jethro Kuan <jethrokuan95@gmail.com>
 ;; URL: https://github.com/zaeph/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex
 ;; Version: 0.1
