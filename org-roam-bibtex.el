@@ -157,6 +157,13 @@ about bibtex field names."
            :value-type (string :tag "Field")))
   :group 'org-roam-bibtex)
 
+(defcustom org-roam-bibtex-citekey-format "cite:%s"
+  "Format string for the citekey.
+The citekey obtained from `helm-bibtex'/`ivy-bibtex'/`org-ref'
+will be formatted as specified here."
+  :type 'string
+  :group 'org-roam-bibtex)
+
 (defcustom org-roam-bibtex-persp-project `("notes" . ,org-roam-directory)
   "Perspective name and path to the project with bibliography notes.
 A cons cell (PERSP-NAME . PROJECT-PATH).  Only relevant when
@@ -318,7 +325,7 @@ pre-populated with the record title.
 `org-roam-bibtex-template'.  If the variable is not defined,
 revert to using `org-roam-capture-templates'.
 
-4.. Optionally, when `org-roam-bibtex-preformat-templates' is
+4. Optionally, when `org-roam-bibtex-preformat-templates' is
 non-nil, any prompt wildcards in `org-roam-bibtex-template' or
 `org-roam-capture-templates' associated with the bibtex record
 fields as specified in `org-roam-bibtex-preformat-templates'
@@ -343,7 +350,7 @@ t. In this case, the perspective will be switched to the org-roam
 notes project before calling any org-roam functions."
   (unless org-roam-mode
     (org-roam-mode +1))
-  (let* ((citekey-formatted (format "cite:%s" citekey))
+  (let* ((citekey-formatted (format (or org-roam-bibtex-citekey-format "%s") citekey))
          (note-info (list (cons 'ref citekey-formatted))))
     ;; Optionally switch to the notes perspective
     (when org-roam-bibtex-switch-persp
@@ -353,27 +360,26 @@ notes project before calling any org-roam functions."
       ;; Call org-roam-find-file
       (let* ((entry (ignore-errors (bibtex-completion-get-entry citekey)))
              ;; Check if a custom template has been set
-             custom?
-             (template (or (setq custom? org-roam-bibtex-template)
-                           org-roam-capture-templates))
+             (templates (or org-roam-bibtex-template
+                            org-roam-capture-templates))
              (org-roam-capture-templates
               ;; Optionally preformat keywords
               (or
                (when org-roam-bibtex-preformat-templates
-                 (let* ((templates (copy-tree template))
+                 (let* ((tmpls (copy-tree templates))
                         result)
-                   (dolist (template templates result)
-                     (pushnew (org-roam-bibtex--preformat-template template entry) result))))
-               template))
+                   (dolist (tmpl tmpls result)
+                     (pushnew (org-roam-bibtex--preformat-template tmp entry) result))))
+               templates))
              (title
               (or (s-format "${title}" 'bibtex-completion-apa-get-value entry)
-                  "Title not found for this entry (Check your bibtex file)"))
-             (org-roam-capture--context 'ref)
-             (org-roam-capture--info (list (cons 'title title)
-                                           (cons 'ref citekey-formatted)
-                                           (cons 'slug (org-roam--title-to-slug citekey)))))
-        (if custom?
-            (org-roam--capture)
+                  "Title not found for this entry (Check your bibtex file)")))
+        (if org-roam-bibtex-template
+            (let ((org-roam-capture--context 'ref)
+                  (org-roam-capture--info (list (cons 'title title)
+                                                (cons 'ref citekey-formatted)
+                                                (cons 'slug (org-roam--title-to-slug citekey)))))
+              (org-roam--capture))
           (org-roam-find-file title))))))
 
 (provide 'org-roam-bibtex)
