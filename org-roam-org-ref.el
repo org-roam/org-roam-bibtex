@@ -67,12 +67,23 @@
   :group 'org-ref
   :prefix "org-roam-org-ref-")
 
-(defcustom org-roam-org-ref-preformat-templates nil
+(defcustom org-roam-org-ref-preformat-templates t
   "Non-nil to enable template preformatting.
 See `org-roam-org-ref-edit-notes' for details."
   :type '(choice
           (const :tag "Yes" t)
           (const :tag "No" nil))
+  :group 'org-roam-org-ref)
+
+(defcustom org-roam-org-ref-template
+  '(("r" "ref" plain
+     (function org-roam-capture--get-point)
+     ""
+     :file-name "${slug}"
+     :head "#+TITLE: ${title}\n#+ROAM_KEY: ${ref}\n"
+     :unnarrowed t))
+  "Template to use when creating a new note.
+See `org-roam-org-ref-edit-notes' for details."
   :group 'org-roam-org-ref)
 
 (defcustom org-roam-org-ref-include-citekey-in-titles nil
@@ -305,23 +316,29 @@ notes project before calling any org-roam functions."
     (unless (ignore-errors (org-roam-find-ref note-info))
       ;; Call org-roam-find-file
       (let* ((entry (ignore-errors (bibtex-completion-get-entry citekey)))
+             ;; Check if a custom template has been set
+             custom?
+             (template (or (setq custom? org-roam-org-ref-template)
+                           org-roam-capture-templates))
              (org-roam-capture-templates
               ;; Optionally preformat keywords
               (or
                (when org-roam-org-ref-preformat-templates
-                 (let* ((templates (copy-tree org-roam-capture-templates))
+                 (let* ((templates (copy-tree template))
                         result)
                    (dolist (template templates result)
                      (pushnew (org-roam-org-ref--preformat-template template entry) result))))
-               org-roam-capture-templates))
+               template))
              (title
               (or (s-format "${title}" 'bibtex-completion-apa-get-value entry)
                   "Title not found for this entry (Check your bibtex file)"))
-             (title-formatted
-              (if org-roam-org-ref-include-citekey-in-titles
-                  (format "%s: %s" citekey title)
-                title)))
-        (org-roam-find-file title-formatted)))))
+             (org-roam-capture--context 'ref)
+             (org-roam-capture--info (list (cons 'title title)
+                                           (cons 'ref (format "cite:%s" citekey))
+                                           (cons 'slug (org-roam--title-to-slug citekey)))))
+        (if custom?
+            (org-roam--capture)
+          (org-roam-find-file title))))))
 
 (provide 'org-roam-org-ref)
 ;;; org-roam-org-ref.el ends here
