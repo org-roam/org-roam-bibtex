@@ -283,11 +283,15 @@ with the CITEKEY as retrieved by `bibtex-completion-get-entry'.
 The prompt presented by `org-roam-find-file' will thus be
 pre-populated with the record title.
 
-3. Optionally, when `org-roam-org-ref-preformat-templates' is
-non-nil, any prompt wildcards in `org-roam-capture-templates'
-associated with the bibtex record fields as specified in
-`org-roam-org-ref-preformat-templates' will be preformatted. Both
-`org-capture-templates' (%^{}) and
+3. The template used to create the note is stored in
+`org-roam-org-ref-template'.  If the variable is not defined,
+revert to using `org-roam-capture-templates'.
+
+4.. Optionally, when `org-roam-org-ref-preformat-templates' is
+non-nil, any prompt wildcards in `org-roam-org-ref-template' or
+`org-roam-capture-templates' associated with the bibtex record
+fields as specified in `org-roam-org-ref-preformat-templates'
+will be preformatted. Both `org-capture-templates' (%^{}) and
 `org-roam-capture-templates' (`s-format', ${}) prompt syntaxes
 are supported.
 
@@ -300,7 +304,7 @@ title for preformatting it will be impossible to change it in the
 expansions will have taken place by then. All the title wildcards
 will be replace with the bibtex field value.
 
-4. Optionally, if you are using projectile and persp-mode and
+5. Optionally, if you are using projectile and persp-mode and
 have a dedicated workspace to work with your org-roam collection,
 you may want to set the perspecive name and project path in
 `org-roam-org-ref-persp-project' and `org-roam-org-ref-switch-persp' to
