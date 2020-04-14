@@ -42,11 +42,11 @@
 ;;       org-ref-notes-directory "path/to/org-roam-directory")
 ;;
 ;; Optionally, `org-roam-capture-templates' can be dynamically
-;; preformatted with bibtex field values. See
+;; preformatted with bibtex field values.  See
 ;; `org-roam-bibtex-preformat-keywords' for more details.
 ;;
 ;; Optionally, automatic switching to the perspective (persp-mode) with
-;; the notes project (projectile) is possible. See
+;; the notes project (projectile) is possible.  See
 ;; `org-roam-bibtex-edit-notes' for more details.
 ;;
 
@@ -159,7 +159,7 @@ about bibtex field names."
 
 (defcustom org-roam-bibtex-persp-project `("notes" . ,org-roam-directory)
   "Perspective name and path to the project with bibliography notes.
-A cons cell (PERSP-NAME . PROJECT-PATH). Only relevant when
+A cons cell (PERSP-NAME . PROJECT-PATH).  Only relevant when
 `org-roam-bibtex-switch-persp' is set to t.
 
 Requires 'persp-mode' and 'projectile'.
@@ -201,8 +201,8 @@ See `org-roam-bibtex-edit-notes' for details."
 
 (defun org-roam-bibtex--preformat-template (template entry)
   "Helper function for `org-roam-bibtex--preformat-templates'.
-TEMPLATE is an element of `org-roam-capture-templates' and ENTRY is a bibtex entry as
-returned by `bibtex-completion-get-entry'."
+TEMPLATE is an element of `org-roam-capture-templates' and ENTRY
+is a bibtex entry as returned by `bibtex-completion-get-entry'."
   ;; Handle org-roam-capture part
   (let* ((kwds (if (listp org-roam-bibtex-preformat-keywords) ; normalize org-roam-bibtex-preformat-keywords
                    org-roam-bibtex-preformat-keywords
@@ -253,7 +253,7 @@ returned by `bibtex-completion-get-entry'."
 
 ;;;###autoload
 (defun org-roam-bibtex-helm-bibtex-edit-notes (keys)
-  "Open an org-roam note associated with the first key from KEYS or create a new one.
+  "Open an org-roam note associated with the first key from KEYS.
 This function replaces `bibtex-edit-notes'. Only the first key
 from KEYS will actually be used."
   (org-roam-bibtex-edit-notes (car keys)))
