@@ -97,7 +97,7 @@ See `org-roam-bibtex-edit-notes' for details."
 (defcustom org-roam-bibtex-preformat-keywords "=key="
   "The template prompt wildcards for preformatting.
 Only relevant when `org-roam-bibtex-preformat-templates' is set
-to t. This can be a string, a list of strings or a cons-cell
+to t (default). This can be a string, a list of strings or a cons-cell
 alist, where each element is (STRING . STRING).
 
 Use only alphanumerical characters, dash and underscore. See
