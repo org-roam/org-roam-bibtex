@@ -104,7 +104,7 @@ Use only alphanumerical characters, dash and underscore. See
 `org-roam-bibtex-edit-notes' for implementation details.
 
 1. If the value is a string, a single keyword, it is treated as
-a bibtex field name, such as =key=. In the following example all
+a BibTeX field name, such as =key=. In the following example all
 the prompts with =key= keyword will be preformatted, as well as
 the corresponding match group %\\1.
 
@@ -117,7 +117,7 @@ the corresponding match group %\\1.
          :unnarrowed t)))
 
 2. If the value is a list of strings they are also treated as
-bibtex field names. The respective prompts will be preformatted.
+BibTeX field names. The respective prompts will be preformatted.
 
 \(setq org-roam-bibtex-preformat-keywords '(\"=key=\" \"title\"))
 \(setq org-roam-capture-templates
@@ -128,9 +128,9 @@ bibtex field names. The respective prompts will be preformatted.
          :unnarrowed t)))
 
 3. If the value is a list of cons cells, then the car of the cons
-cell is treated as a prompt keyword and the cdr as a bibtex field
+cell is treated as a prompt keyword and the cdr as a BibTeX field
 name, and the latter will be used to retrieve relevant value from
-the bibtex entry. If cdr is omitted, then the car is treated as
+the BibTeX entry. If cdr is omitted, then the car is treated as
 the field name.
 
 \(setq org-roam-bibtex-preformat-keywords
@@ -147,12 +147,12 @@ the field name.
          :unnarrowed t)))
 
 Consult bibtex-completion package for additional information
-about bibtex field names."
+about BibTeX field names."
   :type '(choice
-          (string :tag "Bibtex field name")
-          (group :tag "Bibtex field names" (repeat :tag "Bibtex field names" string))
+          (string :tag "BibTeX field name")
+          (group :tag "BibTeX field names" (repeat :tag "BibTeX field names" string))
           (alist
-           :tag "Template wildcard keyword/Bibtex field name pairs"
+           :tag "Template wildcard keyword/BibTeX field name pairs"
            :key-type (string :tag "Wildcard")
            :value-type (string :tag "Field")))
   :group 'org-roam-bibtex)
@@ -209,7 +209,7 @@ See `org-roam-bibtex-edit-notes' for details."
 (defun org-roam-bibtex--preformat-template (template entry)
   "Helper function for `org-roam-bibtex--preformat-templates'.
 TEMPLATE is an element of `org-roam-capture-templates' and ENTRY
-is a bibtex entry as returned by `bibtex-completion-get-entry'."
+is a BibTeX entry as returned by `bibtex-completion-get-entry'."
   ;; Handle org-roam-capture part
   (let* ((kwds (if (listp org-roam-bibtex-preformat-keywords) ; normalize org-roam-bibtex-preformat-keywords
                    org-roam-bibtex-preformat-keywords
@@ -307,7 +307,7 @@ intended for use with org-ref."
 
 This function allows to use org-roam as a backend for managing
 bibliography notes. It relies on `bibtex-completion' to get
-retrieve bibliograpic information from a bibtex file.
+retrieve bibliograpic information from a BibTeX file.
 
 Implementation details and features:
 
@@ -344,7 +344,7 @@ Please pay attention when using this feature that by setting
 title for preformatting it will be impossible to change it in the
 `org-roam-find-file' interactive prompt since all the template
 expansions will have taken place by then. All the title wildcards
-will be replace with the bibtex field value.
+will be replace with the BibTeX field value.
 
 5. Optionally, if you are using projectile and persp-mode and
 have a dedicated workspace to work with your org-roam collection,
@@ -377,7 +377,7 @@ notes project before calling any org-roam functions."
                templates))
              (title
               (or (s-format "${title}" 'bibtex-completion-apa-get-value entry)
-                  "Title not found for this entry (Check your bibtex file)")))
+                  "Title not found for this entry (Check your BibTeX file)")))
         (if org-roam-bibtex-template
             (let ((org-roam-capture--context 'ref)
                   (org-roam-capture--info (list (cons 'title title)
