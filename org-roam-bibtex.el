@@ -54,6 +54,8 @@
 ;;;; Library Requires
 (require 'org-roam)
 (require 'bibtex-completion)
+(eval-when-compile
+  (require 'subr-x))
 
 (declare-function org-ref-find-bibliography "org-ref-core")
 (declare-function projectile-relevant-open-projects "projectile")
@@ -361,30 +363,35 @@ notes project before calling any org-roam functions."
       (org-roam-bibtex--switch-perspective))
     ;; Find org-roam reference with the CITEKEY
     (unless (ignore-errors (org-roam-find-ref note-info))
-      ;; Call org-roam-find-file
-      (let* ((entry (ignore-errors (bibtex-completion-get-entry citekey)))
-             ;; Check if a custom template has been set
-             (templates (or org-roam-bibtex-template
-                            org-roam-capture-templates))
-             (org-roam-capture-templates
-              ;; Optionally preformat keywords
-              (or
-               (when org-roam-bibtex-preformat-templates
-                 (let* ((tmpls (copy-tree templates))
-                        result)
-                   (dolist (tmpl tmpls result)
-                     (pushnew (org-roam-bibtex--preformat-template tmpl entry) result))))
-               templates))
-             (title
-              (or (s-format "${title}" 'bibtex-completion-apa-get-value entry)
-                  "Title not found for this entry (Check your BibTeX file)")))
-        (if org-roam-bibtex-template
-            (let ((org-roam-capture--context 'ref)
-                  (org-roam-capture--info (list (cons 'title title)
-                                                (cons 'ref citekey-formatted)
-                                                (cons 'slug (org-roam--title-to-slug citekey)))))
-              (org-roam--capture))
-          (org-roam-find-file title))))))
+      ;; Check if the requested entry actually exists and fail gracefully
+      (if-let* ((entry (bibtex-completion-get-entry citekey))
+                ;; Depending on the templates used, run org-roam--capture or call org-roam-find-file
+                (templates (or org-roam-bibtex-template
+                               org-roam-capture-templates
+                               (and (display-warning :warning "Could not find the requested templates.")
+                                    nil)))
+                (org-roam-capture-templates
+                 ;; Optionally preformat keywords
+                 (or
+                  (when org-roam-bibtex-preformat-templates
+                    (let* ((tmpls (copy-tree templates))
+                           result)
+                      (dolist (tmpl tmpls result)
+                        (pushnew (org-roam-bibtex--preformat-template tmpl entry) result))))
+                  templates))
+                (title
+                 (or (s-format "${title}" 'bibtex-completion-apa-get-value entry)
+                     "Title not found for this entry (Check your BibTeX file)")))
+          ;; Check if a custom template has been set
+          (if org-roam-bibtex-template
+              (let ((org-roam-capture--context 'ref)
+                    (org-roam-capture--info (list (cons 'title title)
+                                                  (cons 'ref citekey-formatted)
+                                                  (cons 'slug (org-roam--title-to-slug citekey)))))
+                (org-roam--capture))
+            (org-roam-find-file title))
+        (message "Something went wrong. Check the *Warnings* buffer."))
+      )))
 
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
