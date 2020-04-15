@@ -25,18 +25,12 @@ You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick
 
 ### Quick-start
 
+You can get `org-roam-bibtex` up and running by pasting the following codes in your [init-file](https://www.gnu.org/software/emacs/manual/html_node/emacs/Init-File.html):
+
 #### With `use-package`
 ```el
 (use-package org-roam-bibtex
   :load-path "~/projects/org-roam-bibtex/" ;Modify with your own path
-  :custom
-  (org-roam-bibtex-template
-   '(("r" "ref" plain
-      (function org-roam-capture--get-point)
-      ""
-      :file-name "${slug}"
-      :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}\n"
-      :unnarrowed t)))
   :config
   (org-roam-bibtex-mode))
   ```
@@ -47,13 +41,33 @@ You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick
 
 (require 'org-roam-bibtex)
 
-(setq org-roam-bibtex-template
-      '(("r" "ref" plain
-         (function org-roam-capture--get-point)
-         ""
-         :file-name "${slug}"
-         :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}\n"
-         :unnarrowed t)))
-
 (org-roam-bibtex-mode)
 ```
+
+### Configuration
+
+#### Variables
+
+##### `org-roam-bibtex-template`
+
+This variable specifies the template to use when creating a new note.  It builds on the syntax of `org-roam-capture-templates` by allowing you to expand predefined variables to the value of a BibTeX fields.
+
+See `org-roam-bibtex-edit-notes` and `org-roam-bibtex-preformat-keywords` for details.  After having loaded the package, you can access the docstrings of those symbols with `C-h f` `org-roam-bibtex-edit-notes` (`f` for function) and `C-h v` `org-roam-bibtex-preformat-keywords` (`v` for variable).
+
+Here’s the default value of `org-roam-bibtex-template`:
+```el
+(("r" "ref" plain (function org-roam-capture--get-point) ""
+      :file-name "${slug}"
+      :head "#+TITLE: ${title}\n#+ROAM_KEY: ${ref}\n"
+      :unnarrowed t))
+```
+
+You can modify it with `setq`.  For instance, if you want to add the cite-key in the title of the notes, you can modify the code like this (pay attention to the line with `:head`):
+```el
+(setq org-roam-bibtex-template
+      '(("r" "ref" plain (function org-roam-capture--get-point) ""
+         :file-name "${slug}"
+         :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}\n" ; <--
+         :unnarrowed t)))
+```
+
