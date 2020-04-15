@@ -1,14 +1,14 @@
-### Description
+## Description
 
 `org-roam-bibtex` is a library which offers a tighter integration between [`org-roam`](https://github.com/jethrokuan/org-roam), [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex), and [`org-ref`](https://github.com/jkitchin/org-ref).
 
 It allows users to access their bibliographical notes in `org-roam-directory` via `helm-bibtex`, `ivy-bibtex`, or by opening `org-ref`’s `cite:` links and running `3. Add notes`.  If the note does not exist, it is created.
 
-### Demo
+## Demo
 
 <img src="https://raw.githubusercontent.com/Zaeph/org-roam-bibtex/master/doc/demo.gif" width="700">
 
-### Installation
+## Installation
 
 The package is not on MELPA yet, but a request has been filed.
 
@@ -23,11 +23,11 @@ You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick
 
 (You can also copy [`./org-roam-bibtex.el`](https://github.com/Zaeph/org-roam-bibtex/blob/improve-readme/org-roam-bibtex.el) somewhere where `load-path` can access it, but you’d have to update the file manually.)
 
-### Quick-start
+## Quick-start
 
 You can get `org-roam-bibtex` up and running by pasting the following codes in your [init-file](https://www.gnu.org/software/emacs/manual/html_node/emacs/Init-File.html):
 
-#### With `use-package`
+### With `use-package`
 ```el
 (use-package org-roam-bibtex
   :load-path "~/projects/org-roam-bibtex/" ;Modify with your own path
@@ -35,7 +35,7 @@ You can get `org-roam-bibtex` up and running by pasting the following codes in y
   (org-roam-bibtex-mode))
   ```
   
-#### Without `use-package`
+### Without `use-package`
 ```el
 (add-to-list 'load-path "~/projects/org-roam-bibtex/") ;Modify with your own path
 
@@ -44,11 +44,11 @@ You can get `org-roam-bibtex` up and running by pasting the following codes in y
 (org-roam-bibtex-mode)
 ```
 
-### Configuration
+## Configuration
 
-#### Variables
+### Variables
 
-##### `org-roam-bibtex-template`
+### `org-roam-bibtex-template`
 
 This variable specifies the template to use when creating a new note.  It builds on the syntax of `org-roam-capture-templates` by allowing you to expand predefined variables to the value of a BibTeX fields.
 
