@@ -23,7 +23,7 @@ You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick
 
 (You can also copy [`./org-roam-bibtex.el`](https://github.com/Zaeph/org-roam-bibtex/blob/improve-readme/org-roam-bibtex.el) somewhere where `load-path` can access it, but you’d have to update the file manually.)
 
-### Quick start
+### Quick-start
 
 #### With `use-package`
 ```el
