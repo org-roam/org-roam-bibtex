@@ -1,14 +1,17 @@
-## Description
+Description
+---------------
 
 `org-roam-bibtex` is a library which offers a tighter integration between [`org-roam`](https://github.com/jethrokuan/org-roam), [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex), and [`org-ref`](https://github.com/jkitchin/org-ref).
 
 It allows users to access their bibliographical notes in `org-roam-directory` via `helm-bibtex`, `ivy-bibtex`, or by opening `org-ref`’s `cite:` links and running `3. Add notes`.  If the note does not exist, it is created.
 
-## Demo
+Demo
+---------------
 
 <img src="https://raw.githubusercontent.com/Zaeph/org-roam-bibtex/master/doc/demo.gif" width="700">
 
-## Installation
+Installation
+---------------
 
 The package is not on MELPA yet, but a request has been filed.
 
@@ -23,7 +26,8 @@ You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick
 
 (You can also copy [`org-roam-bibtex.el`](https://github.com/Zaeph/org-roam-bibtex/blob/improve-readme/org-roam-bibtex.el) somewhere where `load-path` can access it, but you’d have to update the file manually.)
 
-## Quick-start
+Quick-start
+---------------
 
 You can get `org-roam-bibtex` up and running by pasting the following sexps in your [init-file](https://www.gnu.org/software/emacs/manual/html_node/emacs/Init-File.html):
 
@@ -44,7 +48,8 @@ You can get `org-roam-bibtex` up and running by pasting the following sexps in y
 (org-roam-bibtex-mode)
 ```
 
-## Configuration
+Configuration
+---------------
 
 ### Variables
 
@@ -120,6 +125,7 @@ Use only alphanumerical characters, dash and underscore. See `org-roam-bibtex-ed
 
 Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex) package for additional information about BibTeX field names.
 
-## Community
+Community
+---------------
 For help, support, or if you just want to hang out with us, you can find us here:
 * **IRC**: channel **#org-roam** on [freenode](https://freenode.net/kb/answer/chat)
