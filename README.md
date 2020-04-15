@@ -119,3 +119,7 @@ Use only alphanumerical characters, dash and underscore. See `org-roam-bibtex-ed
 ```
 
 Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex) package for additional information about BibTeX field names.
+
+## Community
+For help, support, or if you just want to hang out with us, you can find us here:
+* **IRC**: channel **#org-roam** on [freenode](https://freenode.net/kb/answer/chat)
