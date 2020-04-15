@@ -2,6 +2,10 @@
 
 `org-roam-bibtex` is a library which offers a tighter integration between [`org-roam`](https://github.com/jethrokuan/org-roam), [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex), and [`org-ref`](https://github.com/jkitchin/org-ref).  It allows the users to access their bibliographical notes in `org-roam-directory` via `helm-bibtex`, `ivy-bibtex`, or by opening `org-ref`’s `cite:` links and running `3. Add notes`.  If the note does not exist, it is created.
 
+### Demo
+
+![demo.gif](https://raw.githubusercontent.com/Zaeph/org-roam-bibtex/master/doc/demo.gif)
+
 ### Installation
 
 The package is not on MELPA yet, but a request has been filed.
