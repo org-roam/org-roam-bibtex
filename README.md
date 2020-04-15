@@ -4,7 +4,7 @@
 
 ### Demo
 
-<img src="https://raw.githubusercontent.com/Zaeph/org-roam-bibtex/master/doc/demo.gif" width="500">
+<img src="https://raw.githubusercontent.com/Zaeph/org-roam-bibtex/master/doc/demo.gif" width="700">
 
 ### Installation
 
