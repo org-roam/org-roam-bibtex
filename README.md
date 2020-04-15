@@ -72,3 +72,50 @@ You can modify it with `setq`.  For instance, if you want to add the cite-key in
 ```
 
 ### `org-roam-bibtex-preformat-keywords`
+
+The template prompt wildcards for preformatting.  Only relevant when `org-roam-bibtex-preformat-templates` is set to t (default).  This can be a string, a list of strings or a cons-cell alist, where each element is `(STRING . STRING)`.
+
+Use only alphanumerical characters, dash and underscore. See `org-roam-bibtex-edit-notes` for implementation details.
+
+1. If the value is a string, a single keyword, it is treated as a BibTeX field name, such as =key=. In the following example all the prompts with =key= keyword will be preformatted, as well as the corresponding match group %\1.
+
+```el
+(setq org-roam-bibtex-preformat-keywords "=key=")
+(setq org-roam-capture-templates
+      ’(("r" "reference" plain (function org-roam-capture--get-point)
+         "#+ROAM_KEY: %^{=key=}%? fullcite: %\1"
+         :file-name "references/${=key=}"
+         :head "#+TITLE: ${title}"
+         :unnarrowed t)))
+```
+
+2. If the value is a list of strings they are also treated as bibtex field names. The respective prompts will be preformatted.
+
+```el
+(setq org-roam-bibtex-preformat-keywords ’("=key=" "title"))
+(setq org-roam-capture-templates
+      ’(("r" "reference" plain (function org-roam-capture--get-point)
+         "#+ROAM_KEY: %^{=key=}%? fullcite: %\1"
+         :file-name "references/${=key=}"
+         :head "#+TITLE: ${title}"
+         :unnarrowed t)))
+```
+
+3. If the value is a list of cons cells, then the car of the cons cell is treated as a prompt keyword and the cdr as a BibTeX field name, and the latter will be used to retrieve relevant value from the BibTeX entry. If cdr is omitted, then the car is treated as the field name.
+
+```el
+(setq org-roam-bibtex-preformat-keywords
+      '(("citekey" . "=key=")
+       ("type" . "=type=")
+       "title"))
+(setq org-roam-capture-templates
+      '(("r" "reference" plain (function org-roam-capture--get-point)
+         "#+ROAM_KEY: %^{citekey}%? fullcite: %\1
+          #+TAGS: %^{type}
+          This %\2 deals with ..."
+         :file-name "references/%<%Y-%m-%d-%H%M%S>_${title}"
+         :head "#+TITLE: ${title}"
+         :unnarrowed t)))
+```
+
+Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex) package for additional information about BibTeX field names.
