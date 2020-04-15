@@ -25,7 +25,7 @@ You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick
 
 ## Quick-start
 
-You can get `org-roam-bibtex` up and running by pasting the following codes in your [init-file](https://www.gnu.org/software/emacs/manual/html_node/emacs/Init-File.html):
+You can get `org-roam-bibtex` up and running by pasting the following sexps in your [init-file](https://www.gnu.org/software/emacs/manual/html_node/emacs/Init-File.html):
 
 ### With `use-package`
 ```el
