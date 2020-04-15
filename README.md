@@ -77,7 +77,7 @@ The template prompt wildcards for preformatting.  Only relevant when `org-roam-b
 
 Use only alphanumerical characters, dash and underscore. See `org-roam-bibtex-edit-notes` for implementation details.
 
-1. If the value is a string, a single keyword, it is treated as a BibTeX field name, such as `=key=`. In the following example all the prompts with the `=key=` keyword will be preformatted, as well as the corresponding match group %\1.
+1. If the value is a string, a single keyword, it is treated as a BibTeX field name, such as `=key=`. In the following example all the prompts with the `=key=` keyword will be preformatted, as well as the corresponding match group `%\1`.
 
 ```el
 (setq org-roam-bibtex-preformat-keywords "=key=")
