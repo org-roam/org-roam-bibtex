@@ -52,7 +52,7 @@ You can get `org-roam-bibtex` up and running by pasting the following codes in y
 
 This variable specifies the template to use when creating a new note.  It builds on the syntax of `org-roam-capture-templates` by allowing you to expand predefined variables to the value of a BibTeX fields.
 
-See `org-roam-bibtex-edit-notes` and `org-roam-bibtex-preformat-keywords` for details.  After having loaded the package, you can access the docstrings of those symbols with `C-h f` `org-roam-bibtex-edit-notes` (`f` for function) and `C-h v` `org-roam-bibtex-preformat-keywords` (`v` for variable).
+See `org-roam-bibtex-edit-notes` and [`org-roam-bibtex-preformat-keywords`](#org-roam-bibtex-preformat-keywords) for details.  After having loaded the package, you can access the docstrings of those symbols with `C-h f` `org-roam-bibtex-edit-notes` (`f` for function) and `C-h v` `org-roam-bibtex-preformat-keywords` (`v` for variable).
 
 Here’s the default value of `org-roam-bibtex-template`:
 ```el
@@ -71,3 +71,4 @@ You can modify it with `setq`.  For instance, if you want to add the cite-key in
          :unnarrowed t)))
 ```
 
+### `org-roam-bibtex-preformat-keywords`
