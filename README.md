@@ -1,10 +1,12 @@
 ### Description
 
-`org-roam-bibtex` is a library which offers a tighter integration between [`org-roam`](https://github.com/jethrokuan/org-roam), [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex), and [`org-ref`](https://github.com/jkitchin/org-ref).  It allows the users to access their bibliographical notes in `org-roam-directory` via `helm-bibtex`, `ivy-bibtex`, or by opening `org-ref`’s `cite:` links and running `3. Add notes`.  If the note does not exist, it is created.
+`org-roam-bibtex` is a library which offers a tighter integration between [`org-roam`](https://github.com/jethrokuan/org-roam), [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex), and [`org-ref`](https://github.com/jkitchin/org-ref).
+
+It allows users to access their bibliographical notes in `org-roam-directory` via `helm-bibtex`, `ivy-bibtex`, or by opening `org-ref`’s `cite:` links and running `3. Add notes`.  If the note does not exist, it is created.
 
 ### Demo
 
-![demo.gif](https://raw.githubusercontent.com/Zaeph/org-roam-bibtex/master/doc/demo.gif)
+<img src="https://raw.githubusercontent.com/Zaeph/org-roam-bibtex/master/doc/demo.gif" width="700">
 
 ### Installation
 
@@ -17,11 +19,11 @@ To do that:
 2. `cd ~/projects`
 3. `git clone https://github.com/Zaeph/org-roam-bibtex.git`
 
-You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See **Configuration** for adding it to your `load-path`
+You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick-start](#quick-start) to learn how to add it `load-path` and to get started with the package.
 
 (You can also copy [`./org-roam-bibtex.el`](https://github.com/Zaeph/org-roam-bibtex/blob/improve-readme/org-roam-bibtex.el) somewhere where `load-path` can access it, but you’d have to update the file manually.)
 
-### Quick-start
+### Quick start
 
 #### With `use-package`
 ```el
