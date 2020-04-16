@@ -415,6 +415,32 @@ notes project before calling any org-roam functions."
         (message "Something went wrong. Check the *Warnings* buffer."))
       )))
 
+(defun org-roam-bibtex--check-relativity (paths)
+  "Check the relativity between members of a list of PATHS.
+- If every file has the same name-base, return 'same-name-base.
+- If every file is in the same directory, return 'same-dir.
+- Otherwise, return nil."
+  (let (name-base dir rel)
+    (catch 'no-dir
+      (or (dolist (path paths rel)
+            (let ((name-base-cur (file-name-base path))
+                  (dir-cur (-> path
+                               (expand-file-name)
+                               (file-name-directory))))
+              (cond
+               ;; Init variables on first run
+               ((and (not name-base)
+                     (not dir))
+                (setq name-base name-base-cur
+                      dir dir-cur))
+               ;; Check if dir is different
+               ((not (equal dir-cur dir))
+                (throw 'no-dir nil))
+                ;; Check name-base
+               (t
+                (unless (equal name-base-cur name-base)
+                  (setq rel 'same-dir))))))
+          'same-name-base))))
 
 (defun org-roam-bibtex-process-file-field (citekey)
   "Process the 'file' BibTeX field and resolve if there are multiples.
@@ -427,11 +453,22 @@ CITEKEY ('=key=').
 are multiple files found the user is prompted to select which one
 to enter"
   (let* ((entry (bibtex-completion-get-entry citekey))
-         (paths (bibtex-completion-find-pdf entry)))
+         (paths (->> (bibtex-completion-find-pdf entry)
+                     ;; Strip invalid files
+                     (remove "/")))
+         (rel (org-roam-bibtex--check-relativity paths))
+         (paths-alist (mapcar (lambda (path)
+                                (let ((name-base (file-name-base path))
+                                      (ext (file-name-extension path)))
+                                  (pcase rel
+                                    ('same-name-base (cons ext path))
+                                    ('same-dir (cons name-base path))
+                                    (_ path))))
+                              paths)))
     (if (= (length paths) 1)
         (car paths)
-      (completing-read "File to use: " paths))))
-
+      (cdr (assoc (completing-read "File to use: " paths-alist)
+                  paths-alist)))))
 
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
