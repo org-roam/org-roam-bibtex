@@ -442,6 +442,24 @@ notes project before calling any org-roam functions."
                   (setq rel 'same-dir))))))
           'same-name-base))))
 
+(defcustom org-roam-bibtex-process-file-field-intelligently t
+  "When t, process the 'file' BibTeX field intelligently.
+When multiple files are listed in the BibTeX field, the goal is
+to only show as much information as is needed to choose which
+file to use:
+- If the files have the same name-base (i.e. file-name without extension),
+  the completion prompt will only list the extension.
+- If the files do not have the same name-base but are in the same directory,
+  the completion prompt will only list the file-names.
+- Otherwise, the completion prompt will show the entire paths.
+This prevents the user from having to differentiate long strings
+in the minibuffer.
+See `org-roam-bibtex-process-file-field' for details."
+  :type '(choice
+          (const :tag "Yes" t)
+          (const :tag "No" nil))
+  :group 'org-roam-bibtex)
+
 (defun org-roam-bibtex-process-file-field (citekey)
   "Process the 'file' BibTeX field and resolve if there are multiples.
 Search the disk for the document associated with this BibTeX
@@ -456,15 +474,21 @@ to enter"
          (paths (->> (bibtex-completion-find-pdf entry)
                      ;; Strip invalid files
                      (remove "/")))
-         (rel (org-roam-bibtex--check-relativity paths))
-         (paths-alist (mapcar (lambda (path)
-                                (let ((name-base (file-name-base path))
-                                      (ext (file-name-extension path)))
-                                  (pcase rel
-                                    ('same-name-base (cons ext path))
-                                    ('same-dir (cons name-base path))
-                                    (_ path))))
-                              paths)))
+         (intelligent? org-roam-bibtex-process-file-field-intelligently)
+         (rel (when intelligent?
+                (org-roam-bibtex--check-relativity paths)))
+         (paths-alist
+          (mapcar (if intelligent?
+                      (lambda (path)
+                        (let ((name-base (file-name-base path))
+                              (ext (file-name-extension path)))
+                          (pcase rel
+                            ('same-name-base (cons ext path))
+                            ('same-dir (cons name-base path))
+                            (_ path))))
+                    (lambda (path)
+                      (cons path path)))
+                  paths)))
     (if (= (length paths) 1)
         (car paths)
       (cdr (assoc (completing-read "File to use: " paths-alist)
