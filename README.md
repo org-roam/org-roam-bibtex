@@ -159,7 +159,7 @@ Below shows how this can be used to integrate with [org-noter](https://github.co
 :END:")))
 ```
 
-Do not forget to escape the escapes the quotes inside the `%`-escapes form!
+Do not forget to escape the quotes inside the `%`-escapes form!
 
 Community
 ---------------
