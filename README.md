@@ -139,11 +139,12 @@ Below shows how this can be used to integrate with [org-noter](https://github.co
 ```el
 (setq org-roam-bibtex-preformat-keywords
    '("=key=" "title" "url" "file" "author-or-editor" "keywords"))
-  (setq org-roam-bibtex-template
-        '(("r" "ref" plain (function org-roam-capture--get-point)
-           ""
-           :file-name "${slug}"
-           :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}
+
+(setq org-roam-bibtex-template
+      '(("r" "ref" plain (function org-roam-capture--get-point)
+         ""
+         :file-name "${slug}"
+         :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}
 
 \- tags ::
 \- keywords :: ${keywords}
@@ -155,7 +156,7 @@ Below shows how this can be used to integrate with [org-noter](https://github.co
 :AUTHOR: ${author-or-editor}
 :NOTER_DOCUMENT: %(org-roam-bibtex-process-file-field \"${=key=}\")
 :NOTER_PAGE:
-:END:"
+:END:")))
 ```
 
 Do not forget to escape the escapes the quotes inside the `%`-escapes form!
