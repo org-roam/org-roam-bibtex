@@ -419,7 +419,8 @@ notes project before calling any org-roam functions."
   "Check the relativity between members of a list of PATHS.
 - If every file has the same name-base, return 'same-name-base.
 - If every file is in the same directory, return 'same-dir.
-- Otherwise, return nil."
+- Otherwise, return nil.
+See `org-roam-bibtex-process-file-field-intelligently' for details."
   (let (name-base dir rel)
     (catch 'no-dir
       (or (dolist (path paths rel)
