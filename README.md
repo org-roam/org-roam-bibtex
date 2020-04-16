@@ -132,7 +132,7 @@ Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex) package fo
 
 ### `%(org-roam-bibtex-process-file-field \"${=key=}\")`
 
-The convenience-function `org-roam-bibtex-process-file-field` has been added to find documents associated with the BibTeX entry.  It is intended to be used inside your template via a `%`-escapes form for sexp (`%(sexp)`) (see `org-capture-templates` for details).
+The convenience-function `org-roam-bibtex-process-file-field` has been added to find documents associated with the BibTeX entry.  It is intended to be used inside your template via a `%`-escapes form for sexp (`%(sexp)`).  See `org-capture-templates` for details.
 
 Below shows how this can be used to integrate with [org-noter](https://github.com/weirdNox/org-noter) or [interleave](https://github.com/rudolfochrist/interleave):
 
