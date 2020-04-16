@@ -148,7 +148,14 @@ Below shows how this can be used to integrate with [org-noter](https://github.co
 \- tags ::
 \- keywords :: ${keywords}
 
-\n* ${title}\n  :PROPERTIES:\n  :Custom_ID: ${=key=}\n  :URL: ${url}\n  :AUTHOR: ${author-or-editor}\n  :NOTER_DOCUMENT: %(org-roam-bibtex-process-file-field \"${=key=}\")\n  :NOTER_PAGE: \n  :END:\n\n"
+* ${title}
+:PROPERTIES:
+:Custom_ID: ${=key=}
+:URL: ${url}
+:AUTHOR: ${author-or-editor}
+:NOTER_DOCUMENT: %(org-roam-bibtex-process-file-field \"${=key=}\")  ; Do not forget to escape quotes!
+:NOTER_PAGE:
+:END:"
 ```
 Community
 ---------------
