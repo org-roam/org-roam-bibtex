@@ -436,7 +436,7 @@ notes project before calling any org-roam functions."
                ;; Check if dir is different
                ((not (equal dir-cur dir))
                 (throw 'no-dir nil))
-                ;; Check name-base
+               ;; Check name-base
                (t
                 (unless (equal name-base-cur name-base)
                   (setq rel 'same-dir))))))
