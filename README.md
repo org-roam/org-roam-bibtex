@@ -127,7 +127,7 @@ Use only alphanumerical characters, dash and underscore. See `org-roam-bibtex-ed
 
 A convenience function has been added `org-roam-bibtex-process-file-field` that can be used as a `%sexp()` to find the documents associated with the bibtex entry and insert them into the template.
 
-Below shows how this can be used to integrate with [org-noter][https://github.com/weirdNox/org-noter] or [interleave][https://github.com/rudolfochrist/interleave]
+Below shows how this can be used to integrate with [org-noter](https://github.com/weirdNox/org-noter) or [interleave](https://github.com/rudolfochrist/interleave)
 
 ```el
 (setq org-roam-bibtex-preformat-keywords
