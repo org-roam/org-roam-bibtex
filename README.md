@@ -1,7 +1,7 @@
 org-roam-bibtex
 ============
 
-<img src="https://raw.githubusercontent.com/Zaeph/org-roam-bibtex/logo/doc/logo-r300.png" width="150">
+<img src="https://raw.githubusercontent.com/Zaeph/org-roam-bibtex/master/doc/logo-r500.png" width="150">
 
 Description
 ---------------
