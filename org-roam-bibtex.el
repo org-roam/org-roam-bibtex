@@ -409,6 +409,7 @@ notes project before calling any org-roam functions."
                     (org-roam-capture--info (list (cons 'title title)
                                                   (cons 'ref citekey-formatted)
                                                   (cons 'slug (org-roam--title-to-slug citekey)))))
+                (add-hook 'org-capture-after-finalize-hook #'org-roam-capture--find-file-h)
                 (org-roam--capture))
             (org-roam-find-file title))
         (message "Something went wrong. Check the *Warnings* buffer."))
