@@ -146,8 +146,8 @@ Below shows how this can be used to integrate with [org-noter](https://github.co
          :file-name "${slug}"
          :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}
 
-\- tags ::
-\- keywords :: ${keywords}
+- tags ::
+- keywords :: ${keywords}
 
 * ${title}
 :PROPERTIES:
