@@ -393,5 +393,20 @@ notes project before calling any org-roam functions."
         (message "Something went wrong. Check the *Warnings* buffer."))
       )))
 
+
+ (defun org-roam-bibtex-process-file-field (citekey)
+    "Process the ‘file’ BibTeX field or search the disk for the document associated with this bibtex entry.
+The disk matching is based on looking in the bibtex-completion-library-path
+for a file with the CITEKEY (=key=).
+
+(Mendeley, Zotero, normal paths) are all supported.
+If there are multiple files found the user is prompted to select which one to enter"
+    (let* ((entry (bibtex-completion-get-entry citekey))
+           (paths (bibtex-completion-find-pdf entry)))
+      (if (= (length paths) 1)
+          (car paths)
+        (completing-read "File to use: " paths))))
+
+
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here

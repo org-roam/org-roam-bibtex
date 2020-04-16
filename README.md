@@ -123,6 +123,29 @@ Use only alphanumerical characters, dash and underscore. See `org-roam-bibtex-ed
          :unnarrowed t)))
 ```
 
+### `%(org-roam-bibtex-process-file-field \"${=key=}\")`
+
+A convenience function has been added `org-roam-bibtex-process-file-field` that can be used as a `%sexp()` to find the documents associated with the bibtex entry and insert them into the template.
+
+Below shows how this can be used to integrate with [org-noter][https://github.com/weirdNox/org-noter] or [interleave][https://github.com/rudolfochrist/interleave]
+
+```el
+(setq org-roam-bibtex-preformat-keywords
+   '("=key=" "title" "url" "file" "author-or-editor" "keywords"))
+  (setq org-roam-bibtex-template
+        '(("r" "ref" plain (function org-roam-capture--get-point)
+           ""
+           :file-name "${slug}"
+           :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}
+
+\- tags ::
+\- keywords :: ${keywords}
+
+\n* ${title}\n  :PROPERTIES:\n  :Custom_ID: ${=key=}\n  :URL: ${url}\n  :AUTHOR: ${author-or-editor}\n  :NOTER_DOCUMENT: %(org-roam-bibtex-process-file-field \"${=key=}\")\n  :NOTER_PAGE: \n  :END:\n\n"
+```
+
+
+
 Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex) package for additional information about BibTeX field names.
 
 Community
