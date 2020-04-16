@@ -476,24 +476,26 @@ to enter"
                      ;; Strip invalid files
                      (remove "/")))
          (intelligent? org-roam-bibtex-process-file-field-intelligently)
-         (rel (when intelligent?
-                (org-roam-bibtex--check-relativity paths)))
-         (paths-alist
-          (mapcar (if intelligent?
-                      (lambda (path)
-                        (let ((name-base (file-name-base path))
-                              (ext (file-name-extension path)))
-                          (pcase rel
-                            ('same-name-base (cons ext path))
-                            ('same-dir (cons name-base path))
-                            (_ path))))
-                    (lambda (path)
-                      (cons path path)))
-                  paths)))
+         paths-alist)
+    (when intelligent?
+      (let ((rel (org-roam-bibtex--check-relativity paths)))
+        (setq paths-alist (mapcar (lambda (path)
+                   (let ((name-base (file-name-base path))
+                         (ext (file-name-extension path)))
+                     (pcase rel
+                       ('same-name-base (cons ext path))
+                       ('same-dir (cons name-base path))
+                       (_ path))))
+                 paths))))
     (if (= (length paths) 1)
         (car paths)
-      (cdr (assoc (completing-read "File to use: " paths-alist)
-                  paths-alist)))))
+      (let ((result (completing-read "File to use: "
+                                     (if intelligent?
+                                         paths-alist
+                                       paths))))
+        (if intelligent?
+            (cdr (assoc paths-alist result))
+          result)))))
 
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
