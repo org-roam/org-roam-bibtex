@@ -128,6 +128,8 @@ Use only alphanumerical characters, dash and underscore. See `org-roam-bibtex-ed
          :unnarrowed t)))
 ```
 
+Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex) package for additional information about BibTeX field names.
+
 ### `%(org-roam-bibtex-process-file-field \"${=key=}\")`
 
 A convenience function has been added `org-roam-bibtex-process-file-field` that can be used as a `%sexp()` to find the documents associated with the bibtex entry and insert them into the template.
@@ -148,11 +150,6 @@ Below shows how this can be used to integrate with [org-noter](https://github.co
 
 \n* ${title}\n  :PROPERTIES:\n  :Custom_ID: ${=key=}\n  :URL: ${url}\n  :AUTHOR: ${author-or-editor}\n  :NOTER_DOCUMENT: %(org-roam-bibtex-process-file-field \"${=key=}\")\n  :NOTER_PAGE: \n  :END:\n\n"
 ```
-
-
-
-Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex) package for additional information about BibTeX field names.
-
 Community
 ---------------
 For help, support, or if you just want to hang out with us, you can find us here:
