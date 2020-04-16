@@ -228,6 +228,24 @@ This function replaces `bibtex-completion-edit-notes'. Only the first key
 from KEYS will actually be used."
   (org-roam-bibtex-edit-notes (car keys)))
 
+;;;###autoload
+(defun org-roam-bibtex-process-file-field (citekey)
+  "Process the 'file' BibTeX field and resolve if there are multiples.
+Search the disk for the document associated with this BibTeX
+entry.  The disk matching is based on looking in the
+`bibtex-completion-library-path' for a file with the
+CITEKEY.
+
+\(Mendeley, Zotero, normal paths) are all supported.  If there
+are multiple files found the user is prompted to select which one
+to enter"
+  (let* ((entry (bibtex-completion-get-entry citekey))
+         (paths (bibtex-completion-find-pdf entry)))
+    (if (= (length paths) 1)
+        (car paths)
+      (completing-read "File to use: " paths))))
+
+
 ;; * Helper functions
 
 (defun org-roam-bibtex--switch-perspective ()
@@ -325,6 +343,7 @@ Otherwise, behave as if called interactively."
          (advice-remove 'bibtex-completion-edit-notes
                         #'org-roam-bibtex-edit-notes-ad))))
 
+;;;###autoload
 (defun org-roam-bibtex-edit-notes (citekey)
   "Open an org-roam note associated with the CITEKEY or create a new one.
 
@@ -414,24 +433,6 @@ notes project before calling any org-roam functions."
             (org-roam-find-file title))
         (message "Something went wrong. Check the *Warnings* buffer."))
       )))
-
-
-(defun org-roam-bibtex-process-file-field (citekey)
-  "Process the 'file' BibTeX field and resolve if there are multiples.
-Search the disk for the document associated with this BibTeX
-entry.  The disk matching is based on looking in the
-`bibtex-completion-library-path' for a file with the
-CITEKEY ('=key=').
-
-\(Mendeley, Zotero, normal paths) are all supported.  If there
-are multiple files found the user is prompted to select which one
-to enter"
-  (let* ((entry (bibtex-completion-get-entry citekey))
-         (paths (bibtex-completion-find-pdf entry)))
-    (if (= (length paths) 1)
-        (car paths)
-      (completing-read "File to use: " paths))))
-
 
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
