@@ -10,7 +10,7 @@
 ;; URL: https://github.com/zaeph/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex
 ;; Version: 0.1
-;; Package-Requires: ((emacs "26.1") (s "1.12.0") (org "9.3") (org-roam "1.0.0") (helm-bibtex "2.0.0"))
+;; Package-Requires: ((emacs "26.1") (s "1.12.0") (org "9.3") (org-roam "1.0.0") (bibtex-completion "1.0.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -31,18 +31,26 @@
 
 ;;; Commentary:
 ;;
-;; This library offers a tighter integration between org-roam and
-;; org-ref by providing `org-roam-bibtex-notes-fn' function, which upon
-;; installing into `org-ref-notes-function' will enable org-ref to use
-;; org-roam as a backend for managing bibliography notes.
+;; This library offers an integration between bibtex-completion and
+;; org-roam by delegating the tasks of note's creation, editing and
+;; retrieval to org-roam. From the org-roam's perspective, the library
+;; provides a means to populate org-roam templates with bibliographic
+;; information secured through bibtex-completion,.
 ;;
 ;; To use it:
 ;;
 ;; call interactively `org-roam-bibtex-mode' or
-;; (org-roam-bibtex-mode +1) from Lisp.
+;; call (org-roam-bibtex-mode +1) from Lisp.
 ;;
-;; Optionally, `org-roam-capture-templates' can be dynamically
-;; preformatted with bibtex field values.  See
+;; After enabling `org-roam-bibtex-mode', the function
+;; `org-roam-bibtex-edit-notes' will shadow
+;; `bibtex-completion-edit-notes' in `helm-bibtex', `ivy-bibtex' and
+;; its surrogate will be used as a `org-ref-notes-function' in
+;; `org-ref' (see `org-ref' documentation for how to setup many-files
+;; notes).
+;;
+;; As a user option, `org-roam-capture-templates' can be dynamically
+;; preformatted with bibtex field values. See
 ;; `org-roam-bibtex-preformat-keywords' for more details.
 ;;
 ;; Optionally, automatic switching to the perspective (persp-mode) with
@@ -51,7 +59,8 @@
 ;;
 
 ;;; Code:
-;;;; Library Requires
+;; * Library Requires
+
 (require 'org-roam)
 (require 'bibtex-completion)
 (eval-when-compile
@@ -61,6 +70,9 @@
 (declare-function projectile-relevant-open-projects "projectile")
 (declare-function persp-switch "persp-mode" (name &optional frame (window (selected-window)) (called-interactively-p (called-interactively-p 'any))))
 (declare-function persp-names "persp-mode" (&optional (phash *persp-hash*) (reverse t)))
+
+
+;; * Customize definitions
 
 (defgroup org-roam-bibtex nil
   "Org-ref and bibtex-completion integration for org-roam."
@@ -193,6 +205,31 @@ See `org-roam-bibtex-edit-notes' for details."
           (const :tag "No" nil))
   :group 'org-roam-bibtex)
 
+
+;; * Interface functions
+
+;;;###autoload
+(defun org-roam-bibtex-notes-fn (citekey)
+  "Open an org-roam note associated with the CITEKEY or create a new one.
+Set `org-ref-notes-function' to this function if your
+bibliorgaphy notes are managed by org-roam and you want some extra
+integration between the two packages.
+
+This is a wrapper function around `org-roam-bibtex-edit-notes'
+intended for use with org-ref."
+  (when (require 'org-ref nil t)
+    (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
+      (org-roam-bibtex-edit-notes citekey))))
+
+;;;###autoload
+(defun org-roam-bibtex-edit-notes-ad (keys)
+  "Open an org-roam note associated with the first key from KEYS.
+This function replaces `bibtex-completion-edit-notes'. Only the first key
+from KEYS will actually be used."
+  (org-roam-bibtex-edit-notes (car keys)))
+
+;; * Helper functions
+
 (defun org-roam-bibtex--switch-perspective ()
   "Helper function for `org-roam-bibtex-edit-notes'."
   (when (and (require 'projectile nil t)
@@ -260,11 +297,8 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
       (setf (nth 4 template) tp))
     template))
 
-(defun org-roam-bibtex-edit-notes-ad (keys)
-  "Open an org-roam note associated with the first key from KEYS.
-This function replaces `bibtex-completion-edit-notes'. Only the first key
-from KEYS will actually be used."
-  (org-roam-bibtex-edit-notes (car keys)))
+
+;; * Main functions
 
 ;;;###autoload
 (define-minor-mode org-roam-bibtex-mode
@@ -290,19 +324,6 @@ Otherwise, behave as if called interactively."
          (setq org-ref-notes-function 'org-ref-notes-function-one-file)
          (advice-remove 'bibtex-completion-edit-notes
                         #'org-roam-bibtex-edit-notes-ad))))
-
-;;;###autoload
-(defun org-roam-bibtex-notes-fn (citekey)
-  "Open an org-roam note associated with the CITEKEY or create a new one.
-Set `org-ref-notes-function' to this function if your
-bibliorgaphy notes are managed by org-roam and you want some extra
-integration between the two packages.
-
-This is a wrapper function around `org-roam-bibtex-edit-notes'
-intended for use with org-ref."
-  (when (require 'org-ref nil t)
-    (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
-      (org-roam-bibtex-edit-notes citekey))))
 
 (defun org-roam-bibtex-edit-notes (citekey)
   "Open an org-roam note associated with the CITEKEY or create a new one.
