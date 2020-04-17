@@ -445,8 +445,7 @@ notes project before calling any org-roam functions."
                 (add-hook 'org-capture-after-finalize-hook #'org-roam-capture--find-file-h)
                 (org-roam--capture))
             (org-roam-find-file title))
-        (message "Something went wrong. Check the *Warnings* buffer."))
-      )))
+        (message "Something went wrong. Check the *Warnings* buffer.")))))
 
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
