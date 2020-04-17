@@ -430,6 +430,10 @@ notes project before calling any org-roam functions."
                   (when org-roam-bibtex-preformat-templates
                     (let* ((tmpls (copy-tree templates))
                            result)
+                      ;; HACK: Currently, there is no easy way to inject ourselves into
+                      ;; the org-capture process once it's started. We traverse and preformat
+                      ;; all the templates beforehand, although only one will be used eventually.
+                      ;; This is a waste of resources and may be slow with many templates.
                       (dolist (tmpl tmpls result)
                         (pushnew (org-roam-bibtex--preformat-template tmpl entry) result))))
                   templates))
@@ -445,8 +449,7 @@ notes project before calling any org-roam functions."
                 (add-hook 'org-capture-after-finalize-hook #'org-roam-capture--find-file-h)
                 (org-roam--capture))
             (org-roam-find-file title))
-        (message "Something went wrong. Check the *Warnings* buffer."))
-      )))
+        (message "Something went wrong. Check the *Warnings* buffer.")))))
 
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
