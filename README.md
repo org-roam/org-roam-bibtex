@@ -92,7 +92,7 @@ If your template is long, you can also place the template inside a file (with th
 ```
 
 Content of `path/to/template.org`:
-```el
+```org
 #+ROAM_KEY: %^{citekey}
 #+PROPERTY: type %^{type}
 #+TAGS: %^{keywords}
