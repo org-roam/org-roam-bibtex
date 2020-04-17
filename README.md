@@ -81,6 +81,30 @@ You can modify it with `setq`.  For instance, if you want to add the cite-key in
          :unnarrowed t)))
 ```
 
+If your template is long, you can also place the template inside a file (with the same expansion of BibTeX fields):
+```el
+(setq org-roam-capture-templates
+      '(("r" "reference" plain (function org-roam-capture--get-point)
+         (file "/path/to/template.org") ; <--
+         :file-name "test/${citekey}"
+         :head "#+TITLE: ${title}\n"
+         :unnarrowed t)))
+```
+
+Content of `path/to/template.org`:
+```el
+#+ROAM_KEY: %^{citekey}
+#+PROPERTY: type %^{type}
+#+TAGS: %^{keywords}
+#+PROPERTY: authors %^{author}
+
+In this %\2 %\4 concluded that %?
+
+fullcite:%\1
+```
+
+You can also use a function to generate the the template if you need something more advanced.
+
 ### `org-roam-bibtex-preformat-keywords`
 
 The template prompt wildcards for preformatting.  Only relevant when `org-roam-bibtex-preformat-templates` is set to `t` (default).  This can be a string, a list of strings or a cons-cell alist, where each element is `(STRING . STRING)`.
