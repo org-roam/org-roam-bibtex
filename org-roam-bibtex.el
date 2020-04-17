@@ -271,8 +271,21 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
   (let* ((kwds (if (listp org-roam-bibtex-preformat-keywords) ; normalize org-roam-bibtex-preformat-keywords
                    org-roam-bibtex-preformat-keywords
                  (list org-roam-bibtex-preformat-keywords)))
-         ;; org-capture
-         (tp (nth 4 template))          ; org-capture template string
+         ;; Org-capture templates:
+         ;; handle different types of org-capture-templates: string, file and function;
+         ;; this is a stripped down version of `org-capture-get-template'
+         (tp
+          (pcase (nth 4 template)       ; org-capture template is here
+            (`nil 'nil)
+            ((and (pred stringp) tmpl) tmpl)
+            (`(file ,file)
+             (let ((flnm (expand-file-name file org-directory)))
+               (if (file-exists-p flnm) (f-read-text flnm)
+                 (format "Template file %S not found" file))))
+            (`(function ,fun)
+             (if (functionp fun) (funcall fun)
+               (format "Template function %S not found" f)))
+            (_ "Invalid capture template")))
          (plst (cdr template))         ; org-roam capture properties are here
          (rx "\\(%\\^{[[:alnum:]-_]*}\\)") ; regexp for org-capture prompt wildcard
          lst)
@@ -292,21 +305,22 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
              (i 1)                               ; match counter
              pos)
         ;; Search for rplc-s, set flag m if found
-        (while (string-match rx tp pos)
-          (if (string= (match-string 1 tp) rplc-s)
-              (progn
-                (setq pos (length tp))
-                (pushnew (list rplc-s field-value i) lst ))
-            (setq pos (match-end 1)
-                  i (1+ i))))
+        (when tp
+          (while (string-match rx tp pos)
+            (if (string= (match-string 1 tp) rplc-s)
+                (progn
+                  (setq pos (length tp))
+                  (pushnew (list rplc-s field-value i) lst ))
+              (setq pos (match-end 1)
+                    i (1+ i)))))
         ;; Replace org-roam-capture prompt wildcards
-        (when (and field-value head )
+        (when (and field-value head)
           (plist-put plst :head (s-replace rplc-s2 field-value head)))
         (when (and field-value fl-nm)
           (plist-put plst :file-name (s-replace rplc-s2 field-value fl-nm)))))
     ;; Second run: replace prompts and propmt matches in org-capture template string
     (dolist (l lst)
-      (when (and (nth 1 l) (stringp tp))
+      (when (and tp (nth 1 l))
         (let ((pos (concat "%\\" (number-to-string (nth 2 l)))))
           ;; replace prompt match wildcards with prompt wildcards
           ;; replace prompt wildcards with bitex field value
