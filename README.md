@@ -103,7 +103,7 @@ In this %\2 %\4 concluded that %?
 fullcite:%\1
 ```
 
-You can also use a function to generate the the template if you need something more advanced.
+You can also use a function to generate the the template if you need something more advanced.  See [Modifying templates](#modifying-templates) for details.
 
 #### `org-roam-bibtex-preformat-keywords`
 
