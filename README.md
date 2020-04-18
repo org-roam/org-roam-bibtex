@@ -58,7 +58,7 @@ Configuration
 
 ### Variables
 
-### `org-roam-bibtex-template`
+#### `org-roam-bibtex-template`
 
 This variable specifies the template to use when creating a new note.  It builds on the syntax of `org-roam-capture-templates` by allowing you to expand predefined variables to the value of a BibTeX fields.
 
@@ -105,7 +105,7 @@ fullcite:%\1
 
 You can also use a function to generate the the template if you need something more advanced.
 
-### `org-roam-bibtex-preformat-keywords`
+#### `org-roam-bibtex-preformat-keywords`
 
 The template prompt wildcards for preformatting.  Only relevant when `org-roam-bibtex-preformat-templates` is set to `t` (default).  This can be a string, a list of strings or a cons-cell alist, where each element is `(STRING . STRING)`.
 
@@ -154,7 +154,7 @@ Use only alphanumerical characters, dash and underscore. See `org-roam-bibtex-ed
 
 Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex) package for additional information about BibTeX field names.
 
-### `%(org-roam-bibtex-process-file-field \"${=key=}\")`
+#### `%(org-roam-bibtex-process-file-field \"${=key=}\")`
 
 The convenience-function `org-roam-bibtex-process-file-field` has been added to find documents associated with the BibTeX entry.  It is intended to be used inside your template via a `%`-escapes form for sexp (`%(sexp)`).  See `org-capture-templates` for details.
 
