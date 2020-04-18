@@ -154,6 +154,8 @@ Use only alphanumerical characters, dash and underscore. See `org-roam-bibtex-ed
 
 Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex) package for additional information about BibTeX field names.
 
+### Modifying templates
+
 #### `%(org-roam-bibtex-process-file-field \"${=key=}\")`
 
 The convenience-function `org-roam-bibtex-process-file-field` has been added to find documents associated with the BibTeX entry.  It is intended to be used inside your template via a `%`-escapes form for sexp (`%(sexp)`).  See `org-capture-templates` for details.
