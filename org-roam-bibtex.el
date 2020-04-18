@@ -329,6 +329,22 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
       (setf (nth 4 template) tp))
     template))
 
+(defun org-roam-bibtex--get-non-ref-path-completions (&optional candidates)
+  "Return a list of cons for titles of non-ref notes to absolute path.
+CANDIDATES is a an alist of candidates to consider.  Defaults to
+`org-roam--get-title-path-completions' otherwise."
+  (let* ((candidates (or candidates
+                         (org-roam--get-title-path-completions)))
+         (refs-path (->> (org-roam--get-ref-path-completions)
+                         (mapcar #'cdr)))
+         completions)
+    (dolist (candidate candidates completions)
+      (let ((title (car candidate))
+            (path (cdr candidate)))
+        (unless (member path refs-path)
+          (setq completions (nconc completions
+                                   (list candidate))))))))
+
 
 ;; * Main functions
 
@@ -450,6 +466,22 @@ notes project before calling any org-roam functions."
                 (org-roam--capture))
             (org-roam-find-file title))
         (message "Something went wrong. Check the *Warnings* buffer.")))))
+
+;;;###autoload
+(defun org-roam-find-non-ref-file (&optional initial-prompt)
+  "Find and open an Org-roam, non-ref file.
+See `org-roam-find-files' and
+`org-roam--get-non-ref-path-completions' for details."
+  (interactive)
+  (org-roam-find initial-prompt #'org-roam--get-non-ref-path-completions))
+
+;;;###autoload
+(defun org-roam-insert-non-ref (prefix)
+  "Find an Org-roam, non-ref file, and insert a relative org link to it at point.
+See `org-roam-insert' and
+`org-roam--get-non-ref-path-completions' for details."
+  (interactive "P")
+  (org-roam-insert prefix #'org-roam--get-non-ref-path-completions))
 
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
