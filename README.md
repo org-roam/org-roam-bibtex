@@ -63,7 +63,7 @@ To revert those actions to their defaults, disable `org-roam-bibtex-mode`.
 
 #### `org-roam-bibtex-find-non-ref-file`
 
-Similar to `org-roam-find-file`, but it excludes your bibliographical notes from the completion-list.  This is useful if you have a lot of them and do not want to clutter up your other notes.
+Similar to `org-roam-find-file`, but it excludes your bibliographical notes from the completion-candidates.  This is useful if you have a lot of them and do not want to clutter up your other notes.
 
 #### `org-roam-bibtex-insert-non-ref`
 
