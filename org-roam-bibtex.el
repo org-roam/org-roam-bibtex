@@ -287,7 +287,7 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
              (if (functionp fun) (funcall fun)
                (format "Template function %S not found" f)))
             (_ "Invalid capture template")))
-         (plst (cdr template))         ; org-roam capture properties are here
+         (plst (cdr template))          ; org-roam capture properties are here
          (rx "\\(%\\^{[[:alnum:]-_]*}\\)") ; regexp for org-capture prompt wildcard
          lst)
     ;; First run:
