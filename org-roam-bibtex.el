@@ -349,6 +349,10 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
 
 ;; * Main functions
 
+(defvar org-roam-bibtex-mode-map
+  (make-sparse-keymap)
+  "Keymap for mode `org-roam-bibtex-mode'.")
+
 ;;;###autoload
 (define-minor-mode org-roam-bibtex-mode
   "Sets `org-roam-bibtex-edit-notes' as a function for editing bibliography notes.
@@ -362,6 +366,7 @@ When called from Lisp, enable `org-roam-mode' if ARG is omitted,
 nil, or positive. If ARG is `toggle', toggle `org-roam-mode'.
 Otherwise, behave as if called interactively."
   :lighter " orb"
+  :keymap  org-roam-bibtex-mode-map
   :group 'org-roam-bibtex
   :require 'org-roam-bibtex
   :global t
