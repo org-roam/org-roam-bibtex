@@ -57,7 +57,7 @@ Usage
 
 You can now access your bibliographical notes in your `org-roam-directory` via `helm-bibtex`/`ivy-bibtex` or by opening `org-ref` links.  This is done in the background by modifying the `Edit notes` actions used by these packages to use `org-roam-bibtex-edit-notes` instead of their defaults.
 
-To revert to the default `Edit notes` action for these packages, disable `org-roam-bibtex-mode`.
+To revert those actions to their defaults, disable `org-roam-bibtex-mode`.
 
 ### Commands
 
