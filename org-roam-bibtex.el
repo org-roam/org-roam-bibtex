@@ -469,7 +469,7 @@ notes project before calling any org-roam functions."
         (message "Something went wrong. Check the *Warnings* buffer.")))))
 
 ;;;###autoload
-(defun org-roam-find-non-ref-file (&optional initial-prompt)
+(defun org-roam-bibtex-find-non-ref-file (&optional initial-prompt)
   "Find and open an Org-roam, non-ref file.
 INITIAL-PROMPT is the initial title prompt.
 See `org-roam-find-files' and
@@ -479,7 +479,7 @@ See `org-roam-find-files' and
                       #'org-roam-bibtex--get-non-ref-path-completions))
 
 ;;;###autoload
-(defun org-roam-insert-non-ref (prefix)
+(defun org-roam-bibtex-insert-non-ref (prefix)
   "Find a non-ref Org-roam file, and insert a relative org link to it at point.
 If PREFIX, downcase the title before insertion.
 See `org-roam-insert' and
