@@ -60,7 +60,7 @@ Configuration
 
 #### `org-roam-bibtex-templates`
 
-This variable specifies the template to use when creating a new note.  It builds on the syntax of `org-roam-capture-templates` by allowing you to expand predefined variables to the value of a BibTeX fields.
+This variable specifies the templates to use when creating a new bibliographical note.  It builds on the syntax of `org-roam-capture-templates` by allowing you to expand predefined variables to the value of a BibTeX fields.
 
 See `org-roam-bibtex-edit-notes` and [`org-roam-bibtex-preformat-keywords`](#org-roam-bibtex-preformat-keywords) for details.  (You can access the docstrings of any loaded function/variable from within Emacs with `C-h f` for functions/commands, and `C-h v` for variables.)
 
@@ -80,6 +80,8 @@ You can modify it with `setq`.  For instance, if you want to add the cite-key in
          :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}\n" ; <--
          :unnarrowed t)))
 ```
+
+If you have more than one template in `org-roam-bibtex-templates`, you will be prompted for the key of the template you want to use (`r` in the example above).  If you only have one template, it will use this one without prompting you.
 
 See [Modifying templates](#modifying-templates) for more info.
 
