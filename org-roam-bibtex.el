@@ -473,18 +473,19 @@ notes project before calling any org-roam functions."
   "Find and open an Org-roam, non-ref file.
 INITIAL-PROMPT is the initial title prompt.
 See `org-roam-find-files' and
-`org-roam--get-non-ref-path-completions' for details."
+`org-roam-bibtex--get-non-ref-path-completions' for details."
   (interactive)
-  (org-roam-find-file initial-prompt #'org-roam--get-non-ref-path-completions))
+  (org-roam-find-file initial-prompt
+                      #'org-roam-bibtex--get-non-ref-path-completions))
 
 ;;;###autoload
 (defun org-roam-insert-non-ref (prefix)
   "Find a non-ref Org-roam file, and insert a relative org link to it at point.
 If PREFIX, downcase the title before insertion.
 See `org-roam-insert' and
-`org-roam--get-non-ref-path-completions' for details."
+`org-roam-bibtex--get-non-ref-path-completions' for details."
   (interactive "P")
-  (org-roam-insert prefix #'org-roam--get-non-ref-path-completions))
+  (org-roam-insert prefix #'org-roam-bibtex--get-non-ref-path-completions))
 
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
