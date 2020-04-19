@@ -27,11 +27,11 @@ To do that:
 2. `cd ~/projects`
 3. `git clone https://github.com/Zaeph/org-roam-bibtex.git`
 
-You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick-start](#quick-start) to learn how to add it `load-path` and to get started with the package.
+You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick-start](#quick-start-) to learn how to add it `load-path` and to get started with the package.
 
 (You can also copy [`org-roam-bibtex.el`](https://github.com/Zaeph/org-roam-bibtex/blob/improve-readme/org-roam-bibtex.el) somewhere where `load-path` can access it, but you’d have to update the file manually.)
 
-Quick-start
+Quick-start 🚀
 ---------------
 
 You can get `org-roam-bibtex` up and running by pasting the following sexps in your [init-file](https://www.gnu.org/software/emacs/manual/html_node/emacs/Init-File.html):
