@@ -33,7 +33,7 @@
 ;;
 ;; This library offers an integration between bibtex-completion and
 ;; org-roam by delegating the tasks of note's creation, editing and
-;; retrieval to org-roam. From the org-roam's perspective, the library
+;; retrieval to org-roam.  From the org-roam's perspective, the library
 ;; provides a means to populate org-roam templates with bibliographic
 ;; information secured through bibtex-completion,.
 ;;
@@ -50,7 +50,7 @@
 ;; notes).
 ;;
 ;; As a user option, `org-roam-capture-templates' can be dynamically
-;; preformatted with bibtex field values. See
+;; preformatted with bibtex field values.  See
 ;; `org-roam-bibtex-preformat-keywords' for more details.
 ;;
 ;; Optionally, automatic switching to the perspective (persp-mode) with
@@ -470,6 +470,7 @@ notes project before calling any org-roam functions."
 ;;;###autoload
 (defun org-roam-find-non-ref-file (&optional initial-prompt)
   "Find and open an Org-roam, non-ref file.
+INITIAL-PROMPT is the initial title prompt.
 See `org-roam-find-files' and
 `org-roam--get-non-ref-path-completions' for details."
   (interactive)
@@ -477,7 +478,8 @@ See `org-roam-find-files' and
 
 ;;;###autoload
 (defun org-roam-insert-non-ref (prefix)
-  "Find an Org-roam, non-ref file, and insert a relative org link to it at point.
+  "Find a non-ref Org-roam file, and insert a relative org link to it at point.
+If PREFIX, downcase the title before insertion.
 See `org-roam-insert' and
 `org-roam--get-non-ref-path-completions' for details."
   (interactive "P")
