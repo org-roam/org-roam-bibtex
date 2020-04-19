@@ -58,13 +58,13 @@ Configuration
 
 ### Variables
 
-#### `org-roam-bibtex-template`
+#### `org-roam-bibtex-templates`
 
 This variable specifies the template to use when creating a new note.  It builds on the syntax of `org-roam-capture-templates` by allowing you to expand predefined variables to the value of a BibTeX fields.
 
 See `org-roam-bibtex-edit-notes` and [`org-roam-bibtex-preformat-keywords`](#org-roam-bibtex-preformat-keywords) for details.  (You can access the docstrings of any loaded function/variable from within Emacs with `C-h f` for functions/commands, and `C-h v` for variables.)
 
-Here’s the default value of `org-roam-bibtex-template`:
+Here’s the default value of `org-roam-bibtex-templates`:
 ```el
 (("r" "ref" plain (function org-roam-capture--get-point) ""
       :file-name "${slug}"
@@ -74,7 +74,7 @@ Here’s the default value of `org-roam-bibtex-template`:
 
 You can modify it with `setq`.  For instance, if you want to add the cite-key in the title of the notes, you can modify the code like this (pay attention to the line with `:head`):
 ```el
-(setq org-roam-bibtex-template
+(setq org-roam-bibtex-templates
       '(("r" "ref" plain (function org-roam-capture--get-point) ""
          :file-name "${slug}"
          :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}\n" ; <--
@@ -170,7 +170,7 @@ Below shows how this can be used to integrate with [org-noter](https://github.co
 (setq org-roam-bibtex-preformat-keywords
    '("=key=" "title" "url" "file" "author-or-editor" "keywords"))
 
-(setq org-roam-bibtex-template
+(setq org-roam-bibtex-templates
       '(("r" "ref" plain (function org-roam-capture--get-point)
          ""
          :file-name "${slug}"

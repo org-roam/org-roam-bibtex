@@ -88,7 +88,7 @@ See `org-roam-bibtex-edit-notes' for details."
           (const :tag "No" nil))
   :group 'org-roam-bibtex)
 
-(defcustom org-roam-bibtex-template
+(defcustom org-roam-bibtex-templates
   '(("r" "ref" plain
      (function org-roam-capture--get-point)
      ""
@@ -394,7 +394,7 @@ The prompt presented by `org-roam-find-file' will thus be
 pre-populated with the record title.
 
 3. The template used to create the note is stored in
-`org-roam-bibtex-template'. If the variable is not defined,
+`org-roam-bibtex-templates'. If the variable is not defined,
 revert to using `org-roam-capture-templates'. In the former case,
 a new file will be created and filled according to the template,
 possibly preformatted (see below) without additional user
@@ -402,7 +402,7 @@ interaction. In the latter case, an interactive `org-capture'
 process will be run.
 
 4. Optionally, when `org-roam-bibtex-preformat-templates' is
-non-nil, any prompt wildcards in `org-roam-bibtex-template' or
+non-nil, any prompt wildcards in `org-roam-bibtex-templates' or
 `org-roam-capture-templates' associated with the bibtex record
 fields as specified in `org-roam-bibtex-preformat-templates'
 will be preformatted. Both `org-capture-templates' (%^{}) and
@@ -436,7 +436,7 @@ notes project before calling any org-roam functions."
       ;; Check if the requested entry actually exists and fail gracefully
       (if-let* ((entry (bibtex-completion-get-entry citekey))
                 ;; Depending on the templates used, run org-roam--capture or call org-roam-find-file
-                (templates (or org-roam-bibtex-template
+                (templates (or org-roam-bibtex-templates
                                org-roam-capture-templates
                                (and (display-warning :warning "Could not find the requested templates.")
                                     nil)))
@@ -457,7 +457,7 @@ notes project before calling any org-roam functions."
                  (or (s-format "${title}" 'bibtex-completion-apa-get-value entry)
                      "Title not found for this entry (Check your BibTeX file)")))
           ;; Check if a custom template has been set
-          (if org-roam-bibtex-template
+          (if org-roam-bibtex-templates
               (let ((org-roam-capture--context 'ref)
                     (org-roam-capture--info (list (cons 'title title)
                                                   (cons 'ref citekey-formatted)
