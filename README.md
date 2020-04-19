@@ -52,7 +52,8 @@ You can get `org-roam-bibtex` up and running by pasting the following sexps in y
 (add-hook 'after-init-hook #'org-roam-bibtex-mode)
 ```
 
-### Usage
+Usage
+---------------
 
 You can now access your bibliographical notes in your `org-roam-directory` via `helm-bibtex`/`ivy-bibtex` or by opening `org-ref` links.  This is done in the background by modifying the `Edit notes` actions used by these packages to use `org-roam-bibtex-edit-notes` instead of their defaults.
 
