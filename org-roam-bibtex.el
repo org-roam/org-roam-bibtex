@@ -475,7 +475,7 @@ INITIAL-PROMPT is the initial title prompt.
 See `org-roam-find-files' and
 `org-roam--get-non-ref-path-completions' for details."
   (interactive)
-  (org-roam-find initial-prompt #'org-roam--get-non-ref-path-completions))
+  (org-roam-find-file initial-prompt #'org-roam--get-non-ref-path-completions))
 
 ;;;###autoload
 (defun org-roam-insert-non-ref (prefix)
