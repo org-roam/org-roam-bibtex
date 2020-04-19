@@ -274,6 +274,7 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
          ;; Org-capture templates:
          ;; handle different types of org-capture-templates: string, file and function;
          ;; this is a stripped down version of `org-capture-get-template'
+         f
          (tp
           (pcase (nth 4 template)       ; org-capture template is here
             (`nil 'nil)
