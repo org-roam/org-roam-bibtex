@@ -1,4 +1,4 @@
-;;; org-roam-bibtex.el --- Connector between org-roam and helm-bibtex -*- coding: utf-8; lexical-binding: t -*-
+;;; org-roam-bibtex.el --- Connector between org-roam, bibtex-completion, and org-ref -*- coding: utf-8; lexical-binding: t -*-
 
 ;; Copyright © 2020 Jethro Kuan <jethrokuan95@gmail.com>
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
