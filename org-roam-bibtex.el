@@ -351,7 +351,7 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
 
 (defvar org-roam-bibtex-mode-map
   (make-sparse-keymap)
-  "Keymap for mode `org-roam-bibtex-mode'.")
+  "Keymap for org-roam-bibtex-mode.")
 
 ;;;###autoload
 (define-minor-mode org-roam-bibtex-mode
