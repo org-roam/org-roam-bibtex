@@ -76,7 +76,7 @@
 ;; * Customize definitions
 
 (defgroup org-roam-bibtex nil
-  "Org-ref and bibtex-completion integration for org-roam."
+  "Org-ref and bibtex-completion integration for Org-roam."
   :group 'org-roam
   :group 'org-ref
   :prefix "org-roam-bibtex-")
@@ -211,9 +211,9 @@ See `org-roam-bibtex-edit-notes' for details."
 
 ;;;###autoload
 (defun org-roam-bibtex-notes-fn (citekey)
-  "Open an org-roam note associated with the CITEKEY or create a new one.
+  "Open an Org-roam note associated with the CITEKEY or create a new one.
 Set `org-ref-notes-function' to this function if your
-bibliorgaphy notes are managed by org-roam and you want some extra
+bibliorgaphy notes are managed by Org-roam and you want some extra
 integration between the two packages.
 
 This is a wrapper function around `org-roam-bibtex-edit-notes'
@@ -224,8 +224,8 @@ intended for use with org-ref."
 
 ;;;###autoload
 (defun org-roam-bibtex-edit-notes-ad (keys)
-  "Open an org-roam note associated with the first key from KEYS.
-This function replaces `bibtex-completion-edit-notes'. Only the first key
+  "Open an Org-roam note associated with the first key from KEYS.
+This function replaces `bibtex-completion-edit-notes'.  Only the first key
 from KEYS will actually be used."
   (org-roam-bibtex-edit-notes (car keys)))
 
@@ -381,37 +381,37 @@ Otherwise, behave as if called interactively."
 
 ;;;###autoload
 (defun org-roam-bibtex-edit-notes (citekey)
-  "Open an org-roam note associated with the CITEKEY or create a new one.
+  "Open an Org-roam note associated with the CITEKEY or create a new one.
 
-This function allows to use org-roam as a backend for managing
-bibliography notes. It relies on `bibtex-completion' to get
+This function allows to use Org-roam as a backend for managing
+bibliography notes.  It relies on `bibtex-completion' to get
 retrieve bibliograpic information from a BibTeX file.
 
 Implementation details and features:
 
 1. This function first calls `org-roam-find-ref' trying to find the
-note file associated with the CITEKEY. The org-roam key can be
+note file associated with the CITEKEY.  The Org-roam key can be
 set with '#+ROAM_KEY:' in-buffer keyword.
 
-2. If the org-roam reference has not been found, the function
+2. If the Org-roam reference has not been found, the function
 calls `org-roam-find-file' passing to it the title associated
 with the CITEKEY as retrieved by `bibtex-completion-get-entry'.
 The prompt presented by `org-roam-find-file' will thus be
 pre-populated with the record title.
 
 3. The template used to create the note is stored in
-`org-roam-bibtex-templates'. If the variable is not defined,
-revert to using `org-roam-capture-templates'. In the former case,
+`org-roam-bibtex-templates'.  If the variable is not defined,
+revert to using `org-roam-capture-templates'.  In the former case,
 a new file will be created and filled according to the template,
 possibly preformatted (see below) without additional user
-interaction. In the latter case, an interactive `org-capture'
+interaction.  In the latter case, an interactive `org-capture'
 process will be run.
 
 4. Optionally, when `org-roam-bibtex-preformat-templates' is
 non-nil, any prompt wildcards in `org-roam-bibtex-templates' or
 `org-roam-capture-templates' associated with the bibtex record
 fields as specified in `org-roam-bibtex-preformat-templates'
-will be preformatted. Both `org-capture-templates' (%^{}) and
+will be preformatted.  Both `org-capture-templates' (%^{}) and
 `org-roam-capture-templates' (`s-format', ${}) prompt syntaxes
 are supported.
 
@@ -421,15 +421,15 @@ to properly specify prompts for replacement.
 Please pay attention when using this feature that by setting
 title for preformatting it will be impossible to change it in the
 `org-roam-find-file' interactive prompt since all the template
-expansions will have taken place by then. All the title wildcards
+expansions will have taken place by then.  All the title wildcards
 will be replace with the BibTeX field value.
 
 5. Optionally, if you are using projectile and persp-mode and
-have a dedicated workspace to work with your org-roam collection,
+have a dedicated workspace to work with your Org-roam collection,
 you may want to set the perspecive name and project path in
 `org-roam-bibtex-persp-project' and `org-roam-bibtex-switch-persp' to
-t. In this case, the perspective will be switched to the org-roam
-notes project before calling any org-roam functions."
+t. In this case, the perspective will be switched to the Org-roam
+notes project before calling any Org-roam functions."
   (unless org-roam-mode
     (org-roam-mode +1))
   (let* ((citekey-formatted (format (or org-roam-bibtex-citekey-format "%s") citekey))
