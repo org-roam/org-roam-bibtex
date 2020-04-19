@@ -39,9 +39,8 @@ You can get `org-roam-bibtex` up and running by pasting the following sexps in y
 ### With `use-package`
 ```el
 (use-package org-roam-bibtex
-  :load-path "~/projects/org-roam-bibtex/" ;Modify with your own path
-  :config
-  (org-roam-bibtex-mode))
+  :hook (after-init . org-roam-bibtex-mode)
+  :load-path "~/projects/org-roam-bibtex/" ;Modify with your own path)
   ```
   
 ### Without `use-package`
@@ -50,7 +49,7 @@ You can get `org-roam-bibtex` up and running by pasting the following sexps in y
 
 (require 'org-roam-bibtex)
 
-(org-roam-bibtex-mode)
+(add-hook 'after-init-hook #'org-roam-bibtex-mode)
 ```
 
 Configuration
