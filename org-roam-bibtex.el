@@ -340,8 +340,7 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
                          (mapcar #'cdr)))
          completions)
     (dolist (candidate candidates completions)
-      (let ((title (car candidate))
-            (path (cdr candidate)))
+      (let ((path (cdr candidate)))
         (unless (member path refs-path)
           (setq completions (nconc completions
                                    (list candidate))))))))
