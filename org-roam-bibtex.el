@@ -64,7 +64,8 @@
 (require 'org-roam)
 (require 'bibtex-completion)
 (eval-when-compile
-  (require 'subr-x))
+  (require 'subr-x)
+  (require 'cl-lib))
 
 (declare-function org-ref-find-bibliography "org-ref-core")
 (declare-function projectile-relevant-open-projects "projectile")
@@ -311,7 +312,7 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
             (if (string= (match-string 1 tp) rplc-s)
                 (progn
                   (setq pos (length tp))
-                  (pushnew (list rplc-s field-value i) lst ))
+                  (cl-pushnew (list rplc-s field-value i) lst ))
               (setq pos (match-end 1)
                     i (1+ i)))))
         ;; Replace org-roam-capture prompt wildcards
@@ -451,7 +452,7 @@ notes project before calling any org-roam functions."
                       ;; all the templates beforehand, although only one will be used eventually.
                       ;; This is a waste of resources and may be slow with many templates.
                       (dolist (tmpl tmpls result)
-                        (pushnew (org-roam-bibtex--preformat-template tmpl entry) result))))
+                        (cl-pushnew (org-roam-bibtex--preformat-template tmpl entry) result))))
                   templates))
                 (title
                  (or (s-format "${title}" 'bibtex-completion-apa-get-value entry)
