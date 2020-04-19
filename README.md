@@ -58,6 +58,16 @@ You can now access your bibliographical notes in your `org-roam-directory` via `
 
 To revert to the default `Edit notes` action for these packages, disable `org-roam-bibtex-mode`.
 
+### Commands
+
+#### `org-roam-bibtex-find-non-ref-file`
+
+Similar to `org-roam-find-file`, but it excludes your bibliographical notes from the completion-list.  This is useful if you have a lot of them and do not want to clutter up your other notes.
+
+#### `org-roam-bibtex-insert-non-ref`
+
+Similar to `org-roam-insert`, but it excludes your bibliographical notes from the completion-list.
+
 Configuration
 ---------------
 
