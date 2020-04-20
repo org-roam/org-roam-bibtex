@@ -112,14 +112,14 @@ See `org-roam-bibtex-edit-notes' for details."
 (defcustom org-roam-bibtex-preformat-keywords "=key="
   "The template prompt wildcards for preformatting.
 Only relevant when `org-roam-bibtex-preformat-templates' is set
-to t (default). This can be a string, a list of strings or a cons-cell
+to t (default).  This can be a string, a list of strings or a cons-cell
 alist, where each element is (STRING . STRING).
 
-Use only alphanumerical characters, dash and underscore. See
+Use only alphanumerical characters, dash and underscore.  See
 `org-roam-bibtex-edit-notes' for implementation details.
 
 1. If the value is a string, a single keyword, it is treated as
-a BibTeX field-name, such as =key=. In the following example all
+a BibTeX field-name, such as =key=.  In the following example all
 the prompts with the '=key=' keyword will be preformatted, as well as
 the corresponding match group %\\1.
 
@@ -132,7 +132,7 @@ the corresponding match group %\\1.
          :unnarrowed t)))
 
 2. If the value is a list of strings they are also treated as
-BibTeX field-names. The respective prompts will be preformatted.
+BibTeX field-names.  The respective prompts will be preformatted.
 
 \(setq org-roam-bibtex-preformat-keywords '(\"=key=\" \"title\"))
 \(setq org-roam-capture-templates
@@ -145,7 +145,7 @@ BibTeX field-names. The respective prompts will be preformatted.
 3. If the value is a list of cons cells, then the car of the cons
 cell is treated as a prompt keyword and the cdr as a BibTeX field
 name, and the latter will be used to retrieve the relevant value
-from the BibTeX entry. If cdr is omitted, then the car is treated
+from the BibTeX entry.  If cdr is omitted, then the car is treated
 as the field name.
 
 \(setq org-roam-bibtex-preformat-keywords
