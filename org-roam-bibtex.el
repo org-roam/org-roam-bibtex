@@ -10,7 +10,7 @@
 ;; URL: https://github.com/zaeph/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex
 ;; Version: 0.1
-;; Package-Requires: ((emacs "26.1") (f "0.20.0") (s "1.12.0") (org "9.3") (org-roam "1.0.0") (bibtex-completion "2.0.0"))
+;; Package-Requires: ((emacs "26.1") (f "0.20.0") (s "1.12.0") (org "9.3") (org-roam "1.0.0") (bibtex-completion "2.0.0") (org-ref "1.1.1"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -61,6 +61,7 @@
 ;; * Library requires
 
 (require 'org-roam)
+(require 'org-ref)
 (require 'bibtex-completion)
 (eval-when-compile
   (require 'subr-x)
