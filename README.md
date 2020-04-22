@@ -1,7 +1,7 @@
 org-roam-bibtex
 ============
 
-<img src="https://raw.githubusercontent.com/Zaeph/org-roam-bibtex/master/doc/logo-r500.png" width="150">
+<img src="https://raw.githubusercontent.com/zaeph/org-roam-bibtex/master/doc/logo-r500.png" width="150">
 
 Description
 ---------------
@@ -13,23 +13,34 @@ It allows users to access their bibliographical notes in `org-roam-directory` vi
 Demo
 ---------------
 
-<img src="https://raw.githubusercontent.com/Zaeph/org-roam-bibtex/master/doc/demo.gif" width="700">
+<img src="https://raw.githubusercontent.com/zaeph/org-roam-bibtex/master/doc/demo.gif" width="700">
 
 Installation
 ---------------
 
-The package is not on MELPA yet, but a request has been filed.
+### Via MELPA
 
-For now, the only way to try the package is to clone the repository somewhere which `load-path` can access.
+The package is on [MELPA](https://github.com/melpa/melpa).  You can install `org-roam-bibtex` using `package.el`:
+```
+M-x package-install RET org-roam-bibtex RET
+```
+
+You can also install it with `M-x package-list-packages`.
+
+If you do not know how MELPA works, check their [Usage](https://github.com/melpa/melpa#usage) section.
+
+### Via cloning
+
+You can also clone the repository somewhere in your `load-path`.  If you would like to assist with development, this is the way to go.
 
 To do that:
 1. Create a directory where you’d like to clone the repository, e.g. `mkdir ~/projects`.
 2. `cd ~/projects`
-3. `git clone https://github.com/Zaeph/org-roam-bibtex.git`
+3. `git clone https://github.com/zaeph/org-roam-bibtex.git`
 
 You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick-start](#quick-start-) to learn how to add it `load-path` and to get started with the package.
 
-(You can also copy [`org-roam-bibtex.el`](https://github.com/Zaeph/org-roam-bibtex/blob/improve-readme/org-roam-bibtex.el) somewhere where `load-path` can access it, but you’d have to update the file manually.)
+(You can also copy [`org-roam-bibtex.el`](https://github.com/zaeph/org-roam-bibtex/blob/improve-readme/org-roam-bibtex.el) somewhere where `load-path` can access it, but you’d have to update the file manually.)
 
 Quick-start 🚀
 ---------------
@@ -37,18 +48,28 @@ Quick-start 🚀
 You can get `org-roam-bibtex` up and running by pasting the following sexps in your [init-file](https://www.gnu.org/software/emacs/manual/html_node/emacs/Init-File.html):
 
 ### With `use-package`
+
 ```el
+;; If you installed via MELPA
+(use-package org-roam-bibtex
+  :hook (org-roam-mode . org-roam-bibtex-mode))
+
+;; If you cloned the repository
 (use-package org-roam-bibtex
   :load-path "~/projects/org-roam-bibtex/" ;Modify with your own path
   :hook (org-roam-mode . org-roam-bibtex-mode))
-  ```
-  
+```
+
 ### Without `use-package`
+
 ```el
+;; If you installed via MELPA
 (add-to-list 'load-path "~/projects/org-roam-bibtex/") ;Modify with your own path
-
 (require 'org-roam-bibtex)
+(add-hook 'after-init-hook #'org-roam-bibtex-mode)
 
+;; If you cloned the repository
+(require 'org-roam-bibtex)
 (add-hook 'after-init-hook #'org-roam-bibtex-mode)
 ```
 
