@@ -64,11 +64,11 @@ You can get `org-roam-bibtex` up and running by pasting the following sexps in y
 
 ```el
 ;; If you installed via MELPA
-(add-to-list 'load-path "~/projects/org-roam-bibtex/") ;Modify with your own path
 (require 'org-roam-bibtex)
 (add-hook 'after-init-hook #'org-roam-bibtex-mode)
 
 ;; If you cloned the repository
+(add-to-list 'load-path "~/projects/org-roam-bibtex/") ;Modify with your own path
 (require 'org-roam-bibtex)
 (add-hook 'after-init-hook #'org-roam-bibtex-mode)
 ```
