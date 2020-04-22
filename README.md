@@ -48,18 +48,28 @@ Quick-start 🚀
 You can get `org-roam-bibtex` up and running by pasting the following sexps in your [init-file](https://www.gnu.org/software/emacs/manual/html_node/emacs/Init-File.html):
 
 ### With `use-package`
+
 ```el
+;; If you installed via MELPA
+(use-package org-roam-bibtex
+  :hook (org-roam-mode . org-roam-bibtex-mode))
+
+;; If you cloned the repository
 (use-package org-roam-bibtex
   :load-path "~/projects/org-roam-bibtex/" ;Modify with your own path
   :hook (org-roam-mode . org-roam-bibtex-mode))
-  ```
-  
+```
+
 ### Without `use-package`
+
 ```el
+;; If you installed via MELPA
 (add-to-list 'load-path "~/projects/org-roam-bibtex/") ;Modify with your own path
-
 (require 'org-roam-bibtex)
+(add-hook 'after-init-hook #'org-roam-bibtex-mode)
 
+;; If you cloned the repository
+(require 'org-roam-bibtex)
 (add-hook 'after-init-hook #'org-roam-bibtex-mode)
 ```
 
