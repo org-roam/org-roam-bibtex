@@ -18,9 +18,20 @@ Demo
 Installation
 ---------------
 
-The package is not on MELPA yet, but a request has been filed.
+### Via MELPA
 
-For now, the only way to try the package is to clone the repository somewhere which `load-path` can access.
+The package is on [MELPA](https://github.com/melpa/melpa).  You can install `org-roam-bibtex` using `package.el`:
+```
+M-x package-install RET org-roam-bibtex RET
+```
+
+You can also install it with `M-x package-list-packages`.
+
+If you do not know how MELPA works, check their [Usage](https://github.com/melpa/melpa#usage) section.
+
+### Via cloning
+
+You can also clone the repository somewhere in your `load-path`.  If you would like to assist with development, this is the way to go.
 
 To do that:
 1. Create a directory where you’d like to clone the repository, e.g. `mkdir ~/projects`.
