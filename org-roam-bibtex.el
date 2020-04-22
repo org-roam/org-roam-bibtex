@@ -10,7 +10,7 @@
 ;; URL: https://github.com/zaeph/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
 ;; Version: 0.1
-;; Package-Requires: ((emacs "26.1") (f "0.20.0") (s "1.12.0") (org "9.3") (org-roam "1.0.0") (bibtex-completion "2.0.0") (org-ref "1.1.1"))
+;; Package-Requires: ((emacs "26.1") (f "0.20.0") (s "1.12.0") (org "9.3") (org-roam "1.0.0") (bibtex-completion "2.0.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -31,11 +31,11 @@
 
 ;;; Commentary:
 ;;
-;; This library offers an integration between bibtex-completion and
-;; org-roam by delegating the tasks of note's creation, editing and
-;; retrieval to org-roam.  From the org-roam's perspective, the library
-;; provides a means to populate org-roam templates with bibliographic
-;; information secured through bibtex-completion,.
+;; This library offers an integration between Bibtex-completion and
+;; Org-roam by delegating the tasks of note's creation, editing and
+;; retrieval to Org-roam.  From the Org-roam's perspective, the library
+;; provides a means to populate Org-roam templates with bibliographic
+;; information secured through Bibtex-completion,.
 ;;
 ;; To use it:
 ;;
@@ -44,9 +44,15 @@
 ;;
 ;; After enabling `org-roam-bibtex-mode', the function
 ;; `org-roam-bibtex-edit-notes' will shadow
-;; `bibtex-completion-edit-notes' in Helm-bibtex, Ivy-bibtex and its
-;; surrogate will be used as a `org-ref-notes-function' in Org-ref
-;; (see `org-ref' documentation for how to setup many-files notes).
+;; `bibtex-completion-edit-notes' in Helm-bibtex, Ivy-bibtex.
+;;
+;; Additionally, `org-roam-bibtex-notes-fn', which is a simple wrapper
+;; around `org-roam-bibtex-edit-notes', is installed as Org-ref's
+;; `org-ref-notes-function'.  See Org-ref's documentation for how to
+;; setup many-files notes.  Take a notice that because of its size,
+;; Org-ref is not a dependency of Org-roam-bibtex, so it will not be
+;; pulled automatically by your package manager and must be installed
+;; manually.
 ;;
 ;; As a user option, `org-roam-capture-templates' can be dynamically
 ;; preformatted with bibtex field values.  See
@@ -60,12 +66,16 @@
 ;;; Code:
 ;; * Library requires
 
+;; We do not require `org-ref' here, because it is too expensive to be
+;; loaded unconditionally and the user might not even need
+;; it. Instead, we require it in the body of `org-roam-bibtex-notes-fn'.
 (require 'org-roam)
-(require 'org-ref)
 (require 'bibtex-completion)
 (eval-when-compile
   (require 'subr-x)
   (require 'cl-lib))
+
+(defvar org-ref-notes-function)
 
 (declare-function org-ref-find-bibliography "org-ref-core")
 (declare-function projectile-relevant-open-projects "projectile")
