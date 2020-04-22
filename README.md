@@ -1,7 +1,7 @@
 org-roam-bibtex
 ============
 
-<img src="https://raw.githubusercontent.com/Zaeph/org-roam-bibtex/master/doc/logo-r500.png" width="150">
+<img src="https://raw.githubusercontent.com/zaeph/org-roam-bibtex/master/doc/logo-r500.png" width="150">
 
 Description
 ---------------
@@ -13,7 +13,7 @@ It allows users to access their bibliographical notes in `org-roam-directory` vi
 Demo
 ---------------
 
-<img src="https://raw.githubusercontent.com/Zaeph/org-roam-bibtex/master/doc/demo.gif" width="700">
+<img src="https://raw.githubusercontent.com/zaeph/org-roam-bibtex/master/doc/demo.gif" width="700">
 
 Installation
 ---------------
@@ -36,11 +36,11 @@ You can also clone the repository somewhere in your `load-path`.  If you would l
 To do that:
 1. Create a directory where you’d like to clone the repository, e.g. `mkdir ~/projects`.
 2. `cd ~/projects`
-3. `git clone https://github.com/Zaeph/org-roam-bibtex.git`
+3. `git clone https://github.com/zaeph/org-roam-bibtex.git`
 
 You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick-start](#quick-start-) to learn how to add it `load-path` and to get started with the package.
 
-(You can also copy [`org-roam-bibtex.el`](https://github.com/Zaeph/org-roam-bibtex/blob/improve-readme/org-roam-bibtex.el) somewhere where `load-path` can access it, but you’d have to update the file manually.)
+(You can also copy [`org-roam-bibtex.el`](https://github.com/zaeph/org-roam-bibtex/blob/improve-readme/org-roam-bibtex.el) somewhere where `load-path` can access it, but you’d have to update the file manually.)
 
 Quick-start 🚀
 ---------------
