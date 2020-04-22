@@ -213,7 +213,7 @@ See `org-roam-bibtex-edit-notes' for details."
 (defun org-roam-bibtex-notes-fn (citekey)
   "Open an Org-roam note associated with the CITEKEY or create a new one.
 Set `org-ref-notes-function' to this function if your
-bibliorgaphy notes are managed by Org-roam and you want some extra
+bibliography notes are managed by Org-roam and you want some extra
 integration between the two packages.
 
 This is a wrapper function around `org-roam-bibtex-edit-notes'
@@ -319,12 +319,12 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
           (plist-put plst :head (s-replace rplc-s2 field-value head)))
         (when (and field-value fl-nm)
           (plist-put plst :file-name (s-replace rplc-s2 field-value fl-nm)))))
-    ;; Second run: replace prompts and propmt matches in org-capture template string
+    ;; Second run: replace prompts and prompt matches in org-capture template string
     (dolist (l lst)
       (when (and tp (nth 1 l))
         (let ((pos (concat "%\\" (number-to-string (nth 2 l)))))
           ;; replace prompt match wildcards with prompt wildcards
-          ;; replace prompt wildcards with bitex field value
+          ;; replace prompt wildcards with BibTeX field value
           (setq tp (s-replace pos (car l) tp)
                 tp (s-replace (car l) (nth 1 l) tp))))
       (setf (nth 4 template) tp))
@@ -384,7 +384,7 @@ Otherwise, behave as if called interactively."
 
 This function allows to use Org-roam as a backend for managing
 bibliography notes.  It relies on `bibtex-completion' to get
-retrieve bibliograpic information from a BibTeX file.
+retrieve bibliographic information from a BibTeX file.
 
 Implementation details and features:
 
@@ -425,7 +425,7 @@ wildcards will be replace with the BibTeX field value.
 
 5. Optionally, if you are using Projectile and Persp-mode and
 have a dedicated workspace to work with your Org-roam collection,
-you may want to set the perspecive name and project path in
+you may want to set the perspective name and project path in
 `org-roam-bibtex-persp-project' and
 `org-roam-bibtex-switch-persp' to t.  In this case, the
 perspective will be switched to the Org-roam notes project before
