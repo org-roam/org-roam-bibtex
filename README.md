@@ -1,3 +1,8 @@
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
+[![GitHub Release](https://img.shields.io/github/release/zaeph/org-roam-bibtex.svg)](https://github.com/zaeph/org-roam-bibtex/releases/)
+[![MELPA](https://melpa.org/packages/org-roam-bibtex-badge.svg)](https://melpa.org/#/org-roam-bibtex)
+
 org-roam-bibtex
 ============
 
