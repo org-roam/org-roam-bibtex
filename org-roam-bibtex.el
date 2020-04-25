@@ -363,6 +363,13 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
   (make-sparse-keymap)
   "Keymap for function `org-roam-bibtex-mode'.")
 
+(defun org-roam-bibtex-find-note-file (citekey)
+  "Find note file associated from BibTeX’s CITEKEY.
+Returns the path to the note file, or nil if it doesn’t exist."
+  (let* ((citekey-formatted (format (or org-roam-bibtex-citekey-format "%s") citekey))
+         (completions (org-roam--get-ref-path-completions)))
+    (cdr (assoc citekey-formatted completions))))
+
 ;;;###autoload
 (define-minor-mode org-roam-bibtex-mode
   "Sets `org-roam-bibtex-edit-notes' as a function for editing bibliography notes.
@@ -382,10 +389,15 @@ Otherwise, behave as if called interactively."
   :global t
   (cond (org-roam-bibtex-mode
          (setq org-ref-notes-function 'org-roam-bibtex-notes-fn)
+         (add-to-list 'bibtex-completion-find-note-functions
+                      #'org-roam-bibtex-find-note-file)
          (advice-add 'bibtex-completion-edit-notes
                      :override #'org-roam-bibtex-edit-notes-ad))
         (t
          (setq org-ref-notes-function 'org-ref-notes-function-one-file)
+         (setq bibtex-completion-find-note-functions
+               (delq #'org-roam-bibtex-find-note-file
+                     bibtex-completion-find-note-functions))
          (advice-remove 'bibtex-completion-edit-notes
                         #'org-roam-bibtex-edit-notes-ad))))
 
