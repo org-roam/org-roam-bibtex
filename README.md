@@ -119,7 +119,7 @@ See `org-roam-bibtex-edit-notes` and [`org-roam-bibtex-preformat-keywords`](#org
 Here’s the default value of `org-roam-bibtex-templates`:
 ```el
 (("r" "ref" plain (function org-roam-capture--get-point) ""
-      :file-name "${slug}"
+      :file-name "${citekey}"
       :head "#+TITLE: ${title}\n#+ROAM_KEY: ${ref}\n"
       :unnarrowed t))
 ```
@@ -128,7 +128,7 @@ You can modify it with `setq`.  For instance, if you want to add the cite-key in
 ```el
 (setq org-roam-bibtex-templates
       '(("r" "ref" plain (function org-roam-capture--get-point) ""
-         :file-name "${slug}"
+         :file-name "${citekey}"
          :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}\n" ; <--
          :unnarrowed t)))
 ```

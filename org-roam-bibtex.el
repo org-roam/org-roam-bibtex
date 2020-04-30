@@ -104,7 +104,7 @@ See `org-roam-bibtex-edit-notes' for details."
   '(("r" "ref" plain
      (function org-roam-capture--get-point)
      ""
-     :file-name "${slug}"
+     :file-name "${citekey}"
      :head "#+TITLE: ${title}\n#+ROAM_KEY: ${ref}\n"
      :unnarrowed t))
   "Template to use when creating a new note.
