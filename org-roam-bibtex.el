@@ -104,7 +104,7 @@ See `org-roam-bibtex-edit-notes' for details."
   '(("r" "ref" plain
      (function org-roam-capture--get-point)
      ""
-     :file-name "${slug}"
+     :file-name "${citekey}"
      :head "#+TITLE: ${title}\n#+ROAM_KEY: ${ref}\n"
      :unnarrowed t))
   "Template to use when creating a new note.
@@ -120,7 +120,7 @@ See `org-roam-bibtex-edit-notes' for details."
           (const :tag "No" nil))
   :group 'org-roam-bibtex)
 
-(defcustom org-roam-bibtex-preformat-keywords "=key="
+(defcustom org-roam-bibtex-preformat-keywords '(("citekey" . "=key="))
   "The template prompt wildcards for preformatting.
 Only relevant when `org-roam-bibtex-preformat-templates' is set
 to t (default).  This can be a string, a list of strings or a
