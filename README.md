@@ -20,6 +20,16 @@ Demo
 
 <img src="https://raw.githubusercontent.com/zaeph/org-roam-bibtex/master/doc/demo.gif" width="700">
 
+A word of warning 🚧
+---------------
+
+`org-roam-bibtex` is in **Alpha**.
+
+This means that a lot of things may change in the future (e.g. renaming variables, rewriting functions).  As a result, the package will be unstable for a while.  This will change when we release v1.0, but for now, you will have to be on the lookout for a few things:
+1. If you encounter a problem with the package, start by making sure that you have the latest version. (cf. [Installation](#installation))
+2. If there is a problem with your configuration, most notably variables which do not exist anymore or functions which are not called with the right number of arguments, you will need to check this page to see what has changed.
+3. If neither 1. nor 2. resolved your problem, please open an **issue**.  (This is what an Alpha version is for!)
+
 Installation
 ---------------
 
