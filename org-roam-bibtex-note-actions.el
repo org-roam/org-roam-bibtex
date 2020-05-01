@@ -199,12 +199,7 @@ that can be customized.  Additionally, user actions can be set in
 `org-roam-bibtex-note-actions-user'."
   (interactive)
   (let ((non-default-frontends (list 'hydra 'ido 'ivy 'helm))
-        (citekey nil))
-    (org-element-map (org-element-parse-buffer) 'keyword
-      (lambda (keyword)
-        (let* ((key (org-element-property :key keyword)))
-          (when (string= "ROAM_KEY" key)
-            (setq citekey (org-element-property :value keyword))))))
+        (citekey (cdr (assoc "ROAM_KEY" (org-roam--extract-global-props '("ROAM_KEY"))))))
     (if citekey
         (cond ((member
                 org-roam-bibtex-note-actions-frontend
