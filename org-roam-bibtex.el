@@ -308,7 +308,7 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
       (let* ((keyword (or (car-safe kwd) kwd))        ; prompt wildcard keyword
              (field-name (or (cdr-safe kwd) kwd)) ; bibtex field name
              (field-value                ; get the bibtex field value
-              (or (s-format (concat "${" field-name "}") 'bibtex-completion-apa-get-value entry)
+              (or (bibtex-completion-apa-get-value field-name entry)
                   nil))                                         ; nil will be used to set back the proper wildcard
              (rplc-s (concat "%^{" (or keyword "citekey") "}")) ; org-capture prompt wildcard
              (rplc-s2 (concat "${" (or keyword "citekey") "}")) ; org-roam-capture prompt wildcard
@@ -483,7 +483,7 @@ calling any Org-roam functions."
                         (cl-pushnew (org-roam-bibtex--preformat-template tmpl entry) result))))
                   templates))
                 (title
-                 (or (s-format "${title}" 'bibtex-completion-apa-get-value entry)
+                 (or (bibtex-completion-apa-get-value "title" entry)
                      "Title not found for this entry (Check your BibTeX file)")))
           ;; Check if a custom template has been set
           (if org-roam-bibtex-templates
