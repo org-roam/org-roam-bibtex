@@ -2,9 +2,9 @@
 
 ;; Copyright © 2020 Jethro Kuan <jethrokuan95@gmail.com>
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
-;; Copyright © 2020 Leo Vivier <leo.vivier+org@gmail.com>
+;; Copyright © 2020 Leo Vivier <leo.vivier+dev@gmail.com>
 
-;; Author: Leo Vivier <leo.vivier+org@gmail.com>
+;; Author: Leo Vivier <leo.vivier+dev@gmail.com>
 ;; 	Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; 	Jethro Kuan <jethrokuan95@gmail.com>
 ;; URL: https://github.com/zaeph/org-roam-bibtex
