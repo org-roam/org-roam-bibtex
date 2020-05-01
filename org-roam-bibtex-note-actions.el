@@ -199,19 +199,29 @@ that can be customized.  Additionally, user actions can be set in
 `org-roam-bibtex-note-actions-user'."
   (interactive)
   (let ((non-default-backends (list 'hydra 'ido 'ivy 'helm))
-        citekey)
+        (citekey nil))
     (org-element-map (org-element-parse-buffer) 'keyword
       (lambda (keyword)
         (let* ((key (org-element-property :key keyword)))
           (when (string= "ROAM_KEY" key)
             (setq citekey (org-element-property :value keyword))))))
-    (cond
-     ((member org-roam-bibtex-note-actions-backend non-default-backends)
-      (org-roam-bibtex-note-actions--run org-roam-bibtex-note-actions-backend citekey))
-     ((functionp org-roam-bibtex-note-actions-backend)
-      (funcall org-roam-bibtex-note-actions-backend citekey))
-     (t
-      (org-roam-bibtex-note-actions--run 'default citekey)))))
+    (if citekey
+        (cond ((member
+                org-roam-bibtex-note-actions-backend
+                non-default-backends)
+               (org-roam-bibtex-note-actions--run
+                org-roam-bibtex-note-actions-backend
+                citekey))
+              ((functionp
+                org-roam-bibtex-note-actions-backend)
+               (funcall
+                org-roam-bibtex-note-actions-backend
+                citekey))
+              (t
+               (org-roam-bibtex-note-actions--run
+                'default
+                citekey)))
+      (message "#+ROAM_KEY is not found in this buffer."))))
 
 (provide 'org-roam-bibtex-note-actions)
 ;;; org-roam-bibtex-note-actions.el ends here
