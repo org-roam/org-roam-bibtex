@@ -455,8 +455,7 @@ perspective will be switched to the Org-roam notes project before
 calling any Org-roam functions."
   (unless org-roam-mode
     (org-roam-mode +1))
-  (let* ((citekey-formatted (format (or org-roam-bibtex-citekey-format "%s") citekey))
-         (note-info (list (cons 'ref citekey-formatted))))
+  (let* ((note-info (list (cons 'ref citekey))))
     ;; Optionally switch to the notes perspective
     (when org-roam-bibtex-switch-persp
       (org-roam-bibtex--switch-perspective))
@@ -489,7 +488,7 @@ calling any Org-roam functions."
           (if org-roam-bibtex-templates
               (let ((org-roam-capture--context 'ref)
                     (org-roam-capture--info (list (cons 'title title)
-                                                  (cons 'ref citekey-formatted)
+                                                  (cons 'ref citekey)
                                                   (cons 'slug (org-roam--title-to-slug citekey)))))
                 (add-hook 'org-capture-after-finalize-hook #'org-roam-capture--find-file-h)
                 (org-roam--capture))
