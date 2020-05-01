@@ -56,8 +56,8 @@
 
 ;; * Customize definitions
 
-(defcustom org-roam-bibtex-note-actions-backend 'helm
-  "Interface backend for `org-roam-bibtex-note actions'."
+(defcustom org-roam-bibtex-note-actions-frontend 'helm
+  "Interface frontend for `org-roam-bibtex-note actions'."
   :type '(radio
           (const :tag "Default" default)
           (const :tag "Ido" ido)
@@ -95,9 +95,9 @@ Each action is a cons cell DESCRIPTION . FUNCTION."
   "Default actions for `org-roam-bibtex-note-actions'.
 Each action is a cons cell DESCRIPTION . FUNCTION.")
 
-(defmacro org-roam-bibtex-note-actions--backend! (backend &rest body)
-  "Return a function definition for BACKEND.
-Function name takes a form of org-roam-bibtex-note-action--BACKEND.
+(defmacro org-roam-bibtex-note-actions--frontend! (frontend &rest body)
+  "Return a function definition for FRONTEND.
+Function name takes a form of org-roam-bibtex-note-action--FRONTEND.
 A simple docstring is constructed and BODY is injected into a
 `let' form, which has two variables bound, NAME and
 CANDIDATES.  NAME is a string formatted with
@@ -105,18 +105,18 @@ CANDIDATES.  NAME is a string formatted with
 constructed from `org-roam-bibtex-note-actions--default',
 `org-roam-bibtex-note-actions-extra', and `org-roam-bibtex-note-actions-user."
   (declare (indent 1) (debug (symbolp &rest form)))
-  (let* ((backend-name (symbol-name (eval backend)))
-         (fun-name (intern (concat "org-roam-bibtex-note-actions--" backend-name))))
+  (let* ((frontend-name (symbol-name (eval frontend)))
+         (fun-name (intern (concat "org-roam-bibtex-note-actions--" frontend-name))))
     `(defun ,fun-name (citekey)
        ,(format "Run note actions in current buffer using %s interface.
-CITEKEY is the citekey." (capitalize backend-name))
+CITEKEY is the citekey." (capitalize frontend-name))
        (let ((name (org-ref-format-entry citekey)) ;; TODO: make a native format function
              ;; TODO: this throws an error for andunclear reason
              ;; (name (bibtex-completion-format-entry
              ;;        (bibtex-completion-get-entry citekey)
              ;;        (window-body-width)))
              (candidates
-              ,(if (string= backend-name "hydra")
+              ,(if (string= frontend-name "hydra")
                     '(append (list :default org-roam-bibtex-note-actions--default)
                              (list :extra org-roam-bibtex-note-actions-extra)
                              (list :user org-roam-bibtex-note-actions-user))
@@ -125,17 +125,17 @@ CITEKEY is the citekey." (capitalize backend-name))
                             org-roam-bibtex-note-actions-user))))
          ,@body))))
 
-(org-roam-bibtex-note-actions--backend! 'default
+(org-roam-bibtex-note-actions--frontend! 'default
   (let ((f (cdr (assoc (completing-read name candidates) candidates))))
     (funcall f (list citekey))))
 
-(org-roam-bibtex-note-actions--backend! 'ido
+(org-roam-bibtex-note-actions--frontend! 'ido
   (let* ((c (cl-map 'list 'car candidates))
          (f (cdr (assoc (ido-completing-read name c) candidates))))
     (funcall f (list citekey))))
 
 (declare-function org-roam-bibtex-note-actions-hydra/body "org-roam-bibtex-note-actions" nil t)
-(org-roam-bibtex-note-actions--backend! 'hydra
+(org-roam-bibtex-note-actions--frontend! 'hydra
   (let ((n ?a)
         actions)
     (dolist (action (plist-get candidates :default))
@@ -160,7 +160,7 @@ CITEKEY is the citekey." (capitalize backend-name))
         ,@actions)))
   (org-roam-bibtex-note-actions-hydra/body))
 
-(org-roam-bibtex-note-actions--backend! 'ivy
+(org-roam-bibtex-note-actions--frontend! 'ivy
   (if (fboundp 'ivy-read)
       (ivy-read name
                 candidates
@@ -171,7 +171,7 @@ CITEKEY is the citekey." (capitalize backend-name))
     (display-warning :warning "You must have Ivy installed to use it! Falling back to default.")
     (org-roam-bibtex-note-actions--default citekey)))
 
-(org-roam-bibtex-note-actions--backend! 'helm
+(org-roam-bibtex-note-actions--frontend! 'helm
   (if (fboundp 'helm)
       (helm :sources
             `(((name . ,name)
@@ -181,9 +181,9 @@ CITEKEY is the citekey." (capitalize backend-name))
     (display-warning :warning "You must have Helm installed to use it! Falling back to default.")
     (org-roam-bibtex-note-actions--default citekey)))
 
-(defun org-roam-bibtex-note-actions--run (backend citekey )
-  "Run note actions on CITEKEY with BACKEND."
-  (let ((fun (intern (concat "org-roam-bibtex-note-actions--" (symbol-name backend)))))
+(defun org-roam-bibtex-note-actions--run (frontend citekey )
+  "Run note actions on CITEKEY with FRONTEND."
+  (let ((fun (intern (concat "org-roam-bibtex-note-actions--" (symbol-name frontend)))))
     (funcall fun citekey)))
 
 ;; * Main functions
@@ -191,14 +191,14 @@ CITEKEY is the citekey." (capitalize backend-name))
 ;;;###autoload
 (defun org-roam-bibtex-note-actions ()
   "Run an interactive prompt to offer note-related actions.
-The prompt backend can be set in
-`org-roam-bibtex-note-actions-backend'.  In addition to default
+The prompt frontend can be set in
+`org-roam-bibtex-note-actions-frontend'.  In addition to default
 actions, which are not supposed to be modified, there is a number
 of prefined extra actions `org-roam-bibtex-note-actions-extra'
 that can be customized.  Additionally, user actions can be set in
 `org-roam-bibtex-note-actions-user'."
   (interactive)
-  (let ((non-default-backends (list 'hydra 'ido 'ivy 'helm))
+  (let ((non-default-frontends (list 'hydra 'ido 'ivy 'helm))
         (citekey nil))
     (org-element-map (org-element-parse-buffer) 'keyword
       (lambda (keyword)
@@ -207,15 +207,15 @@ that can be customized.  Additionally, user actions can be set in
             (setq citekey (org-element-property :value keyword))))))
     (if citekey
         (cond ((member
-                org-roam-bibtex-note-actions-backend
-                non-default-backends)
+                org-roam-bibtex-note-actions-frontend
+                non-default-frontends)
                (org-roam-bibtex-note-actions--run
-                org-roam-bibtex-note-actions-backend
+                org-roam-bibtex-note-actions-frontend
                 citekey))
               ((functionp
-                org-roam-bibtex-note-actions-backend)
+                org-roam-bibtex-note-actions-frontend)
                (funcall
-                org-roam-bibtex-note-actions-backend
+                org-roam-bibtex-note-actions-frontend
                 citekey))
               (t
                (org-roam-bibtex-note-actions--run
