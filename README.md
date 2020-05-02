@@ -30,6 +30,10 @@ This means that a lot of things may change in the future (e.g. renaming variable
 2. If there is a problem with your configuration, most notably variables which do not exist anymore or functions which are not called with the right number of arguments, you will need to check this page to see what has changed.
 3. If neither 1. nor 2. resolved your problem, please open an **issue**.  (This is what an Alpha version is for!)
 
+##### WARNING! 
+
+- **As of v0.2 `org-roam-bibtex` namespace was renamed into `orb`. Besides, `org-roam-bibtex-mode` is now `orb-minor-mode`. The existing functions and variables bearing the old prefix will be supported for a while but the support will be dropped eventually. All new functions and variables will have the new prefix.**
+
 Installation
 ---------------
 
@@ -67,12 +71,12 @@ You can get `org-roam-bibtex` up and running by pasting the following sexps in y
 ```el
 ;; If you installed via MELPA
 (use-package org-roam-bibtex
-  :hook (org-roam-mode . org-roam-bibtex-mode))
+  :hook (org-roam-mode . orb-minor-mode))
 
 ;; If you cloned the repository
 (use-package org-roam-bibtex
   :load-path "~/projects/org-roam-bibtex/" ;Modify with your own path
-  :hook (org-roam-mode . org-roam-bibtex-mode))
+  :hook (org-roam-mode . orb-minor-mode))
 ```
 
 ### Without `use-package`
@@ -80,28 +84,28 @@ You can get `org-roam-bibtex` up and running by pasting the following sexps in y
 ```el
 ;; If you installed via MELPA
 (require 'org-roam-bibtex)
-(add-hook 'after-init-hook #'org-roam-bibtex-mode)
+(add-hook 'after-init-hook #'orb-minor-mode)
 
 ;; If you cloned the repository
 (add-to-list 'load-path "~/projects/org-roam-bibtex/") ;Modify with your own path
 (require 'org-roam-bibtex)
-(add-hook 'after-init-hook #'org-roam-bibtex-mode)
+(add-hook 'after-init-hook #'orb-minor-mode)
 ```
 
 Usage
 ---------------
 
-You can now access your bibliographical notes in your `org-roam-directory` via `helm-bibtex`/`ivy-bibtex` or by opening `org-ref` links.  This is done in the background by modifying the `Edit notes` actions used by these packages to use `org-roam-bibtex-edit-notes` instead of their defaults.
+You can now access your bibliographical notes in your `org-roam-directory` via `helm-bibtex`/`ivy-bibtex` or by opening `org-ref` links.  This is done in the background by modifying the `Edit notes` actions used by these packages to use `orb-edit-notes` instead of their defaults.
 
-To revert those actions to their defaults, disable `org-roam-bibtex-mode`.
+To revert those actions to their defaults, disable `orb-minor-mode`.
 
 ### Commands
 
-#### `org-roam-bibtex-find-non-ref-file`
+#### `orb-find-non-ref-file`
 
 Similar to `org-roam-find-file`, but it excludes your bibliographical notes from the completion-candidates.  This is useful if you have a lot of them and do not want to clutter up your other notes.
 
-#### `org-roam-bibtex-insert-non-ref`
+#### `orb-insert-non-ref`
 
 Similar to `org-roam-insert`, but it excludes your bibliographical notes from the completion-list.
 
@@ -110,13 +114,13 @@ Configuration
 
 ### Variables
 
-#### `org-roam-bibtex-templates`
+#### `orb-templates`
 
 This variable specifies the templates to use when creating a new bibliographical note.  It builds on the syntax of `org-roam-capture-templates` by allowing you to expand predefined variables to the value of a BibTeX fields.
 
-See `org-roam-bibtex-edit-notes` and [`org-roam-bibtex-preformat-keywords`](#org-roam-bibtex-preformat-keywords) for details.  (You can access the docstrings of any loaded function/variable from within Emacs with `C-h f` for functions/commands, and `C-h v` for variables.)
+See `orb-edit-notes` and [`orb-preformat-keywords`](#orb-preformat-keywords) for details.  (You can access the docstrings of any loaded function/variable from within Emacs with `C-h f` for functions/commands, and `C-h v` for variables.)
 
-Here’s the default value of `org-roam-bibtex-templates`:
+Here’s the default value of `orb-templates`:
 ```el
 (("r" "ref" plain (function org-roam-capture--get-point) ""
       :file-name "${citekey}"
@@ -126,27 +130,27 @@ Here’s the default value of `org-roam-bibtex-templates`:
 
 You can modify it with `setq`.  For instance, if you want to add the cite-key in the title of the notes, you can modify the code like this (pay attention to the line with `:head`):
 ```el
-(setq org-roam-bibtex-templates
+(setq orb-templates
       '(("r" "ref" plain (function org-roam-capture--get-point) ""
          :file-name "${citekey}"
          :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}\n" ; <--
          :unnarrowed t)))
 ```
 
-If you have more than one template in `org-roam-bibtex-templates`, you will be prompted for the key of the template you want to use (`r` in the example above).  If you only have one template, it will use this one without prompting you.
+If you have more than one template in `orb-templates`, you will be prompted for the key of the template you want to use (`r` in the example above).  If you only have one template, it will use this one without prompting you.
 
 See [Modifying templates](#modifying-templates) for more info.
 
-#### `org-roam-bibtex-preformat-keywords`
+#### `orb-preformat-keywords`
 
-The template prompt wildcards for preformatting.  Only relevant when `org-roam-bibtex-preformat-templates` is set to `t` (default).  This can be a string, a list of strings or a cons-cell alist, where each element is `(STRING . STRING)`.
+The template prompt wildcards for preformatting.  Only relevant when `orb-preformat-templates` is set to `t` (default).  This can be a string, a list of strings or a cons-cell alist, where each element is `(STRING . STRING)`.
 
-Use only alphanumerical characters, dash and underscore. See `org-roam-bibtex-edit-notes` for implementation details.
+Use only alphanumerical characters, dash and underscore. See `orb-edit-notes` for implementation details.
 
 1. If the value is a string, a single keyword, it is treated as a BibTeX field name, such as `=key=`. In the following example all the prompts with the `=key=` keyword will be preformatted, as well as the corresponding match group `%\1`.
 
 ```el
-(setq org-roam-bibtex-preformat-keywords "=key=")
+(setq orb-preformat-keywords "=key=")
 (setq org-roam-capture-templates
       ’(("r" "reference" plain (function org-roam-capture--get-point)
          "#+ROAM_KEY: %^{=key=}%? fullcite: %\1"
@@ -158,7 +162,7 @@ Use only alphanumerical characters, dash and underscore. See `org-roam-bibtex-ed
 2. If the value is a list of strings they are also treated as BibTeX field names. The respective prompts will be preformatted.
 
 ```el
-(setq org-roam-bibtex-preformat-keywords ’("=key=" "title"))
+(setq orb-preformat-keywords ’("=key=" "title"))
 (setq org-roam-capture-templates
       ’(("r" "reference" plain (function org-roam-capture--get-point)
          "#+ROAM_KEY: %^{=key=}%? fullcite: %\1"
@@ -170,7 +174,7 @@ Use only alphanumerical characters, dash and underscore. See `org-roam-bibtex-ed
 3. If the value is a list of cons cells, then the car of the cons cell is treated as a prompt keyword and the cdr as a BibTeX field-name, and the latter will be used to retrieve the relevant value from the BibTeX entry. If cdr is omitted, then the car is treated as the field-name.
 
 ```el
-(setq org-roam-bibtex-preformat-keywords
+(setq orb-preformat-keywords
       '(("citekey" . "=key=")
        ("type" . "=type=")
        "title"))
@@ -214,17 +218,17 @@ fullcite:%\1
 
 You can also use a function to generate the the template if you need something more advanced.  
 
-#### `%(org-roam-bibtex-process-file-field \"${=key=}\")`
+#### `%(orb-process-file-field \"${=key=}\")`
 
-The convenience-function `org-roam-bibtex-process-file-field` has been added to find documents associated with the BibTeX entry.  It is intended to be used inside your template via a `%`-escapes form for sexp (`%(sexp)`).  See `org-capture-templates` for details.
+The convenience-function `orb-process-file-field` has been added to find documents associated with the BibTeX entry.  It is intended to be used inside your template via a `%`-escapes form for sexp (`%(sexp)`).  See `org-capture-templates` for details.
 
 Below shows how this can be used to integrate with [org-noter](https://github.com/weirdNox/org-noter) or [interleave](https://github.com/rudolfochrist/interleave):
 
 ```el
-(setq org-roam-bibtex-preformat-keywords
+(setq orb-preformat-keywords
    '("=key=" "title" "url" "file" "author-or-editor" "keywords"))
 
-(setq org-roam-bibtex-templates
+(setq orb-templates
       '(("r" "ref" plain (function org-roam-capture--get-point)
          ""
          :file-name "${slug}"
@@ -238,7 +242,7 @@ Below shows how this can be used to integrate with [org-noter](https://github.co
 :Custom_ID: ${=key=}
 :URL: ${url}
 :AUTHOR: ${author-or-editor}
-:NOTER_DOCUMENT: %(org-roam-bibtex-process-file-field \"${=key=}\")
+:NOTER_DOCUMENT: %(orb-process-file-field \"${=key=}\")
 :NOTER_PAGE:
 :END:")))
 ```
