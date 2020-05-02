@@ -86,6 +86,7 @@ Each action is a cons cell DESCRIPTION . FUNCTION."
           :value-type (symbol :tag "Function name (unquoted)"))
   :group 'org-roam-bibtex)
 
+
 ;; * Helper functions
 
 (defvar org-roam-bibtex-note-actions-default
@@ -108,10 +109,10 @@ constructed from `org-roam-bibtex-note-actions-default',
   (let* ((frontend-name (symbol-name (eval frontend)))
          (fun-name (intern (concat "org-roam-bibtex-note-actions--" frontend-name))))
     `(defun ,fun-name (citekey)
-       ,(format "Run note actions in current buffer using %s interface.
+       ,(format "Provide note actions using %s interface.
 CITEKEY is the citekey." (capitalize frontend-name))
        (let ((name (org-ref-format-entry citekey)) ;; TODO: make a native format function
-             ;; TODO: this throws an error for andunclear reason
+             ;; TODO: this throws an error for an unclear reason
              ;; (name (bibtex-completion-format-entry
              ;;        (bibtex-completion-get-entry citekey)
              ;;        (window-body-width)))
@@ -141,11 +142,11 @@ CITEKEY is the citekey." (capitalize frontend-name))
           (cl-pushnew
            `(,(format "%c" n) (,(cdr action) 'key) ,(car action) :column ,(concat type " actions"))
            actions)
-          (setq n (1+ n)))))
+          (setq n (1+ n)))))            ; TODO: figure out a way to supply mnemonic keys
     (setq actions (nreverse actions))
     (eval
      `(defhydra org-roam-bibtex-note-actions-hydra (:color blue :hint nil)
-        ,(format  "^\n   %s\n\n^"  (s-word-wrap (- (window-body-width) 2) name))
+        ,(format  "^\n  %s \n\n^"  (s-word-wrap (- (window-body-width) 2) name))
         ,@actions)))
   (org-roam-bibtex-note-actions-hydra/body))
 
@@ -193,12 +194,7 @@ that can be customized.  Additionally, user actions can be set in
                               '("ROAM_KEY"))))))
     ;; remove format from citekey
     (when org-roam-bibtex-citekey-format
-      (string-match "\\(.*\\)%s\\(.*\\)" org-roam-bibtex-citekey-format)
-      (let ((beg (match-end 1))
-            (end (+ (length citekey)
-                    (- (match-beginning 2)
-                       (length org-roam-bibtex-citekey-format)))))
-        (setq citekey (substring citekey beg end)))))
+      (setq citekey (org-roam-bibtex--unformat-citekey citekey)))
     (if citekey
         (cond ((member
                 org-roam-bibtex-note-actions-frontend
