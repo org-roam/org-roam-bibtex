@@ -42,12 +42,11 @@
 ;; call interactively `orb-minor-mode' or
 ;; call (orb-minor-mode +1) from Lisp.
 ;;
-;; After enabling `orb-minor-mode', the function
-;; `orb-edit-notes' will shadow
-;; `bibtex-completion-edit-notes' in Helm-bibtex, Ivy-bibtex.
+;; After enabling `orb-minor-mode', the function `orb-edit-notes' will
+;; shadow `bibtex-completion-edit-notes' in Helm-bibtex, Ivy-bibtex.
 ;;
-;; Additionally, `orb-notes-fn', which is a simple wrapper
-;; around `orb-edit-notes', is installed as Org-ref's
+;; Additionally, `orb-notes-fn', which is a simple wrapper around
+;; `orb-edit-notes', is installed as Org-ref's
 ;; `org-ref-notes-function'.  See Org-ref's documentation for how to
 ;; setup many-files notes.  Take a notice that because of its size,
 ;; Org-ref is not a dependency of Org-roam-bibtex, so it will not be
@@ -122,9 +121,9 @@ See `orb-edit-notes' for details."
 
 (defcustom orb-preformat-keywords '(("citekey" . "=key="))
   "The template prompt wildcards for preformatting.
-Only relevant when `orb-preformat-templates' is set
-to t (default).  This can be a string, a list of strings or a
-cons-cell alist, where each element is (STRING . STRING).
+Only relevant when `orb-preformat-templates' is set to
+t (default).  This can be a string, a list of strings or
+a cons-cell alist, where each element is (STRING . STRING).
 
 Use only alphanumerical characters, dash and underscore.  See
 `orb-edit-notes' for implementation details.
@@ -432,18 +431,18 @@ The prompt presented by `org-roam-find-file' will thus be
 pre-populated with the record title.
 
 3. The template used to create the note is stored in
-`orb-templates'.  If the variable is not defined,
-revert to using `org-roam-capture-templates'.  In the former
-case, a new file will be created and filled according to the
-template, possibly preformatted (see below) without additional
-user interaction.  In the latter case, an interactive
-`org-capture' process will be run.
+`orb-templates'.  If the variable is not defined, revert to using
+`org-roam-capture-templates'.  In the former case, a new file
+will be created and filled according to the template, possibly
+preformatted (see below) without additional user interaction.  In
+the latter case, an interactive `org-capture' process will be
+run.
 
-4. Optionally, when `orb-preformat-templates' is
-non-nil, any prompt wildcards in `orb-templates' or
+4. Optionally, when `orb-preformat-templates' is non-nil, any
+prompt wildcards in `orb-templates' or
 `org-roam-capture-templates' associated with the bibtex record
-fields as specified in `orb-preformat-templates' will
-be preformatted.  Both `org-capture-templates' (%^{}) and
+fields as specified in `orb-preformat-templates' will be
+preformatted.  Both `org-capture-templates' (%^{}) and
 `org-roam-capture-templates' (`s-format', ${}) prompt syntaxes
 are supported.
 
@@ -459,10 +458,9 @@ wildcards will be replace with the BibTeX field value.
 5. Optionally, if you are using Projectile and Persp-mode and
 have a dedicated workspace to work with your Org-roam collection,
 you may want to set the perspective name and project path in
-`orb-persp-project' and
-`orb-switch-persp' to t.  In this case, the
-perspective will be switched to the Org-roam notes project before
-calling any Org-roam functions."
+`orb-persp-project' and `orb-switch-persp' to t.  In this case,
+the perspective will be switched to the Org-roam notes project
+before calling any Org-roam functions."
   (unless org-roam-mode
     (org-roam-mode +1))
   (let* ((citekey-formatted (format (or orb-citekey-format "%s") citekey))
@@ -520,8 +518,8 @@ See `org-roam-find-files' and
 (defun orb-insert-non-ref (prefix)
   "Find a non-ref Org-roam file, and insert a relative org link to it at point.
 If PREFIX, downcase the title before insertion.  See
-`org-roam-insert' and
-`orb--get-non-ref-path-completions' for details."
+`org-roam-insert' and `orb--get-non-ref-path-completions' for
+details."
   (interactive "P")
   (org-roam-insert prefix #'orb--get-non-ref-path-completions))
 

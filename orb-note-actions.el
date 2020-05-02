@@ -181,12 +181,11 @@ CITEKEY is the citekey." (capitalize frontend-name))
 ;;;###autoload
 (defun orb-note-actions ()
   "Run an interactive prompt to offer note-related actions.
-The prompt frontend can be set in
-`orb-note-actions-frontend'.  In addition to default
-actions, which are not supposed to be modified, there is a number
-of prefined extra actions `orb-note-actions-extra'
-that can be customized.  Additionally, user actions can be set in
-`orb-note-actions-user'."
+The prompt frontend can be set in `orb-note-actions-frontend'.
+In addition to default actions, which are not supposed to be
+modified, there is a number of prefined extra actions
+`orb-note-actions-extra' that can be customized.  Additionally,
+user actions can be set in `orb-note-actions-user'."
   (interactive)
   (let ((non-default-frontends (list 'hydra 'ido 'ivy 'helm))
         (citekey (cdr (assoc "ROAM_KEY"
