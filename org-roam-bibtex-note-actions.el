@@ -200,6 +200,14 @@ that can be customized.  Additionally, user actions can be set in
   (interactive)
   (let ((non-default-frontends (list 'hydra 'ido 'ivy 'helm))
         (citekey (cdr (assoc "ROAM_KEY" (org-roam--extract-global-props '("ROAM_KEY"))))))
+    ;; remove format from citekey
+    (when org-roam-bibtex-citekey-format
+      (string-match "\\(.*\\)%s\\(.*\\)" org-roam-bibtex-citekey-format)
+      (let ((beg (match-end 1))
+            (end (+ (length citekey)
+                    (- (match-beginning 2)
+                       (length org-roam-bibtex-citekey-format)))))
+        (setq citekey (substring citekey beg end))))
     (if citekey
         (cond ((member
                 org-roam-bibtex-note-actions-frontend
