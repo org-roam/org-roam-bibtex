@@ -69,6 +69,7 @@
 ;; loaded unconditionally and the user might not even need
 ;; it. Instead, we require it in the body of `orb-notes-fn'.
 (require 'org-roam)
+(require 'orb-compat)
 (require 'bibtex-completion)
 (eval-when-compile
   (require 'subr-x)
