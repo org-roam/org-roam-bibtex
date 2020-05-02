@@ -356,6 +356,16 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
           (setq completions (nconc completions
                                    (list candidate))))))))
 
+(defun org-roam-bibtex--unformat-citekey (citekey)
+  "Remove format from CITEKEY.
+Format is `org-roam-bibtex-citekey-format'."
+  (string-match "\\(.*\\)%s\\(.*\\)" org-roam-bibtex-citekey-format)
+  (let ((beg (match-end 1))
+        (end (+ (length citekey)
+                (- (match-beginning 2)
+                   (length org-roam-bibtex-citekey-format)))))
+    (substring citekey beg end)))
+
 
 ;; * Main functions
 
