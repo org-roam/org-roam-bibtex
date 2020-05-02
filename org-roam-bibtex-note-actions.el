@@ -56,7 +56,7 @@
 
 ;; * Customize definitions
 
-(defcustom org-roam-bibtex-note-actions-frontend 'helm
+(defcustom org-roam-bibtex-note-actions-frontend 'default
   "Interface frontend for `org-roam-bibtex-note actions'."
   :type '(radio
           (const :tag "Default" default)
@@ -88,7 +88,7 @@ Each action is a cons cell DESCRIPTION . FUNCTION."
 
 ;; * Helper functions
 
-(defvar org-roam-bibtex-note-actions--default
+(defvar org-roam-bibtex-note-actions-default
   '(("Open PDF file(s)" . bibtex-completion-open-pdf)
     ("Add PDF to library" . bibtex-completion-add-pdf-to-library)
     ("Open URL or DOI in browser" . bibtex-completion-open-url-or-doi))
@@ -102,7 +102,7 @@ A simple docstring is constructed and BODY is injected into a
 `let' form, which has two variables bound, NAME and
 CANDIDATES.  NAME is a string formatted with
 `org-ref-format-entry' and CANDIDATES is a cons cell alist
-constructed from `org-roam-bibtex-note-actions--default',
+constructed from `org-roam-bibtex-note-actions-default',
 `org-roam-bibtex-note-actions-extra', and `org-roam-bibtex-note-actions-user."
   (declare (indent 1) (debug (symbolp &rest form)))
   (let* ((frontend-name (symbol-name (eval frontend)))
@@ -116,13 +116,10 @@ CITEKEY is the citekey." (capitalize frontend-name))
              ;;        (bibtex-completion-get-entry citekey)
              ;;        (window-body-width)))
              (candidates
-              ,(if (string= frontend-name "hydra")
-                    '(append (list :default org-roam-bibtex-note-actions--default)
-                             (list :extra org-roam-bibtex-note-actions-extra)
-                             (list :user org-roam-bibtex-note-actions-user))
-                  '(append  org-roam-bibtex-note-actions--default
-                            org-roam-bibtex-note-actions-extra
-                            org-roam-bibtex-note-actions-user))))
+              ,(unless (string= frontend-name "hydra")
+                 '(append  org-roam-bibtex-note-actions-default
+                           org-roam-bibtex-note-actions-extra
+                           org-roam-bibtex-note-actions-user))))
          ,@body))))
 
 (org-roam-bibtex-note-actions--frontend! 'default
@@ -138,21 +135,13 @@ CITEKEY is the citekey." (capitalize frontend-name))
 (org-roam-bibtex-note-actions--frontend! 'hydra
   (let ((n ?a)
         actions)
-    (dolist (action (plist-get candidates :default))
-      (cl-pushnew
-       `(,(format "%c" n) (,(cdr action) 'key) ,(car action) :column "Default actions")
-       actions)
-       (setq n (1+ n)))
-    (dolist (action (plist-get candidates :extra))
-      (cl-pushnew
-       `(,(format "%c" n) (,(cdr action) 'key) ,(car action) :column "Extra actions")
-       actions)
-       (setq n (1+ n)))
-    (dolist (action (plist-get candidates :user))
-      (cl-pushnew
-       `(,(format "%c" n) (,(cdr action) 'key) ,(car action) :column "User actions")
-       actions)
-       (setq n (1+ n)))
+    (dolist (type (list "Default" "Extra" "User"))
+      (let ((actions-var (intern (concat "org-roam-bibtex-note-actions-" (downcase type)))))
+        (dolist (action (symbol-value actions-var))
+          (cl-pushnew
+           `(,(format "%c" n) (,(cdr action) 'key) ,(car action) :column ,(concat type " actions"))
+           actions)
+          (setq n (1+ n)))))
     (setq actions (nreverse actions))
     (eval
      `(defhydra org-roam-bibtex-note-actions-hydra (:color blue :hint nil)
