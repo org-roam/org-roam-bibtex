@@ -139,7 +139,7 @@ You can modify it with `setq`.  For instance, if you want to add the cite-key in
 (setq orb-templates
       '(("r" "ref" plain (function org-roam-capture--get-point) ""
          :file-name "${citekey}"
-         :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}\n" ; <--
+         :head "#+TITLE: ${citekey}: ${title}\n#+ROAM_KEY: ${ref}\n" ; <--
          :unnarrowed t)))
 ```
 
@@ -182,7 +182,7 @@ Use only alphanumerical characters, dash and underscore. See `orb-edit-notes` fo
 ```el
 (setq orb-preformat-keywords
       '(("citekey" . "=key=")
-       ("type" . "=type=")
+        ("type" . "=type=")
        "title"))
 (setq org-roam-capture-templates
       '(("r" "reference" plain (function org-roam-capture--get-point)
@@ -192,6 +192,13 @@ Use only alphanumerical characters, dash and underscore. See `orb-edit-notes` fo
          :file-name "references/%<%Y-%m-%d-%H%M%S>_${title}"
          :head "#+TITLE: ${title}"
          :unnarrowed t)))
+```
+
+Note that, by default, `org-preformat-keywords` is only configured to replace `${citekey}` with the value of `=key=`:
+
+```el
+(setq orb-preformat-keywords
+      '(("citekey" . "=key=")))
 ```
 
 Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex) package for additional information about BibTeX field names.
@@ -232,23 +239,23 @@ Below shows how this can be used to integrate with [org-noter](https://github.co
 
 ```el
 (setq orb-preformat-keywords
-   '("=key=" "title" "url" "file" "author-or-editor" "keywords"))
+   '("citekey" "title" "url" "file" "author-or-editor" "keywords"))
 
 (setq orb-templates
       '(("r" "ref" plain (function org-roam-capture--get-point)
          ""
          :file-name "${slug}"
-         :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}
+         :head "#+TITLE: ${citekey}: ${title}\n#+ROAM_KEY: ${ref}
 
 - tags ::
 - keywords :: ${keywords}
 
 * ${title}
 :PROPERTIES:
-:Custom_ID: ${=key=}
+:Custom_ID: ${citekey}
 :URL: ${url}
 :AUTHOR: ${author-or-editor}
-:NOTER_DOCUMENT: %(orb-process-file-field \"${=key=}\")
+:NOTER_DOCUMENT: %(orb-process-file-field \"${citekey}\")
 :NOTER_PAGE:
 :END:")))
 ```
