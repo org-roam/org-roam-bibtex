@@ -71,9 +71,9 @@ You can get `org-roam-bibtex` up and running by pasting the following sexps in y
 ```el
 ;; If you installed via MELPA
 (use-package org-roam-bibtex
-  :hook (org-roam-mode . org-roam-bibtex-mode
+  :hook (org-roam-mode . org-roam-bibtex-mode)
   :bind (:map org-mode-map
-         (("C-c n a" . orb-note-actions)))))
+         (("C-c n a" . orb-note-actions))))
 
 ;; If you cloned the repository
 (use-package org-roam-bibtex
