@@ -43,7 +43,6 @@
 ;;; Code:
 ;; * Library requires
 
-(require 'org-roam-bibtex)
 (require 'warnings)
 (require 'cl-lib)
 ;; TODO: get rid of after we have our own format function
