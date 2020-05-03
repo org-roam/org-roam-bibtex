@@ -182,7 +182,7 @@ Use only alphanumerical characters, dash and underscore. See `orb-edit-notes` fo
 ```el
 (setq orb-preformat-keywords
       '(("citekey" . "=key=")
-       ("type" . "=type=")
+        ("type" . "=type=")
        "title"))
 (setq org-roam-capture-templates
       '(("r" "reference" plain (function org-roam-capture--get-point)
