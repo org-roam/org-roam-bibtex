@@ -1,13 +1,13 @@
-;;; org-roam-bibtex-note-actions.el --- Connector between Org-roam, BibTeX-completion, and Org-ref -*- coding: utf-8; lexical-binding: t -*-
+;;; orb-note-actions.el --- Connector between Org-roam, BibTeX-completion, and Org-ref -*- coding: utf-8; lexical-binding: t -*-
 
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
-;; Copyright © 2020 Leo Vivier <leo.vivier+org@gmail.com>
+;; Copyright © 2020 Leo Vivier <leo.vivier+dev@gmail.com>
 
-;; Author: Leo Vivier <leo.vivier+org@gmail.com>
+;; Author: Leo Vivier <leo.vivier+dev@gmail.com>
 ;; 	Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; URL: https://github.com/zaeph/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
-;; Version: 0.1
+;; Version: 0.2
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -49,15 +49,15 @@
 ;; TODO: get rid of after we have our own format function
 (require 'org-ref)
 
-(declare-function ido-completing-read "ido" (prompt choices &optional predicate require-match initial-input hist def inherit-input-method))
+(declare-function ido-completing-read "ido")
 (declare-function helm "helm")
 (declare-function ivy-read "ivy")
 (declare-function defhydra "hydra")
 
 ;; * Customize definitions
 
-(defcustom org-roam-bibtex-note-actions-frontend 'default
-  "Interface frontend for `org-roam-bibtex-note actions'."
+(defcustom orb-note-actions-frontend 'default
+  "Interface frontend for `orb-note-actions'."
   :type '(radio
           (const :tag "Default" default)
           (const :tag "Ido" ido)
@@ -67,21 +67,21 @@
           (function :tag "Custom function"))
   :group 'org-roam-bibtex)
 
-(defcustom org-roam-bibtex-note-actions-extra
+(defcustom orb-note-actions-extra
   '(("Show record in the bibtex file" . bibtex-completion-show-entry))
-  "Extra actions for `org-roam-bibtex-note-actions'.
+  "Extra actions for `orb-note-actions'.
 Each action is a cons cell DESCRIPTION . FUNCTION."
   :type '(alist
-          :tag "Extra actions for `org-roam-bibtex-note-actions'"
+          :tag "Extra actions for `orb-note-actions'"
           :key-type (string :tag "Prompt")
           :value-type (symbol :tag "Function name (unquoted)"))
   :group 'org-roam-bibtex)
 
-(defcustom org-roam-bibtex-note-actions-user nil
-  "User actions for `org-roam-bibtex-note-actions'.
+(defcustom orb-note-actions-user nil
+  "User actions for `orb-note-actions'.
 Each action is a cons cell DESCRIPTION . FUNCTION."
   :type '(alist
-          :tag "User actions for `org-roam-bibtex-note-actions'"
+          :tag "User actions for `orb-note-actions'"
           :key-type (string :tag "Prompt")
           :value-type (symbol :tag "Function name (unquoted)"))
   :group 'org-roam-bibtex)
@@ -89,25 +89,25 @@ Each action is a cons cell DESCRIPTION . FUNCTION."
 
 ;; * Helper functions
 
-(defvar org-roam-bibtex-note-actions-default
+(defvar orb-note-actions-default
   '(("Open PDF file(s)" . bibtex-completion-open-pdf)
     ("Add PDF to library" . bibtex-completion-add-pdf-to-library)
     ("Open URL or DOI in browser" . bibtex-completion-open-url-or-doi))
-  "Default actions for `org-roam-bibtex-note-actions'.
+  "Default actions for `orb-note-actions'.
 Each action is a cons cell DESCRIPTION . FUNCTION.")
 
-(defmacro org-roam-bibtex-note-actions--frontend! (frontend &rest body)
+(defmacro orb-note-actions--frontend! (frontend &rest body)
   "Return a function definition for FRONTEND.
-Function name takes a form of org-roam-bibtex-note-action--FRONTEND.
+Function name takes a form of orb-note-actions--FRONTEND.
 A simple docstring is constructed and BODY is injected into a
 `let' form, which has two variables bound, NAME and
 CANDIDATES.  NAME is a string formatted with
 `org-ref-format-entry' and CANDIDATES is a cons cell alist
-constructed from `org-roam-bibtex-note-actions-default',
-`org-roam-bibtex-note-actions-extra', and `org-roam-bibtex-note-actions-user."
+constructed from `orb-note-actions-default',
+`orb-note-actions-extra', and `orb-note-actions-user."
   (declare (indent 1) (debug (symbolp &rest form)))
   (let* ((frontend-name (symbol-name (eval frontend)))
-         (fun-name (intern (concat "org-roam-bibtex-note-actions--" frontend-name))))
+         (fun-name (intern (concat "orb-note-actions--" frontend-name))))
     `(defun ,fun-name (citekey)
        ,(format "Provide note actions using %s interface.
 CITEKEY is the citekey." (capitalize frontend-name))
@@ -118,26 +118,26 @@ CITEKEY is the citekey." (capitalize frontend-name))
              ;;        (window-body-width)))
              (candidates
               ,(unless (string= frontend-name "hydra")
-                 '(append  org-roam-bibtex-note-actions-default
-                           org-roam-bibtex-note-actions-extra
-                           org-roam-bibtex-note-actions-user))))
+                 '(append  orb-note-actions-default
+                           orb-note-actions-extra
+                           orb-note-actions-user))))
          ,@body))))
 
-(org-roam-bibtex-note-actions--frontend! 'default
+(orb-note-actions--frontend! 'default
   (let ((f (cdr (assoc (completing-read name candidates) candidates))))
     (funcall f (list citekey))))
 
-(org-roam-bibtex-note-actions--frontend! 'ido
+(orb-note-actions--frontend! 'ido
   (let* ((c (cl-map 'list 'car candidates))
          (f (cdr (assoc (ido-completing-read name c) candidates))))
     (funcall f (list citekey))))
 
-(declare-function org-roam-bibtex-note-actions-hydra/body "org-roam-bibtex-note-actions" nil t)
-(org-roam-bibtex-note-actions--frontend! 'hydra
+(declare-function orb-note-actions-hydra/body "orb-note-actions" nil t)
+(orb-note-actions--frontend! 'hydra
   (let ((n ?a)
         actions)
     (dolist (type (list "Default" "Extra" "User"))
-      (let ((actions-var (intern (concat "org-roam-bibtex-note-actions-" (downcase type)))))
+      (let ((actions-var (intern (concat "orb-note-actions-" (downcase type)))))
         (dolist (action (symbol-value actions-var))
           (cl-pushnew
            `(,(format "%c" n) (,(cdr action) 'key) ,(car action) :column ,(concat type " actions"))
@@ -145,23 +145,23 @@ CITEKEY is the citekey." (capitalize frontend-name))
           (setq n (1+ n)))))            ; TODO: figure out a way to supply mnemonic keys
     (setq actions (nreverse actions))
     (eval
-     `(defhydra org-roam-bibtex-note-actions-hydra (:color blue :hint nil)
+     `(defhydra orb-note-actions-hydra (:color blue :hint nil)
         ,(format  "^\n  %s \n\n^"  (s-word-wrap (- (window-body-width) 2) name))
         ,@actions)))
-  (org-roam-bibtex-note-actions-hydra/body))
+  (orb-note-actions-hydra/body))
 
-(org-roam-bibtex-note-actions--frontend! 'ivy
+(orb-note-actions--frontend! 'ivy
   (if (fboundp 'ivy-read)
       (ivy-read name
                 candidates
                 :require-match t
-                :caller #'org-roam-bibtex-note-actions
+                :caller #'orb-note-actions
                 :action (lambda (c)
                           (funcall (cdr c) (list citekey))))
     (display-warning :warning "You must have Ivy installed to use it! Falling back to default.")
-    (org-roam-bibtex-note-actions--default citekey)))
+    (orb-note-actions--default citekey)))
 
-(org-roam-bibtex-note-actions--frontend! 'helm
+(orb-note-actions--frontend! 'helm
   (if (fboundp 'helm)
       (helm :sources
             `(((name . ,name)
@@ -169,52 +169,51 @@ CITEKEY is the citekey." (capitalize frontend-name))
                (action . (lambda (f)
                            (funcall f (list ,citekey)))))))
     (display-warning :warning "You must have Helm installed to use it! Falling back to default.")
-    (org-roam-bibtex-note-actions--default citekey)))
+    (orb-note-actions--default citekey)))
 
-(defun org-roam-bibtex-note-actions--run (frontend citekey )
+(defun orb-note-actions--run (frontend citekey )
   "Run note actions on CITEKEY with FRONTEND."
-  (let ((fun (intern (concat "org-roam-bibtex-note-actions--" (symbol-name frontend)))))
+  (let ((fun (intern (concat "orb-note-actions--" (symbol-name frontend)))))
     (funcall fun citekey)))
 
 ;; * Main functions
 
 ;;;###autoload
-(defun org-roam-bibtex-note-actions ()
+(defun orb-note-actions ()
   "Run an interactive prompt to offer note-related actions.
-The prompt frontend can be set in
-`org-roam-bibtex-note-actions-frontend'.  In addition to default
-actions, which are not supposed to be modified, there is a number
-of prefined extra actions `org-roam-bibtex-note-actions-extra'
-that can be customized.  Additionally, user actions can be set in
-`org-roam-bibtex-note-actions-user'."
+The prompt frontend can be set in `orb-note-actions-frontend'.
+In addition to default actions, which are not supposed to be
+modified, there is a number of prefined extra actions
+`orb-note-actions-extra' that can be customized.  Additionally,
+user actions can be set in `orb-note-actions-user'."
   (interactive)
   (let ((non-default-frontends (list 'hydra 'ido 'ivy 'helm))
         (citekey (cdr (assoc "ROAM_KEY"
                              (org-roam--extract-global-props
                               '("ROAM_KEY"))))))
     ;; remove format from citekey
-    (when org-roam-bibtex-citekey-format
-      (setq citekey (org-roam-bibtex--unformat-citekey citekey)))
+    (when orb-citekey-format
+      (setq citekey (orb--unformat-citekey citekey)))
     (if citekey
         (cond ((member
-                org-roam-bibtex-note-actions-frontend
+                orb-note-actions-frontend
                 non-default-frontends)
-               (org-roam-bibtex-note-actions--run
-                org-roam-bibtex-note-actions-frontend
+               (orb-note-actions--run
+                orb-note-actions-frontend
                 citekey))
               ((functionp
-                org-roam-bibtex-note-actions-frontend)
+                orb-note-actions-frontend)
                (funcall
-                org-roam-bibtex-note-actions-frontend
+                orb-note-actions-frontend
                 citekey))
               (t
-               (org-roam-bibtex-note-actions--run
+               (orb-note-actions--run
                 'default
                 citekey)))
       (message "#+ROAM_KEY is not found in this buffer."))))
 
-(provide 'org-roam-bibtex-note-actions)
-;;; org-roam-bibtex-note-actions.el ends here
+(provide 'orb-note-actions)
+;;; orb-note-actions.el ends here
 ;; Local Variables:
 ;; fill-column: 70
 ;; End:

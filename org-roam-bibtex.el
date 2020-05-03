@@ -9,7 +9,7 @@
 ;; 	Jethro Kuan <jethrokuan95@gmail.com>
 ;; URL: https://github.com/zaeph/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
-;; Version: 0.1
+;; Version: 0.2
 ;; Package-Requires: ((emacs "26.1") (f "0.20.0") (s "1.12.0") (org "9.3") (org-roam "1.0.0") (bibtex-completion "2.0.0"))
 
 ;; This file is NOT part of GNU Emacs.
@@ -42,12 +42,11 @@
 ;; call interactively `org-roam-bibtex-mode' or
 ;; call (org-roam-bibtex-mode +1) from Lisp.
 ;;
-;; After enabling `org-roam-bibtex-mode', the function
-;; `org-roam-bibtex-edit-notes' will shadow
-;; `bibtex-completion-edit-notes' in Helm-bibtex, Ivy-bibtex.
+;; After enabling `org-roam-bibtex-mode', the function `orb-edit-notes' will
+;; shadow `bibtex-completion-edit-notes' in Helm-bibtex, Ivy-bibtex.
 ;;
-;; Additionally, `org-roam-bibtex-notes-fn', which is a simple wrapper
-;; around `org-roam-bibtex-edit-notes', is installed as Org-ref's
+;; Additionally, `orb-notes-fn', which is a simple wrapper around
+;; `orb-edit-notes', is installed as Org-ref's
 ;; `org-ref-notes-function'.  See Org-ref's documentation for how to
 ;; setup many-files notes.  Take a notice that because of its size,
 ;; Org-ref is not a dependency of Org-roam-bibtex, so it will not be
@@ -56,11 +55,11 @@
 ;;
 ;; As a user option, `org-roam-capture-templates' can be dynamically
 ;; preformatted with bibtex field values.  See
-;; `org-roam-bibtex-preformat-keywords' for more details.
+;; `orb-preformat-keywords' for more details.
 ;;
 ;; Optionally, automatic switching to the perspective (Persp-mode)
 ;; with the notes project (Projectile) is possible.  See
-;; `org-roam-bibtex-edit-notes' for more details.
+;; `orb-edit-notes' for more details.
 ;;
 
 ;;; Code:
@@ -68,8 +67,9 @@
 
 ;; We do not require `org-ref' here, because it is too expensive to be
 ;; loaded unconditionally and the user might not even need
-;; it. Instead, we require it in the body of `org-roam-bibtex-notes-fn'.
+;; it. Instead, we require it in the body of `orb-notes-fn'.
 (require 'org-roam)
+(require 'orb-compat)
 (require 'bibtex-completion)
 (eval-when-compile
   (require 'subr-x)
@@ -90,17 +90,17 @@
   :group 'org-roam
   :group 'org-ref
   :group 'bibtex-completion
-  :prefix "org-roam-bibtex-")
+  :prefix "orb-")
 
-(defcustom org-roam-bibtex-preformat-templates t
+(defcustom orb-preformat-templates t
   "Non-nil to enable template preformatting.
-See `org-roam-bibtex-edit-notes' for details."
+See `orb-edit-notes' for details."
   :type '(choice
           (const :tag "Yes" t)
           (const :tag "No" nil))
   :group 'org-roam-bibtex)
 
-(defcustom org-roam-bibtex-templates
+(defcustom orb-templates
   '(("r" "ref" plain
      (function org-roam-capture--get-point)
      ""
@@ -108,33 +108,33 @@ See `org-roam-bibtex-edit-notes' for details."
      :head "#+TITLE: ${title}\n#+ROAM_KEY: ${ref}\n"
      :unnarrowed t))
   "Template to use when creating a new note.
-See `org-roam-bibtex-edit-notes' for details."
+See `orb-edit-notes' for details."
   :type '(list)
   :group 'org-roam-bibtex)
 
-(defcustom org-roam-bibtex-include-citekey-in-titles nil
+(defcustom orb-include-citekey-in-titles nil
   "Non-nil to include the citekey in titles.
-See `org-roam-bibtex-edit-notes' for details."
+See `orb-edit-notes' for details."
   :type '(choice
           (const :tag "Yes" t)
           (const :tag "No" nil))
   :group 'org-roam-bibtex)
 
-(defcustom org-roam-bibtex-preformat-keywords '(("citekey" . "=key="))
+(defcustom orb-preformat-keywords '(("citekey" . "=key="))
   "The template prompt wildcards for preformatting.
-Only relevant when `org-roam-bibtex-preformat-templates' is set
-to t (default).  This can be a string, a list of strings or a
-cons-cell alist, where each element is (STRING . STRING).
+Only relevant when `orb-preformat-templates' is set to
+t (default).  This can be a string, a list of strings or
+a cons-cell alist, where each element is (STRING . STRING).
 
 Use only alphanumerical characters, dash and underscore.  See
-`org-roam-bibtex-edit-notes' for implementation details.
+`orb-edit-notes' for implementation details.
 
 1. If the value is a string, a single keyword, it is treated as a
 BibTeX field-name, such as =key=.  In the following example all
 the prompts with the '=key=' keyword will be preformatted, as
 well as the corresponding match group %\\1.
 
-\(setq org-roam-bibtex-preformat-keywords \"=key=\")
+\(setq orb-preformat-keywords \"=key=\")
 \(setq org-roam-capture-templates
       '((\"r\" \"reference\" plain (function org-roam-capture--get-point)
          \"#+ROAM_KEY: %^{=key=}%? fullcite: %\\1\"
@@ -145,7 +145,7 @@ well as the corresponding match group %\\1.
 2. If the value is a list of strings they are also treated as
 BibTeX field-names.  The respective prompts will be preformatted.
 
-\(setq org-roam-bibtex-preformat-keywords '(\"=key=\" \"title\"))
+\(setq orb-preformat-keywords '(\"=key=\" \"title\"))
 \(setq org-roam-capture-templates
       '((\"r\" \"reference\" plain (function org-roam-capture--get-point)
          \"#+ROAM_KEY: %^{=key=}%? fullcite: %\\1\"
@@ -159,7 +159,7 @@ name, and the latter will be used to retrieve the relevant value
 from the BibTeX entry.  If cdr is omitted, then the car is
 treated as the field name.
 
-\(setq org-roam-bibtex-preformat-keywords
+\(setq orb-preformat-keywords
       '((\"citekey\" . \"=key=\")
        (\"type\" . \"=type=\")
        \"title\"))
@@ -183,35 +183,35 @@ about BibTeX field names."
            :value-type (string :tag "Field")))
   :group 'org-roam-bibtex)
 
-(defcustom org-roam-bibtex-citekey-format "cite:%s"
+(defcustom orb-citekey-format "cite:%s"
   "Format string for the citekey.
 The citekey obtained from Helm-bibtex/Ivy-bibtex/Org-ref
 will be formatted as specified here."
   :type 'string
   :group 'org-roam-bibtex)
 
-(defcustom org-roam-bibtex-persp-project `("notes" . ,org-roam-directory)
+(defcustom orb-persp-project `("notes" . ,org-roam-directory)
   "Perspective name and path to the project with bibliography notes.
 A cons cell (PERSP-NAME . PROJECT-PATH).  Only relevant when
-`org-roam-bibtex-switch-persp' is set to t.
+`orb-switch-persp' is set to t.
 
 Requires command `persp-mode' and command `projectile-mode'.
 
 PERSP-NAME should be a valid Perspective name, PROJECT-PATH should be
 an open Projectile project.
 
-See `org-roam-bibtex-edit-notes' for details"
+See `orb-edit-notes' for details"
   :type '(cons (string :tag "Perspective name") (directory :tag "Projectile directory"))
   :group 'org-roam-bibtex)
 
-(defcustom org-roam-bibtex-switch-persp nil
+(defcustom orb-switch-persp nil
   "Non-nil to enable switching to the notes perspective.
 Set the name of the perspective and the path to the notes project
-in `org-roam-bibtex-persp-project' for this to take effect.
+in `orb-persp-project' for this to take effect.
 
 Requires command `persp-mode' and command `projectile-mode'.
 
-See `org-roam-bibtex-edit-notes' for details."
+See `orb-edit-notes' for details."
   :type '(choice
           (const :tag "Yes" t)
           (const :tag "No" nil))
@@ -221,27 +221,27 @@ See `org-roam-bibtex-edit-notes' for details."
 ;; * Interface functions
 
 ;;;###autoload
-(defun org-roam-bibtex-notes-fn (citekey)
+(defun orb-notes-fn (citekey)
   "Open an Org-roam note associated with the CITEKEY or create a new one.
 Set `org-ref-notes-function' to this function if your
 bibliography notes are managed by Org-roam and you want some extra
 integration between the two packages.
 
-This is a wrapper function around `org-roam-bibtex-edit-notes'
+This is a wrapper function around `orb-edit-notes'
 intended for use with Org-ref."
   (when (require 'org-ref nil t)
     (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
-      (org-roam-bibtex-edit-notes citekey))))
+      (orb-edit-notes citekey))))
 
 ;;;###autoload
-(defun org-roam-bibtex-edit-notes-ad (keys)
+(defun orb-edit-notes-ad (keys)
   "Open an Org-roam note associated with the first key from KEYS.
 This function replaces `bibtex-completion-edit-notes'.  Only the first key
 from KEYS will actually be used."
-  (org-roam-bibtex-edit-notes (car keys)))
+  (orb-edit-notes (car keys)))
 
 ;;;###autoload
-(defun org-roam-bibtex-process-file-field (citekey)
+(defun orb-process-file-field (citekey)
   "Process the 'file' BibTeX field and resolve if there are multiples.
 Search the disk for the document associated with this BibTeX
 entry.  The disk matching is based on looking in the
@@ -260,11 +260,11 @@ to enter"
 
 ;; * Helper functions
 
-(defun org-roam-bibtex--switch-perspective ()
-  "Helper function for `org-roam-bibtex-edit-notes'."
+(defun orb--switch-perspective ()
+  "Helper function for `orb-edit-notes'."
   (when (and (require 'projectile nil t)
              (require 'persp-mode nil t))
-    (let ((notes-project (cdr org-roam-bibtex-persp-project))
+    (let ((notes-project (cdr orb-persp-project))
           (projects (projectile-relevant-open-projects))
           openp)
       (dolist (project projects openp)
@@ -272,17 +272,17 @@ to enter"
       (when openp
         (let ((p-names (cdr (persp-names))))
           (dolist (p-name p-names)
-            (when (s-equals? p-name (car org-roam-bibtex-persp-project))
+            (when (s-equals? p-name (car orb-persp-project))
               (persp-switch p-name))))))))
 
-(defun org-roam-bibtex--preformat-template (template entry)
-  "Helper function for `org-roam-bibtex--preformat-templates'.
+(defun orb--preformat-template (template entry)
+  "Helper function for `orb--preformat-templates'.
 TEMPLATE is an element of `org-roam-capture-templates' and ENTRY
 is a BibTeX entry as returned by `bibtex-completion-get-entry'."
   ;; Handle org-roam-capture part
-  (let* ((kwds (if (listp org-roam-bibtex-preformat-keywords) ; normalize org-roam-bibtex-preformat-keywords
-                   org-roam-bibtex-preformat-keywords
-                 (list org-roam-bibtex-preformat-keywords)))
+  (let* ((kwds (if (listp orb-preformat-keywords) ; normalize orb-preformat-keywords
+                   orb-preformat-keywords
+                 (list orb-preformat-keywords)))
          ;; Org-capture templates:
          ;; handle different types of org-capture-templates: string, file and function;
          ;; this is a stripped down version of `org-capture-get-template'
@@ -341,7 +341,7 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
       (setf (nth 4 template) tp))
     template))
 
-(defun org-roam-bibtex--get-non-ref-path-completions (&optional candidates)
+(defun orb--get-non-ref-path-completions (&optional candidates)
   "Return a list of cons for titles of non-ref notes to absolute path.
 CANDIDATES is a an alist of candidates to consider.  Defaults to
 `org-roam--get-title-path-completions' otherwise."
@@ -356,14 +356,14 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
           (setq completions (nconc completions
                                    (list candidate))))))))
 
-(defun org-roam-bibtex--unformat-citekey (citekey)
+(defun orb--unformat-citekey (citekey)
   "Remove format from CITEKEY.
-Format is `org-roam-bibtex-citekey-format'."
-  (string-match "\\(.*\\)%s\\(.*\\)" org-roam-bibtex-citekey-format)
+Format is `orb-citekey-format'."
+  (string-match "\\(.*\\)%s\\(.*\\)" orb-citekey-format)
   (let ((beg (match-end 1))
         (end (+ (length citekey)
                 (- (match-beginning 2)
-                   (length org-roam-bibtex-citekey-format)))))
+                   (length orb-citekey-format)))))
     (substring citekey beg end)))
 
 
@@ -373,16 +373,16 @@ Format is `org-roam-bibtex-citekey-format'."
   (make-sparse-keymap)
   "Keymap for function `org-roam-bibtex-mode'.")
 
-(defun org-roam-bibtex-find-note-file (citekey)
+(defun orb-find-note-file (citekey)
   "Find note file associated from BibTeX’s CITEKEY.
 Returns the path to the note file, or nil if it doesn’t exist."
-  (let* ((citekey-formatted (format (or org-roam-bibtex-citekey-format "%s") citekey))
+  (let* ((citekey-formatted (format (or orb-citekey-format "%s") citekey))
          (completions (org-roam--get-ref-path-completions)))
     (cdr (assoc citekey-formatted completions))))
 
 ;;;###autoload
 (define-minor-mode org-roam-bibtex-mode
-  "Sets `org-roam-bibtex-edit-notes' as a function for editing bibliography notes.
+  "Sets `orb-edit-notes' as a function for editing bibliography notes.
 Affects Org-ref and Helm-bibtex/Ivy-bibtex.
 
 When called interactively, toggle `org-roam-bibtex-mode'. with prefix
@@ -395,24 +395,24 @@ Otherwise, behave as if called interactively."
   :lighter " orb"
   :keymap  org-roam-bibtex-mode-map
   :group 'org-roam-bibtex
-  :require 'org-roam-bibtex
+  :require 'orb
   :global t
   (cond (org-roam-bibtex-mode
-         (setq org-ref-notes-function 'org-roam-bibtex-notes-fn)
+         (setq org-ref-notes-function 'orb-notes-fn)
          (add-to-list 'bibtex-completion-find-note-functions
-                      #'org-roam-bibtex-find-note-file)
+                      #'orb-find-note-file)
          (advice-add 'bibtex-completion-edit-notes
-                     :override #'org-roam-bibtex-edit-notes-ad))
+                     :override #'orb-edit-notes-ad))
         (t
          (setq org-ref-notes-function 'org-ref-notes-function-one-file)
          (setq bibtex-completion-find-note-functions
-               (delq #'org-roam-bibtex-find-note-file
+               (delq #'orb-find-note-file
                      bibtex-completion-find-note-functions))
          (advice-remove 'bibtex-completion-edit-notes
-                        #'org-roam-bibtex-edit-notes-ad))))
+                        #'orb-edit-notes-ad))))
 
 ;;;###autoload
-(defun org-roam-bibtex-edit-notes (citekey)
+(defun orb-edit-notes (citekey)
   "Open an Org-roam note associated with the CITEKEY or create a new one.
 
 This function allows to use Org-roam as a backend for managing
@@ -432,22 +432,22 @@ The prompt presented by `org-roam-find-file' will thus be
 pre-populated with the record title.
 
 3. The template used to create the note is stored in
-`org-roam-bibtex-templates'.  If the variable is not defined,
-revert to using `org-roam-capture-templates'.  In the former
-case, a new file will be created and filled according to the
-template, possibly preformatted (see below) without additional
-user interaction.  In the latter case, an interactive
-`org-capture' process will be run.
+`orb-templates'.  If the variable is not defined, revert to using
+`org-roam-capture-templates'.  In the former case, a new file
+will be created and filled according to the template, possibly
+preformatted (see below) without additional user interaction.  In
+the latter case, an interactive `org-capture' process will be
+run.
 
-4. Optionally, when `org-roam-bibtex-preformat-templates' is
-non-nil, any prompt wildcards in `org-roam-bibtex-templates' or
+4. Optionally, when `orb-preformat-templates' is non-nil, any
+prompt wildcards in `orb-templates' or
 `org-roam-capture-templates' associated with the bibtex record
-fields as specified in `org-roam-bibtex-preformat-templates' will
-be preformatted.  Both `org-capture-templates' (%^{}) and
+fields as specified in `orb-preformat-templates' will be
+preformatted.  Both `org-capture-templates' (%^{}) and
 `org-roam-capture-templates' (`s-format', ${}) prompt syntaxes
 are supported.
 
-See `org-roam-bibtex-preformat-keywords' for more details on how
+See `orb-preformat-keywords' for more details on how
 to properly specify prompts for replacement.
 
 Please pay attention when using this feature that by setting
@@ -459,30 +459,29 @@ wildcards will be replace with the BibTeX field value.
 5. Optionally, if you are using Projectile and Persp-mode and
 have a dedicated workspace to work with your Org-roam collection,
 you may want to set the perspective name and project path in
-`org-roam-bibtex-persp-project' and
-`org-roam-bibtex-switch-persp' to t.  In this case, the
-perspective will be switched to the Org-roam notes project before
-calling any Org-roam functions."
+`orb-persp-project' and `orb-switch-persp' to t.  In this case,
+the perspective will be switched to the Org-roam notes project
+before calling any Org-roam functions."
   (unless org-roam-mode
     (org-roam-mode +1))
-  (let* ((citekey-formatted (format (or org-roam-bibtex-citekey-format "%s") citekey))
+  (let* ((citekey-formatted (format (or orb-citekey-format "%s") citekey))
          (note-info (list (cons 'ref citekey-formatted))))
     ;; Optionally switch to the notes perspective
-    (when org-roam-bibtex-switch-persp
-      (org-roam-bibtex--switch-perspective))
+    (when orb-switch-persp
+      (orb--switch-perspective))
     ;; Find org-roam reference with the CITEKEY
     (unless (ignore-errors (org-roam-find-ref note-info))
       ;; Check if the requested entry actually exists and fail gracefully
       (if-let* ((entry (bibtex-completion-get-entry citekey))
                 ;; Depending on the templates used, run org-roam--capture or call org-roam-find-file
-                (templates (or org-roam-bibtex-templates
+                (templates (or orb-templates
                                org-roam-capture-templates
                                (and (display-warning :warning "Could not find the requested templates.")
                                     nil)))
                 (org-roam-capture-templates
                  ;; Optionally preformat keywords
                  (or
-                  (when org-roam-bibtex-preformat-templates
+                  (when orb-preformat-templates
                     (let* ((tmpls (copy-tree templates))
                            result)
                       ;; HACK: Currently, there is no easy way to inject ourselves into
@@ -490,13 +489,13 @@ calling any Org-roam functions."
                       ;; all the templates beforehand, although only one will be used eventually.
                       ;; This is a waste of resources and may be slow with many templates.
                       (dolist (tmpl tmpls result)
-                        (cl-pushnew (org-roam-bibtex--preformat-template tmpl entry) result))))
+                        (cl-pushnew (orb--preformat-template tmpl entry) result))))
                   templates))
                 (title
                  (or (bibtex-completion-apa-get-value "title" entry)
                      "Title not found for this entry (Check your BibTeX file)")))
           ;; Check if a custom template has been set
-          (if org-roam-bibtex-templates
+          (if orb-templates
               (let ((org-roam-capture--context 'ref)
                     (org-roam-capture--info (list (cons 'title title)
                                                   (cons 'ref citekey-formatted)
@@ -507,23 +506,23 @@ calling any Org-roam functions."
         (message "Something went wrong. Check the *Warnings* buffer.")))))
 
 ;;;###autoload
-(defun org-roam-bibtex-find-non-ref-file (&optional initial-prompt)
+(defun orb-find-non-ref-file (&optional initial-prompt)
   "Find and open an Org-roam, non-ref file.
 INITIAL-PROMPT is the initial title prompt.
 See `org-roam-find-files' and
-`org-roam-bibtex--get-non-ref-path-completions' for details."
+`orb--get-non-ref-path-completions' for details."
   (interactive)
   (org-roam-find-file initial-prompt
-                      #'org-roam-bibtex--get-non-ref-path-completions))
+                      #'orb--get-non-ref-path-completions))
 
 ;;;###autoload
-(defun org-roam-bibtex-insert-non-ref (prefix)
+(defun orb-insert-non-ref (prefix)
   "Find a non-ref Org-roam file, and insert a relative org link to it at point.
 If PREFIX, downcase the title before insertion.  See
-`org-roam-insert' and
-`org-roam-bibtex--get-non-ref-path-completions' for details."
+`org-roam-insert' and `orb--get-non-ref-path-completions' for
+details."
   (interactive "P")
-  (org-roam-insert prefix #'org-roam-bibtex--get-non-ref-path-completions))
+  (org-roam-insert prefix #'orb--get-non-ref-path-completions))
 
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
