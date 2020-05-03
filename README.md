@@ -71,12 +71,12 @@ You can get `org-roam-bibtex` up and running by pasting the following sexps in y
 ```el
 ;; If you installed via MELPA
 (use-package org-roam-bibtex
-  :hook (org-roam-mode . orb-minor-mode))
+  :hook (org-roam-mode . org-roam-bibtex-mode))
 
 ;; If you cloned the repository
 (use-package org-roam-bibtex
   :load-path "~/projects/org-roam-bibtex/" ;Modify with your own path
-  :hook (org-roam-mode . orb-minor-mode))
+  :hook (org-roam-mode . org-roam-bibtex-mode))
 ```
 
 ### Without `use-package`
@@ -84,12 +84,12 @@ You can get `org-roam-bibtex` up and running by pasting the following sexps in y
 ```el
 ;; If you installed via MELPA
 (require 'org-roam-bibtex)
-(add-hook 'after-init-hook #'orb-minor-mode)
+(add-hook 'after-init-hook #'org-roam-bibtex-mode)
 
 ;; If you cloned the repository
 (add-to-list 'load-path "~/projects/org-roam-bibtex/") ;Modify with your own path
 (require 'org-roam-bibtex)
-(add-hook 'after-init-hook #'orb-minor-mode)
+(add-hook 'after-init-hook #'org-roam-bibtex-mode)
 ```
 
 Usage
@@ -97,7 +97,7 @@ Usage
 
 You can now access your bibliographical notes in your `org-roam-directory` via `helm-bibtex`/`ivy-bibtex` or by opening `org-ref` links.  This is done in the background by modifying the `Edit notes` actions used by these packages to use `orb-edit-notes` instead of their defaults.
 
-To revert those actions to their defaults, disable `orb-minor-mode`.
+To revert those actions to their defaults, disable `org-roam-bibtex-mode`.
 
 ### Commands
 
