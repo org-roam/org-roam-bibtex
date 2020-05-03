@@ -39,10 +39,10 @@
 ;;
 ;; To use it:
 ;;
-;; call interactively `org-bibtex-mode' or
-;; call (org-bibtex-mode +1) from Lisp.
+;; call interactively `org-roam-bibtex-mode' or
+;; call (org-roam-bibtex-mode +1) from Lisp.
 ;;
-;; After enabling `org-bibtex-mode', the function `orb-edit-notes' will
+;; After enabling `org-roam-bibtex-mode', the function `orb-edit-notes' will
 ;; shadow `bibtex-completion-edit-notes' in Helm-bibtex, Ivy-bibtex.
 ;;
 ;; Additionally, `orb-notes-fn', which is a simple wrapper around
@@ -369,9 +369,9 @@ Format is `orb-citekey-format'."
 
 ;; * Main functions
 
-(defvar org-bibtex-mode-map
+(defvar org-roam-bibtex-mode-map
   (make-sparse-keymap)
-  "Keymap for function `org-bibtex-mode'.")
+  "Keymap for function `org-roam-bibtex-mode'.")
 
 (defun orb-find-note-file (citekey)
   "Find note file associated from BibTeX’s CITEKEY.
@@ -381,23 +381,23 @@ Returns the path to the note file, or nil if it doesn’t exist."
     (cdr (assoc citekey-formatted completions))))
 
 ;;;###autoload
-(define-minor-mode org-bibtex-mode
+(define-minor-mode org-roam-bibtex-mode
   "Sets `orb-edit-notes' as a function for editing bibliography notes.
 Affects Org-ref and Helm-bibtex/Ivy-bibtex.
 
-When called interactively, toggle `org-bibtex-mode'. with prefix
-ARG, enable `org-bibtex-mode' if ARG is positive, otherwise disable
+When called interactively, toggle `org-roam-bibtex-mode'. with prefix
+ARG, enable `org-roam-bibtex-mode' if ARG is positive, otherwise disable
 it.
 
 When called from Lisp, enable `org-roam-mode' if ARG is omitted,
 nil, or positive.  If ARG is `toggle', toggle `org-roam-mode'.
 Otherwise, behave as if called interactively."
   :lighter " orb"
-  :keymap  org-bibtex-mode-map
+  :keymap  org-roam-bibtex-mode-map
   :group 'org-roam-bibtex
   :require 'orb
   :global t
-  (cond (org-bibtex-mode
+  (cond (org-roam-bibtex-mode
          (setq org-ref-notes-function 'orb-notes-fn)
          (add-to-list 'bibtex-completion-find-note-functions
                       #'orb-find-note-file)

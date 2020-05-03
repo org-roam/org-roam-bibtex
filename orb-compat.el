@@ -40,12 +40,10 @@
 (define-obsolete-variable-alias 'org-roam-bibtex-citekey-format 'orb-citekey-format "0.2")
 (define-obsolete-variable-alias 'org-roam-bibtex-persp-project 'orb-persp-project "0.2")
 (define-obsolete-variable-alias 'org-roam-bibtex-switch-persp 'orb-switch-persp "0.2")
-(define-obsolete-variable-alias 'org-roam-bibtex-mode-map 'orb-minor-mode-map "0.2")
 
 (define-obsolete-function-alias 'org-roam-bibtex-notes-fn 'orb-notes-fn "0.2")
 (define-obsolete-function-alias 'org-roam-bibtex-edit-notes-ad 'orb-edit-notes-ad "0.2")
 (define-obsolete-function-alias 'org-roam-bibtex-process-file-field 'orb-process-file-field "0.2")
-(define-obsolete-function-alias 'org-roam-bibtex-mode 'orb-minor-mode "0.2")
 (define-obsolete-function-alias 'org-roam-bibtex-edit-notes 'orb-edit-notes "0.2")
 (define-obsolete-function-alias 'org-roam-bibtex-find-non-ref-file 'orb-find-non-ref-file "0.2")
 (define-obsolete-function-alias 'org-roam-bibtex-insert-non-ref 'orb-insert-non-ref "0.2")
