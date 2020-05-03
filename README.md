@@ -153,14 +153,14 @@ The template prompt wildcards for preformatting.  Only relevant when `orb-prefor
 
 Use only alphanumerical characters, dash and underscore. See `orb-edit-notes` for implementation details.
 
-1. If the value is a string, a single keyword, it is treated as a BibTeX field name, such as `citekey`. In the following example all the prompts with the `citekey` keyword will be preformatted, as well as the corresponding match group `%\1`.
+1. If the value is a string, a single keyword, it is treated as a BibTeX field name, such as `=key=`. In the following example all the prompts with the `=key=` keyword will be preformatted, as well as the corresponding match group `%\1`.
 
 ```el
-(setq orb-preformat-keywords "citekey")
+(setq orb-preformat-keywords "=key=")
 (setq org-roam-capture-templates
       ’(("r" "reference" plain (function org-roam-capture--get-point)
-         "#+ROAM_KEY: %^{citekey}%? fullcite: %\1"
-         :file-name "references/${citekey}"
+         "#+ROAM_KEY: %^{=key=}%? fullcite: %\1"
+         :file-name "references/${=key=}"
          :head "#+TITLE: ${title}"
          :unnarrowed t)))
 ```
@@ -168,11 +168,11 @@ Use only alphanumerical characters, dash and underscore. See `orb-edit-notes` fo
 2. If the value is a list of strings they are also treated as BibTeX field names. The respective prompts will be preformatted.
 
 ```el
-(setq orb-preformat-keywords ’("citekey" "title"))
+(setq orb-preformat-keywords ’("=key=" "title"))
 (setq org-roam-capture-templates
       ’(("r" "reference" plain (function org-roam-capture--get-point)
-         "#+ROAM_KEY: %^{citekey}%? fullcite: %\1"
-         :file-name "references/${citekey}"
+         "#+ROAM_KEY: %^{=key=}%? fullcite: %\1"
+         :file-name "references/${=key=}"
          :head "#+TITLE: ${title}"
          :unnarrowed t)))
 ```
@@ -181,7 +181,7 @@ Use only alphanumerical characters, dash and underscore. See `orb-edit-notes` fo
 
 ```el
 (setq orb-preformat-keywords
-      '(("citekey" . "citekey")
+      '(("citekey" . "=key=")
        ("type" . "=type=")
        "title"))
 (setq org-roam-capture-templates
@@ -224,7 +224,7 @@ fullcite:%\1
 
 You can also use a function to generate the the template if you need something more advanced.  
 
-#### `%(orb-process-file-field \"${citekey}\")`
+#### `%(orb-process-file-field \"${=key=}\")`
 
 The convenience-function `orb-process-file-field` has been added to find documents associated with the BibTeX entry.  It is intended to be used inside your template via a `%`-escapes form for sexp (`%(sexp)`).  See `org-capture-templates` for details.
 
