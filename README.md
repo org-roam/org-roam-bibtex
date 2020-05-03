@@ -71,12 +71,16 @@ You can get `org-roam-bibtex` up and running by pasting the following sexps in y
 ```el
 ;; If you installed via MELPA
 (use-package org-roam-bibtex
-  :hook (org-roam-mode . org-roam-bibtex-mode))
+  :hook (org-roam-mode . org-roam-bibtex-mode
+  :bind (:map org-mode-map
+         (("C-c n a" . orb-note-actions)))))
 
 ;; If you cloned the repository
 (use-package org-roam-bibtex
   :load-path "~/projects/org-roam-bibtex/" ;Modify with your own path
-  :hook (org-roam-mode . org-roam-bibtex-mode))
+  :hook (org-roam-mode . org-roam-bibtex-mode)
+  :bind (:map org-mode-map
+         (("C-c n a" . orb-note-actions))))
 ```
 
 ### Without `use-package`
@@ -85,11 +89,13 @@ You can get `org-roam-bibtex` up and running by pasting the following sexps in y
 ;; If you installed via MELPA
 (require 'org-roam-bibtex)
 (add-hook 'after-init-hook #'org-roam-bibtex-mode)
+(define-key org-roam-bibtex-mode-map (kbd "C-c n a") #'orb-note-actions)
 
 ;; If you cloned the repository
 (add-to-list 'load-path "~/projects/org-roam-bibtex/") ;Modify with your own path
 (require 'org-roam-bibtex)
 (add-hook 'after-init-hook #'org-roam-bibtex-mode)
+(define-key org-roam-bibtex-mode-map (kbd "C-c n a") #'orb-note-actions)
 ```
 
 Usage
