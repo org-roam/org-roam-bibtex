@@ -381,6 +381,9 @@ Returns the path to the note file, or nil if it doesn’t exist."
     (cdr (assoc citekey-formatted completions))))
 
 ;;;###autoload
+(defalias 'org-roam-bibtex-minor-mode 'orb-minor-mode)
+
+;;;###autoload
 (define-minor-mode orb-minor-mode
   "Sets `orb-edit-notes' as a function for editing bibliography notes.
 Affects Org-ref and Helm-bibtex/Ivy-bibtex.
