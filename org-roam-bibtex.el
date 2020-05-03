@@ -39,10 +39,10 @@
 ;;
 ;; To use it:
 ;;
-;; call interactively `orb-minor-mode' or
-;; call (orb-minor-mode +1) from Lisp.
+;; call interactively `org-bibtex-mode' or
+;; call (org-bibtex-mode +1) from Lisp.
 ;;
-;; After enabling `orb-minor-mode', the function `orb-edit-notes' will
+;; After enabling `org-bibtex-mode', the function `orb-edit-notes' will
 ;; shadow `bibtex-completion-edit-notes' in Helm-bibtex, Ivy-bibtex.
 ;;
 ;; Additionally, `orb-notes-fn', which is a simple wrapper around
@@ -369,9 +369,9 @@ Format is `orb-citekey-format'."
 
 ;; * Main functions
 
-(defvar orb-minor-mode-map
+(defvar org-bibtex-mode-map
   (make-sparse-keymap)
-  "Keymap for function `orb-minor-mode'.")
+  "Keymap for function `org-bibtex-mode'.")
 
 (defun orb-find-note-file (citekey)
   "Find note file associated from BibTeX’s CITEKEY.
@@ -381,26 +381,23 @@ Returns the path to the note file, or nil if it doesn’t exist."
     (cdr (assoc citekey-formatted completions))))
 
 ;;;###autoload
-(defalias 'org-roam-bibtex-minor-mode 'orb-minor-mode)
-
-;;;###autoload
-(define-minor-mode orb-minor-mode
+(define-minor-mode org-bibtex-mode
   "Sets `orb-edit-notes' as a function for editing bibliography notes.
 Affects Org-ref and Helm-bibtex/Ivy-bibtex.
 
-When called interactively, toggle `orb-minor-mode'. with prefix
-ARG, enable `orb-minor-mode' if ARG is positive, otherwise disable
+When called interactively, toggle `org-bibtex-mode'. with prefix
+ARG, enable `org-bibtex-mode' if ARG is positive, otherwise disable
 it.
 
 When called from Lisp, enable `org-roam-mode' if ARG is omitted,
 nil, or positive.  If ARG is `toggle', toggle `org-roam-mode'.
 Otherwise, behave as if called interactively."
   :lighter " orb"
-  :keymap  orb-minor-mode-map
+  :keymap  org-bibtex-mode-map
   :group 'org-roam-bibtex
   :require 'orb
   :global t
-  (cond (orb-minor-mode
+  (cond (org-bibtex-mode
          (setq org-ref-notes-function 'orb-notes-fn)
          (add-to-list 'bibtex-completion-find-note-functions
                       #'orb-find-note-file)

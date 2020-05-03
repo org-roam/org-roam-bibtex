@@ -32,7 +32,7 @@ This means that a lot of things may change in the future (e.g. renaming variable
 
 ##### WARNING! 
 
-- **As of v0.2 `org-roam-bibtex` namespace was renamed into `orb`. Besides, `org-roam-bibtex-mode` is now `orb-minor-mode`. The existing functions and variables bearing the old prefix will be supported for a while but the support will be dropped eventually. All new functions and variables will have the new prefix.**
+- **In version 0.2, the `org-roam-bibtex` namespace was renamed to `orb`, except for `org-roam-bibtex-mode` and other definitions that match the `*-mode*` pattern. The existing functions and variables bearing the old prefix will be supported for a while but support will be dropped eventually. All new functions and variables will have the new prefix except those matching the `*-mode*` pattern, which will retain the `org-roam-bibtex` namespace.**
 
 Installation
 ---------------
