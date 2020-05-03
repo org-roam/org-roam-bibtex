@@ -139,7 +139,7 @@ You can modify it with `setq`.  For instance, if you want to add the cite-key in
 (setq orb-templates
       '(("r" "ref" plain (function org-roam-capture--get-point) ""
          :file-name "${citekey}"
-         :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}\n" ; <--
+         :head "#+TITLE: ${citekey}: ${title}\n#+ROAM_KEY: ${ref}\n" ; <--
          :unnarrowed t)))
 ```
 
@@ -153,14 +153,14 @@ The template prompt wildcards for preformatting.  Only relevant when `orb-prefor
 
 Use only alphanumerical characters, dash and underscore. See `orb-edit-notes` for implementation details.
 
-1. If the value is a string, a single keyword, it is treated as a BibTeX field name, such as `=key=`. In the following example all the prompts with the `=key=` keyword will be preformatted, as well as the corresponding match group `%\1`.
+1. If the value is a string, a single keyword, it is treated as a BibTeX field name, such as `citekey`. In the following example all the prompts with the `citekey` keyword will be preformatted, as well as the corresponding match group `%\1`.
 
 ```el
-(setq orb-preformat-keywords "=key=")
+(setq orb-preformat-keywords "citekey")
 (setq org-roam-capture-templates
       ’(("r" "reference" plain (function org-roam-capture--get-point)
-         "#+ROAM_KEY: %^{=key=}%? fullcite: %\1"
-         :file-name "references/${=key=}"
+         "#+ROAM_KEY: %^{citekey}%? fullcite: %\1"
+         :file-name "references/${citekey}"
          :head "#+TITLE: ${title}"
          :unnarrowed t)))
 ```
@@ -168,11 +168,11 @@ Use only alphanumerical characters, dash and underscore. See `orb-edit-notes` fo
 2. If the value is a list of strings they are also treated as BibTeX field names. The respective prompts will be preformatted.
 
 ```el
-(setq orb-preformat-keywords ’("=key=" "title"))
+(setq orb-preformat-keywords ’("citekey" "title"))
 (setq org-roam-capture-templates
       ’(("r" "reference" plain (function org-roam-capture--get-point)
-         "#+ROAM_KEY: %^{=key=}%? fullcite: %\1"
-         :file-name "references/${=key=}"
+         "#+ROAM_KEY: %^{citekey}%? fullcite: %\1"
+         :file-name "references/${citekey}"
          :head "#+TITLE: ${title}"
          :unnarrowed t)))
 ```
@@ -181,7 +181,7 @@ Use only alphanumerical characters, dash and underscore. See `orb-edit-notes` fo
 
 ```el
 (setq orb-preformat-keywords
-      '(("citekey" . "=key=")
+      '(("citekey" . "citekey")
        ("type" . "=type=")
        "title"))
 (setq org-roam-capture-templates
@@ -224,7 +224,7 @@ fullcite:%\1
 
 You can also use a function to generate the the template if you need something more advanced.  
 
-#### `%(orb-process-file-field \"${=key=}\")`
+#### `%(orb-process-file-field \"${citekey}\")`
 
 The convenience-function `orb-process-file-field` has been added to find documents associated with the BibTeX entry.  It is intended to be used inside your template via a `%`-escapes form for sexp (`%(sexp)`).  See `org-capture-templates` for details.
 
@@ -232,23 +232,23 @@ Below shows how this can be used to integrate with [org-noter](https://github.co
 
 ```el
 (setq orb-preformat-keywords
-   '("=key=" "title" "url" "file" "author-or-editor" "keywords"))
+   '("citekey" "title" "url" "file" "author-or-editor" "keywords"))
 
 (setq orb-templates
       '(("r" "ref" plain (function org-roam-capture--get-point)
          ""
          :file-name "${slug}"
-         :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}
+         :head "#+TITLE: ${citekey}: ${title}\n#+ROAM_KEY: ${ref}
 
 - tags ::
 - keywords :: ${keywords}
 
 * ${title}
 :PROPERTIES:
-:Custom_ID: ${=key=}
+:Custom_ID: ${citekey}
 :URL: ${url}
 :AUTHOR: ${author-or-editor}
-:NOTER_DOCUMENT: %(orb-process-file-field \"${=key=}\")
+:NOTER_DOCUMENT: %(orb-process-file-field \"${citekey}\")
 :NOTER_PAGE:
 :END:")))
 ```
