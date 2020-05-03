@@ -194,6 +194,13 @@ Use only alphanumerical characters, dash and underscore. See `orb-edit-notes` fo
          :unnarrowed t)))
 ```
 
+Note that, by default, `org-preformat-keywords` is only configured to replace `${citekey}` with the value of `=key=`:
+
+```el
+(setq orb-preformat-keywords
+      '(("citekey" . "=key=")))
+```
+
 Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex) package for additional information about BibTeX field names.
 
 ### Modifying templates
