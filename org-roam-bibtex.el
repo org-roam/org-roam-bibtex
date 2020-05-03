@@ -74,6 +74,8 @@
 (eval-when-compile
   (require 'subr-x)
   (require 'cl-lib))
+;;;; org-roam-bibtex features
+(require 'orb-note-actions)
 
 (defvar org-ref-notes-function)
 
