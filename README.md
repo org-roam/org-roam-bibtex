@@ -6,7 +6,7 @@
 org-roam-bibtex
 ============
 
-<img src="https://raw.githubusercontent.com/zaeph/org-roam-bibtex/master/doc/logo-r500.png" width="150">
+<img alt="ORB logo" src="doc/logo-r500.png" width="150">
 
 Description
 ---------------
@@ -15,10 +15,18 @@ Description
 
 It allows users to access their bibliographical notes in `org-roam-directory` via `helm-bibtex`, `ivy-bibtex`, or by opening `org-ref`’s `cite:` links and running `3. Add notes`.  If the note does not exist, it is created.
 
-Demo
----------------
 
-<img src="https://raw.githubusercontent.com/zaeph/org-roam-bibtex/master/doc/demo.gif" width="700">
+Quick Demonstration 🎬
+---------------
+Click the picture to go to the video:
+
+<a href="https://www.youtube.com/watch?v=Wy9WvF5gWYg">
+<img alt="Quick presentation (video)" src="doc/demo-thumbnail.jpg" width="700">
+</a>
+
+#### Another GIF demonstration
+
+<img alt="Demo (gif)" src="doc/demo.gif" width="700">
 
 A word of warning 🚧
 ---------------
