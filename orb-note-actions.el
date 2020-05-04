@@ -140,7 +140,7 @@ CITEKEY is the citekey." (capitalize frontend-name))
       (let ((actions-var (intern (concat "orb-note-actions-" (downcase type)))))
         (dolist (action (symbol-value actions-var))
           (cl-pushnew
-           `(,(format "%c" n) (,(cdr action) 'key) ,(car action) :column ,(concat type " actions"))
+           `(,(format "%c" n) (,(cdr action) (list ,citekey)) ,(car action) :column ,(concat type " actions"))
            actions)
           (setq n (1+ n)))))            ; TODO: figure out a way to supply mnemonic keys
     (setq actions (nreverse actions))
