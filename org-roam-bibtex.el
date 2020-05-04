@@ -350,11 +350,10 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
          (refs-path (->> (org-roam--get-ref-path-completions)
                          (mapcar #'cdr)))
          completions)
-    (dolist (candidate candidates completions)
+    (dolist (candidate candidates (nreverse completions))
       (let ((path (cdr candidate)))
         (unless (member path refs-path)
-          (setq completions (nconc completions
-                                   (list candidate))))))))
+          (push candidate completions))))))
 
 (defun orb--unformat-citekey (citekey)
   "Remove format from CITEKEY.
