@@ -464,13 +464,12 @@ the perspective will be switched to the Org-roam notes project
 before calling any Org-roam functions."
   (unless org-roam-mode
     (org-roam-mode +1))
-  (let* ((citekey-formatted (format (or orb-citekey-format "%s") citekey))
-         (note-info (list (cons 'ref citekey-formatted))))
+  (let* ((citekey-formatted (format (or orb-citekey-format "%s") citekey)))
     ;; Optionally switch to the notes perspective
     (when orb-switch-persp
       (orb--switch-perspective))
     ;; Find org-roam reference with the CITEKEY
-    (unless (ignore-errors (org-roam-find-ref note-info))
+    (unless (ignore-errors (org-roam--find-ref citekey))
       ;; Check if the requested entry actually exists and fail gracefully
       (if-let* ((entry (bibtex-completion-get-entry citekey))
                 ;; Depending on the templates used, run org-roam--capture or call org-roam-find-file
