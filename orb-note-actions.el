@@ -7,7 +7,7 @@
 ;; 	Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; URL: https://github.com/zaeph/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
-;; Version: 0.2.1
+;; Version: 0.2.2
 
 ;; This file is NOT part of GNU Emacs.
 
