@@ -68,7 +68,8 @@
   :group 'org-roam-bibtex)
 
 (defcustom orb-note-actions-extra
-  '(("Show record in the bibtex file" . bibtex-completion-show-entry))
+  '(("Save citekey to kill-ring and clipboard" . orb-note-actions-copy-citekey)
+    ("Show record in the bibtex file" . bibtex-completion-show-entry))
   "Extra actions for `orb-note-actions'.
 Each action is a cons cell DESCRIPTION . FUNCTION."
   :type '(alist
@@ -175,6 +176,15 @@ CITEKEY is the citekey." (capitalize frontend-name))
   "Run note actions on CITEKEY with FRONTEND."
   (let ((fun (intern (concat "orb-note-actions--" (symbol-name frontend)))))
     (funcall fun citekey)))
+
+;; * Note actions
+
+(defun orb-note-actions-copy-citekey (citekey)
+  "Save note's citekey to kill-ring and copy it to clipboard.
+Since CITEKEY is actually a list of one element, the car of the list is used."
+  (with-temp-buffer
+    (insert (car citekey))
+    (copy-region-as-kill (point-min) (point-max))))
 
 ;; * Main functions
 
