@@ -276,4 +276,4 @@ For help, support, or if you just want to hang out with us, you can find us here
 * **IRC**: channel **#org-roam** on [freenode](https://freenode.net/kb/answer/chat)
 * **Slack**: channel **#org-roam-bibtex** on [Org Roam](https://join.slack.com/t/orgroam/shared_invite/zt-deoqamys-043YQ~s5Tay3iJ5QRI~Lxg)
 
-### [Changelog](https://github.com/zaeph/org-roam-bibtex/CHANGELOG.md)
+### [Changelog](https://github.com/zaeph/org-roam-bibtex/blob/master/CHANGELOG.md)
