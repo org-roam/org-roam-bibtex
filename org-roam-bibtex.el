@@ -301,6 +301,11 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
          (plst (cdr template))          ; org-roam capture properties are here
          (rx "\\(%\\^{[[:alnum:]-_]*}\\)") ; regexp for org-capture prompt wildcard
          lst)
+    ;; Error if =key= is not preformatted in `orb-preformat-keywords'
+    (unless (or (member "=key=" kwds)
+                (rassoc "=key=" kwds))
+      (org-roam--with-template-error 'orb-preformat-keywords
+        (user-error "No preformating found for `=key='")))
     ;; First run:
     ;; 1) Make a list of (rplc-s field-value match-position) for the second run
     ;; 2) replace org-roam-capture wildcards

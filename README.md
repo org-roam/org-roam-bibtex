@@ -247,7 +247,7 @@ Below shows how this can be used to integrate with [org-noter](https://github.co
 
 ```el
 (setq orb-preformat-keywords
-   '("citekey" "title" "url" "file" "author-or-editor" "keywords"))
+   '(("citekey" . "=key=") "title" "url" "file" "author-or-editor" "keywords"))
 
 (setq orb-templates
       '(("r" "ref" plain (function org-roam-capture--get-point)
