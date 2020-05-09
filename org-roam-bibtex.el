@@ -290,9 +290,9 @@ The special keywords and their replacements are defined in
          (fields (mapcar #'cdr replacements)))
     (mapcar (lambda (kwd)
               (pcase kwd
-                ((pred stringp)
-                 (when (member kwd fields)
-                   (cons kwd (car (rassoc kwd replacements)))))
+                ((and (pred stringp)
+                      (pred (lambda (x) (member x fields))))
+                 (cons kwd (car (rassoc kwd replacements))))
                 (`(,kwd1 . ,kwd2)
                  (when (member kwd2 fields)
                    (cons kwd1 (car (rassoc kwd2 replacements)))))
