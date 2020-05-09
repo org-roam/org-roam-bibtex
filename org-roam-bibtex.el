@@ -404,9 +404,8 @@ Format is `orb-citekey-format'."
 (defun orb-find-note-file (citekey)
   "Find note file associated from BibTeX’s CITEKEY.
 Returns the path to the note file, or nil if it doesn’t exist."
-  (let* ((citekey-formatted (format (or orb-citekey-format "%s") citekey))
-         (completions (org-roam--get-ref-path-completions)))
-    (cdr (assoc citekey-formatted completions))))
+  (let* ((completions (org-roam--get-ref-path-completions)))
+    (cdr (assoc citekey completions))))
 
 ;;;###autoload
 (define-minor-mode org-roam-bibtex-mode
