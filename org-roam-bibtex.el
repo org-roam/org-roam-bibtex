@@ -275,14 +275,40 @@ to enter"
             (when (s-equals? p-name (car orb-persp-project))
               (persp-switch p-name))))))))
 
+(defvar orb--virtual-fields-replacements
+  '(("=type=" . "type")
+    ("=key=" . "citekey")
+    ("=has-pdf=" . "pdf?")
+    ("=has-note=" . "note?"))
+  "Alist of '='-embraced virtual-fields with their replacements.")
+
+(defun orb--replace-special-keywords (kwds)
+  "Replace special keywords in KWDS with their respective virtual field.
+The special keywords and their replacements are defined in
+`orb--virtual-fields-replacements'."
+  (let* ((replacements orb--virtual-fields-replacements)
+         (fields (mapcar #'cdr replacements)))
+    (mapcar (lambda (kwd)
+              (pcase kwd
+                ((pred stringp)
+                 (when (member kwd fields)
+                   (cons kwd (car (rassoc kwd replacements)))))
+                (`(,kwd1 . ,kwd2)
+                 (when (member kwd2 fields)
+                   (cons kwd1 (car (rassoc kwd2 replacements)))))
+                (_ kwd)))
+            kwds)))
+
 (defun orb--preformat-template (template entry)
   "Helper function for `orb--preformat-templates'.
 TEMPLATE is an element of `org-roam-capture-templates' and ENTRY
 is a BibTeX entry as returned by `bibtex-completion-get-entry'."
   ;; Handle org-roam-capture part
-  (let* ((kwds (if (listp orb-preformat-keywords) ; normalize orb-preformat-keywords
-                   orb-preformat-keywords
-                 (list orb-preformat-keywords)))
+  (let* ((kwds (->> (if (listp orb-preformat-keywords) ; normalize orb-preformat-keywords
+                        orb-preformat-keywords
+                      (list orb-preformat-keywords))
+                    ;; Replace special keywords with their corresponding virtual fields
+                    (orb--replace-special-keywords)))
          ;; Org-capture templates:
          ;; handle different types of org-capture-templates: string, file and function;
          ;; this is a stripped down version of `org-capture-get-template'
@@ -301,11 +327,6 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
          (plst (cdr template))          ; org-roam capture properties are here
          (rx "\\(%\\^{[[:alnum:]-_]*}\\)") ; regexp for org-capture prompt wildcard
          lst)
-    ;; Error if =key= is not preformatted in `orb-preformat-keywords'
-    (unless (or (member "=key=" kwds)
-                (rassoc "=key=" kwds))
-      (org-roam--with-template-error 'orb-preformat-keywords
-        (user-error "No preformating found for `=key='")))
     ;; First run:
     ;; 1) Make a list of (rplc-s field-value match-position) for the second run
     ;; 2) replace org-roam-capture wildcards
