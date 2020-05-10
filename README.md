@@ -28,6 +28,17 @@ Click the picture to go to the video:
 
 <img alt="Demo (gif)" src="doc/demo.gif" width="700">
 
+Articles
+---------------
+Here is a selection of articles that you may find interesting.
+
+#### Introduction to Org-roam
+- [How To Take Smart Notes With Org-mode](https://blog.jethro.dev/posts/how_to_take_smart_notes_org/) (by [@jethrokuan](https://github.com/jethrokuan))
+
+#### Workflow
+- [An Orgmode Note Workflow](https://rgoswami.me/posts/org-note-workflow/) (by [@HaoZeke](https://github.com/HaoZeke))
+
+
 A word of warning 🚧
 ---------------
 
