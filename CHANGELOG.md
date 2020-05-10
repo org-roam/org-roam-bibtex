@@ -8,6 +8,34 @@ Well, at least we try!
 
 ## [Unreleased]
 
+## [0.2.3] - 2020-05-10
+### Added
+- `orb--replace-virtual-field` and `orb--virtual-fields-alist` for
+  mapping `bibtex-completion` virtual field names to more conventional
+  words, namely these: 
+  ``` elisp
+  ("=type=" . "type")
+  ("=key=" . "citekey")
+  ("=has-pdf=" . "pdf?")
+  ("=has-note=" . "note?")
+  ```
+
+  From now on, `type`, `citekey`, `pdf?` and `note?` are recognized as
+  aliases of, respectively, `=type=`, `=key=`, `=has-pdf?` and
+  `=has-note=` in `orb-preformat-keywords`.
+- Throw an error if an `orb-preformat-keywords` element is neither a
+  string nor a cons cell.
+- Github funding badge
+
+### Changed
+- No more no less: [the upstream URL](https://github.com/org-roam/org-roam-bibtex.git)! We are now a
+  legit brethren of the Org-Roam family.
+
+### Fixed
+- `helm-bibtex` not showing the note indicator because
+  `orb-find-note-file` wasn't adjusted to the upstream changes in
+  `org-roam--get-ref-path-completions`
+
 ## [0.2.2] - 2020-05-06
 ### Added
 - CHANGELOG (this document)
@@ -65,7 +93,8 @@ Well, at least we try!
 [org-roam]: https://github.com/jethrokuan/org-roam
 [helm-bibtex/bibtex-completion]: https://github.com/tmalsburg/helm-bibtex
 
-[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.1.0...v0.2.0
