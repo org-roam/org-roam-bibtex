@@ -65,9 +65,9 @@ Well, at least we try!
 [org-roam]: https://github.com/jethrokuan/org-roam
 [helm-bibtex/bibtex-completion]: https://github.com/tmalsburg/helm-bibtex
 
-[Unreleased]: https://github.com/zaeph/org-roam-bibtex/compare/v0.2.2...HEAD
-[0.2.2]: https://github.com/zaeph/org-roam-bibtex/compare/v0.2.1...v0.2.2
-[0.2.1]: https://github.com/zaeph/org-roam-bibtex/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/zaeph/org-roam-bibtex/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/zaeph/org-roam-bibtex/releases/tag/v0.1.0
+[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/org-roam/org-roam-bibtex/releases/tag/v0.1.0
 
