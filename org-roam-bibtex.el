@@ -278,27 +278,27 @@ to enter"
             (when (s-equals? p-name (car orb-persp-project))
               (persp-switch p-name))))))))
 
-(defvar orb--virtual-fields-replacements
+(defvar orb--virtual-fields-alist
   '(("=type=" . "type")
     ("=key=" . "citekey")
     ("=has-pdf=" . "pdf?")
     ("=has-note=" . "note?"))
   "Alist of '='-embraced virtual-fields with their replacements.")
 
-(defun orb--replace-special-keywords (kwds)
+(defun orb--replace-virtual-fields (kwds)
   "Replace special keywords in KWDS with their respective virtual field.
 The special keywords and their replacements are defined in
-`orb--virtual-fields-replacements'."
-  (let* ((replacements orb--virtual-fields-replacements)
+`orb--virtual-fields-alist'."
+  (let* ((replacements orb--virtual-fields-alist)
          (fields (mapcar #'cdr replacements)))
     (mapcar (lambda (kwd)
               (pcase kwd
                 ((and (pred stringp)
                       (pred (lambda (x) (member x fields))))
                  (cons kwd (car (rassoc kwd replacements))))
-                (`(,kwd1 . ,kwd2)
-                 (when (member kwd2 fields)
-                   (cons kwd1 (car (rassoc kwd2 replacements)))))
+                (`(and (,kwd1 . ,kwd2)
+                       (member kwd2 fields))
+                 (cons kwd1 (car (rassoc kwd2 replacements))))
                 (_ kwd)))
             kwds)))
 
@@ -311,7 +311,7 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
                         orb-preformat-keywords
                       (list orb-preformat-keywords))
                     ;; Replace special keywords with their corresponding virtual fields
-                    (orb--replace-special-keywords)))
+                    (orb--replace-virtual-fields)))
          ;; Org-capture templates:
          ;; handle different types of org-capture-templates: string, file and function;
          ;; this is a stripped down version of `org-capture-get-template'
