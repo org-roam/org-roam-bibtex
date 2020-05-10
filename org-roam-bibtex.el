@@ -289,17 +289,22 @@ to enter"
   "Replace special keywords in KWDS with their respective virtual field.
 The special keywords and their replacements are defined in
 `orb--virtual-fields-alist'."
-  (let* ((replacements orb--virtual-fields-alist)
-         (fields (mapcar #'cdr replacements)))
+  (let* ((alist orb--virtual-fields-alist)
+         (fields (mapcar #'cdr alist)))
     (mapcar (lambda (kwd)
               (pcase kwd
-                ((and (pred stringp)
-                      (pred (lambda (x) (member x fields))))
-                 (cons kwd (car (rassoc kwd replacements))))
-                (`(and (,kwd1 . ,kwd2)
-                       (member kwd2 fields))
-                 (cons kwd1 (car (rassoc kwd2 replacements))))
-                (_ kwd)))
+                ((pred stringp)
+                 (if (member kwd fields)
+                     (cons kwd (car (rassoc kwd alist)))
+                   kwd))
+                (`(,kwd1 . ,kwd2)
+                 (if (member kwd2 fields)
+                     (cons kwd1 (car (rassoc kwd2 alist)))
+                   kwd))
+                (wrong-type
+                 (org-roam--with-template-error 'orb-preformat-keywords
+                   (signal 'wrong-type-argument
+                           `((stringp consp) ,wrong-type))))))
             kwds)))
 
 (defun orb--preformat-template (template entry)
