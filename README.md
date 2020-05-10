@@ -1,6 +1,6 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
-[![GitHub Release](https://img.shields.io/github/release/zaeph/org-roam-bibtex.svg)](https://github.com/zaeph/org-roam-bibtex/releases/)
+[![GitHub Release](https://img.shields.io/github/release/org-roam/org-roam-bibtex.svg)](https://github.com/org-roam/org-roam-bibtex/releases/)
 [![MELPA](https://melpa.org/packages/org-roam-bibtex-badge.svg)](https://melpa.org/#/org-roam-bibtex)
 
 org-roam-bibtex
@@ -63,11 +63,11 @@ You can also clone the repository somewhere in your `load-path`.  If you would l
 To do that:
 1. Create a directory where you’d like to clone the repository, e.g. `mkdir ~/projects`.
 2. `cd ~/projects`
-3. `git clone https://github.com/zaeph/org-roam-bibtex.git`
+3. `git clone https://github.com/org-roam/org-roam-bibtex.git`
 
 You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick-start](#quick-start-) to learn how to add it to your `load-path` and to get started with the package.
 
-(You can also copy [`org-roam-bibtex.el`](https://github.com/zaeph/org-roam-bibtex/blob/improve-readme/org-roam-bibtex.el) somewhere where `load-path` can access it, but you’d have to update the file manually.)
+(You can also copy [`org-roam-bibtex.el`](https://github.com/org-roam/org-roam-bibtex/blob/improve-readme/org-roam-bibtex.el) somewhere where `load-path` can access it, but you’d have to update the file manually.)
 
 Quick-start 🚀
 ---------------
@@ -276,4 +276,4 @@ For help, support, or if you just want to hang out with us, you can find us here
 * **IRC**: channel **#org-roam** on [freenode](https://freenode.net/kb/answer/chat)
 * **Slack**: channel **#org-roam-bibtex** on [Org Roam](https://join.slack.com/t/orgroam/shared_invite/zt-deoqamys-043YQ~s5Tay3iJ5QRI~Lxg)
 
-### [Changelog](https://github.com/zaeph/org-roam-bibtex/blob/master/CHANGELOG.md)
+### [Changelog](https://github.com/org-roam/org-roam-bibtex/blob/master/CHANGELOG.md)

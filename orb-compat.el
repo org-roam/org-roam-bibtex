@@ -5,7 +5,7 @@
 
 ;; Author: Leo Vivier <leo.vivier+dev@gmail.com>
 ;; 	Mykhailo Shevchuk <mail@mshevchuk.com>
-;; URL: https://github.com/zaeph/org-roam-bibtex
+;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
 ;; Version: 0.2.2
 
