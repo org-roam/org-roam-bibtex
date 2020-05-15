@@ -553,7 +553,7 @@ See `org-roam-find-files' and
 `orb--get-non-ref-path-completions' for details."
   (interactive)
   (org-roam-find-file initial-prompt
-                      #'orb--get-non-ref-path-completions))
+                      (orb--get-non-ref-path-completions)))
 
 ;;;###autoload
 (defun orb-insert-non-ref (prefix)
@@ -562,7 +562,7 @@ If PREFIX, downcase the title before insertion.  See
 `org-roam-insert' and `orb--get-non-ref-path-completions' for
 details."
   (interactive "P")
-  (org-roam-insert prefix #'orb--get-non-ref-path-completions))
+  (org-roam-insert prefix (orb--get-non-ref-path-completions)))
 
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
