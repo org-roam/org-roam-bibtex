@@ -375,19 +375,28 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
       (setf (nth 4 template) tp))
     template))
 
-(defun orb--get-non-ref-path-completions (&optional candidates)
+(defun orb--get-non-ref-path-completions ()
   "Return a list of cons for titles of non-ref notes to absolute path.
 CANDIDATES is a an alist of candidates to consider.  Defaults to
 `org-roam--get-title-path-completions' otherwise."
-  (let* ((candidates (or candidates
-                         (org-roam--get-title-path-completions)))
-         (refs-path (->> (org-roam--get-ref-path-completions)
-                         (mapcar #'cdr)))
-         completions)
-    (dolist (candidate candidates (nreverse completions))
-      (let ((path (cdr candidate)))
-        (unless (member path refs-path)
-          (push candidate completions))))))
+  (let* ((rows (org-roam-db-query [:select [titles:file titles:titles tags:tags] :from titles
+                                   :left :join tags
+                                   :on (= titles:file tags:file)
+                                   :left :join refs :on (= titles:file refs:file)
+                                   :where refs:file :is :null]))
+         (ht (make-hash-table :test 'equal)))
+    (dolist (row rows)
+      (pcase-let ((`(,file-path ,titles ,tags) row))
+        (let ((titles (or titles (list (org-roam--path-to-slug file-path)))))
+          (dolist (title titles)
+            (let ((k (concat
+                      (if tags
+                          (concat "(" (s-join org-roam-tag-separator tags) ") ")
+                        "")
+                      title))
+                  (v (list :path file-path :title title)))
+              (puthash k v ht))))))
+    ht))
 
 (defun orb--unformat-citekey (citekey)
   "Remove format from CITEKEY.
@@ -544,7 +553,7 @@ See `org-roam-find-files' and
 `orb--get-non-ref-path-completions' for details."
   (interactive)
   (org-roam-find-file initial-prompt
-                      #'orb--get-non-ref-path-completions))
+                      (orb--get-non-ref-path-completions)))
 
 ;;;###autoload
 (defun orb-insert-non-ref (prefix)
@@ -553,7 +562,7 @@ If PREFIX, downcase the title before insertion.  See
 `org-roam-insert' and `orb--get-non-ref-path-completions' for
 details."
   (interactive "P")
-  (org-roam-insert prefix #'orb--get-non-ref-path-completions))
+  (org-roam-insert prefix (orb--get-non-ref-path-completions)))
 
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
