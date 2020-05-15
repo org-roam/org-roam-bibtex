@@ -69,7 +69,8 @@
 
 (defcustom orb-note-actions-extra
   '(("Save citekey to kill-ring and clipboard" . orb-note-actions-copy-citekey)
-    ("Show record in the bibtex file" . bibtex-completion-show-entry))
+    ("Show record in the bibtex file" . bibtex-completion-show-entry)
+    ("Scrap pdf file for references" . orb-note-actions-scrap-pdf))
   "Extra actions for `orb-note-actions'.
 Each action is a cons cell DESCRIPTION . FUNCTION."
   :type '(alist
@@ -185,6 +186,11 @@ Since CITEKEY is actually a list of one element, the car of the list is used."
   (with-temp-buffer
     (insert (car citekey))
     (copy-region-as-kill (point-min) (point-max))))
+
+(defun orb-note-actions-scrap-pdf (citekey)
+  "Wrapper around `orb-reference-scrapper-insert'."
+  (orb-reference-scrapper-insert (car citekey)))
+
 
 ;; * Main functions
 

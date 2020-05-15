@@ -1,0 +1,454 @@
+#+STARTUP: noinlineimages noindent
+#+SETUPFILE: ~/Documents/org/setup/org-work.setup
+* Journal titles, abbreviations and letter codes
+
+|---+---+---+---+---+---+---+---+---|
+| [[A]] | [[B]] | [[C]] | [[D]] | [[E]] | [[F]] | [[G]] | [[H]] | [[I]] |
+|---+---+---+---+---+---+---+---+---|
+| [[J]] | [[K]] | [[L]] | [[M]] | [[N]] | [[O]] | [[P]] | [[Q]] | [[R]] |
+|---+---+---+---+---+---+---+---+---|
+| [[S]] | [[T]] | [[U]] | [[V]] | [[W]] | [[X]] | [[Y]] | [[Z]] |   |
+|---+---+---+---+---+---+---+---+---|
+
+#+name: journal-titles
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<A>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| AA         | Amino Acids                                                                                       | Amino Acids                                        |
+| AACT       | Antimicrobial Agents and Chemotherapy                                                             | Antimicrob. Agents Chemother.                      |
+| ABC-       | Analytical and Bioanalytical Chemistry                                                            | Anal. Bioanal. Chem.                               |
+| AC         | Analytical Chemistry                                                                              | Anal. Chem.                                        |
+| ACA        | Aldrichimica Acta                                                                                 | Aldrichimica Acta                                  |
+| ACH        | Annali di Chimica                                                                                 | Ann. Chim.                                         |
+| ACQ        | Actualite Chimique                                                                                | Actual. Chim.                                      |
+|            |                                                                                                   |                                                    |
+| AC-C       | Acta Crystallographica Section C: Crystal Structure Communications                                | Acta Crystallogr., Sect. C: Cryst. Struct. Commun. |
+| ACIS-      | Advances in Colloid and Interface Science                                                         | Adv. Colloid Interfac.                             |
+| ACR        | Accounts of Chemical Research                                                                     | Acc. Chem. Res.                                    |
+|            |                                                                                                   |                                                    |
+| ACS        | Acta Chemica Scandinavica                                                                         | Acta Chem. Scand.                                  |
+| ACSC       | ACS Catalysis                                                                                     | ACS Catal.                                         |
+| ACSAMI     | ACS Applied Materials & Interfaces                                                                | ACS Appl. Mater. Interfaces                        |
+| ACSEL      | ACS Energy Letters                                                                                | ACS Energy Lett.                                   |
+| ACSN       | ACS Nano                                                                                          | ACS Nano                                           |
+| ACSO       | ACS Omega                                                                                         | ACS Omega                                          |
+| ACSSCE     | ACS Sustainable Chemistry & Engineering                                                           | ACS Sustainable Chem. Eng.                         |
+| ACSSS      | American Chemical Society Symposium Series                                                        | ACS Symp. Ser.                                     |
+|            |                                                                                                   |                                                    |
+| ADVP       | Advances in Pharmacolohy                                                                          | Adv. Pharm.                                        |
+| AEM        | Advanced Energy Materials                                                                         | Adv. Energy Mater.                                 |
+| AFM        | Advanced Functional Materials                                                                     | Adv. Func. Mater.                                  |
+| AITE       | Archivum Immunologiae et Therapia Experimentalis                                                  | Arch. Immun. Therap. Exper.                        |
+| AJC        | Australian Journal of Chemistry                                                                   | Aust. J. Chem.                                     |
+| AJOC       | Asian Journal of Organic Chemistry                                                                | Asian J. Org. Chem.                                |
+|            |                                                                                                   |                                                    |
+| AM         | Advanced Materials                                                                                | Adv. Mater.                                        |
+| AMR        | Advanced Materials Research                                                                       | Adv. Mater. Res.                                   |
+| AN         | Angewandte Chemie                                                                                 | Angew. Chem.                                       |
+| ANIE       | Angewandte Chemie International Edition                                                           | Angew. Chem. Int. Ed.                              |
+| ANYAS      | Annals of the New York Academy of Sciences                                                        | Ann. N. Y. Acad. Sci.                              |
+| AOMC       | Advances in Organometallic Chemistry                                                              | Adv. Organomet. Chem.                              |
+|            |                                                                                                   |                                                    |
+| AP         | Archiv der Pharmazie                                                                              | Arch. Pharm.                                       |
+| ARKIVOC    | Arkivoc                                                                                           | Arkivoc                                            |
+| AS         | Anaesthesist                                                                                      | Anaesthesist                                       |
+| ASC-       | Advanced Synthesis & Catalysis                                                                    | Adv. Synth. Catal.                                 |
+| ASCI       | Applied Sciences                                                                                  | Appl. Sci.                                         |
+| ASS-       | Applied Surface Science                                                                           | Appl. Surf. Sci.                                   |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<B>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| BC         | Bioorganic Chemistry                                                                              | Bioorg. Chem.                                      |
+| BCC        | Bulgarian Chemistry Communications                                                                | Bulgar. Chem. Commun.                              |
+| BCJC       | Bioconjugate Chemistry                                                                            | Bioconjugate Chem.                                 |
+| BCP        | Biochemical Pharmacology                                                                          | Biochem. Pharm.                                    |
+| BCSJ       | Bulletin of the Chemical Society of Japan                                                         | Bull. Chem. Soc. Jpn.                              |
+| BCY        | Biochemistry                                                                                      | Biochemistry                                       |
+| BDCG-B-A   | Berichte der Deutschen Chemischen Gesselschaft, B: Abhandlungen                                   | Ber. Deutsch. Chem. Ges. B: Abhand.                |
+|            |                                                                                                   |                                                    |
+| BIRM       | BioInorganic Reaction Mechanisms                                                                  | BioInorg. React. Mech.                             |
+| BJOC       | Beilstein Journal of Organic Chemistry                                                            | Beilstein J. Org. Chem.                            |
+| BKCS       | Bulletin of the Korean Chemical Society                                                           | Bull. Korean Chem. Soc.                            |
+|            |                                                                                                   |                                                    |
+| BMC        | Bioorganic & Medicinal Chemistry                                                                  | Bioorg. Med. Chem.                                 |
+| BMCL       | Bioorganic & Medicinal Chemistry Letters                                                          | Bioorg. Med. Chem. Lett.                           |
+| BONE       | Bone                                                                                              | Bone                                               |
+|            |                                                                                                   |                                                    |
+| BSCF       | Bulletin de la Societe Chimique de France                                                         | Bull. Soc. Chim. Fr.                               |
+| BTJ        | Biotechnology Journal                                                                             | BTJ                                                |
+| BTL        | Biotechnology Letter                                                                              | Biotechnol. Lett.                                  |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<C>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| C          | Carbon                                                                                            | Carbon                                             |
+| CAJ        | Chemistry - An Asian Journal                                                                      | Chem. Asian J.                                     |
+| CAT        | Catalysts                                                                                         | Catalysts                                          |
+| CB         | Chemische Berichte                                                                                | Chem. Ber.                                         |
+| CHB        | Chemistry & Biology                                                                               | Chem. Biol.                                        |
+| CBC        | ChemBioChem                                                                                       | ChemBioChem                                        |
+|            |                                                                                                   |                                                    |
+| CC         | Chemical Communications                                                                           | Chem. Commun.                                      |
+| CCADD      | Current Computer-Aided Drug Design                                                                | Curr. Comput. Aided Drug Des.                      |
+| CCCC       | Collection of Czechoslovak Chemical Communications                                                | Collect. Czech. Chem. Commun.                      |
+| CCR        | Coordination Chemistry Reviews                                                                    | Coord. Chem. Rev.                                  |
+| CDDT       | Current Drug Discovery Technologies                                                               | Curr. Drug Discovery Technol.                      |
+|            |                                                                                                   |                                                    |
+| CEC        | CrystEngComm                                                                                      | CrystEngComm                                       |
+| CEJ        | Chemistry — A European Journal                                                                    | Chem. Eur. J.                                      |
+| CENJ-      | Chemical Engineering Journal                                                                      | Chem. Eng. J.                                      |
+| CET        | Chemical Engineering and Technology                                                               | Chem. Eng. Technol.                                |
+| CGD        | Crystal Growth & Design                                                                           | Cryst. Growth Des.                                 |
+| CH         | Chimia                                                                                            | Chimia                                             |
+| CHC        | Chemistry of Heterocyclic Compounds                                                               | Chem. Heterocycl. Compd.                           |
+| CJC        | Canadian Journal of Chemistry                                                                     | Can. J. Chem.                                      |
+| CJOC       | Chinese Journal of Organic Chemistry                                                              | Chinese J. Org. Chem.                              |
+| CL         | Chemistry Letters                                                                                 | Chem. Lett.                                        |
+|            |                                                                                                   |                                                    |
+| CM         | Chemistry of Materials                                                                            | Chem. Mater.                                       |
+| CMDC       | ChemMedChem                                                                                       | ChemMedChem                                        |
+| CMC        | Current Medicinal Chemistry                                                                       | Curr. Med. Chem.                                   |
+| CMCACA     | Current Medicinal Chemistry Anti-Cancer Agents                                                    | Curr. Med. Chem. Anti-Cancer Agents                |
+| CMMI       | Contrast Media & Molecular Imaging                                                                | Contrast Media Mol. Imaging                        |
+| CNC        | Chemistry of Natural Compounds                                                                    | Chem. Nat. Compd.                                  |
+|            |                                                                                                   |                                                    |
+| CO         | Clinical Oncology                                                                                 | Clin. Oncol.                                       |
+| COC        | Current Organic Chemistry                                                                         | Curr. Org. Chem.                                   |
+| COCB       | Current Opinion in Chemical Biology                                                               | Curr. Opin. Chem. Biol.                            |
+| COCIS      | Current Opinion in Colloid and Interface Science                                                  | Curr. Opin. Colloid Interface Sci.                 |
+| CP         | Chemical Physics                                                                                  | Chem. Phys.                                        |
+| CPE        | Chemical and Process Engineering                                                                  | Chem. Process Eng.                                 |
+| CPB        | Chemical & Pharmaceutical Bulletin                                                                | Chem. Pharm. Bull.                                 |
+| CPL-       | Chemical Physics Letters                                                                          | Chem. Phys. Lett                                   |
+|            |                                                                                                   |                                                    |
+| CR         | Carbohydrate Research                                                                             | Carbohydr. Res.                                    |
+| CRC        | Comptes Rendus Chimie                                                                             | C. R. Chim.                                        |
+| CRD        | Chemical Record                                                                                   | Chem. Rec.                                         |
+| CRT        | Chemical Research in Toxicology                                                                   | Chem. Res. Toxicol.                                |
+| CRV        | Chemical Reviews                                                                                  | Chem. Rev.                                         |
+|            |                                                                                                   |                                                    |
+| CS         | Chemical Science                                                                                  | Chem. Sci.                                         |
+| CS-B-B     | Colloids and Surfaces, B: Biointerfaces                                                           | Colloids Surf., B                                  |
+| CSC        | Crystal Structure Communications                                                                  | Cryst. Struct. Commun.                             |
+| CSUSC      | ChemSusChem                                                                                       | ChemSusChem                                        |
+| CSR        | Chemical Society Reviews                                                                          | Chem. Soc. Rev.                                    |
+| CST        | Catalysis Science & Technology                                                                    | Catal. Sci. Technol.                               |
+|            |                                                                                                   |                                                    |
+| CTMC       | Current Topics in Medicinal Chemistry                                                             | Curr. Top. Med. Chem.                              |
+| CUS        | Current Science                                                                                   | Curr. Sci.                                         |
+|            |                                                                                                   |                                                    |
+| CZ         | Chemiker-Zeitung                                                                                  | Chem.-Ztg.                                         |
+| CZV        | Chemicke Zvesti                                                                                   | Chem. Zvesti                                       |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<D>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| DDTT       | Drug Discovery Today: Technologies                                                                | Drug Discov. Today Technol.                        |
+| DMP        | Designed Monomers and Polymers                                                                    | Des. Monomers Polym.                               |
+| DPC        | Doklady Physical Chemistry                                                                        | Dokl. Phys. Chem.                                  |
+| DS-        | Desalination                                                                                      | Desalination                                       |
+| DT         | Dalton Transactions                                                                               | Dalton Trans.                                      |
+| DTA        | Drug Testing and Analysis                                                                         | Drug Test. Anal.                                   |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<E>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| EC         | Environmental Chemistry                                                                           | Environ. Chem.                                     |
+| ECA-       | Electrochimica Acta                                                                               | Electrochim. Acta                                  |
+| ECSSL      | Electrochemical and Solid-State Letters                                                           | Electrochem. Solid-State Lett.                     |
+| ECST       | ECS Transactions                                                                                  | ECS Trans.                                         |
+| ECSI-      | The Electrochemical Society Interface                                                             | Electrochem. Soc. Interface                        |
+| EES        | Energy & Environmental Science                                                                    | Energy Environ. Sci.                               |
+|            |                                                                                                   |                                                    |
+| EJIC       | European Journal of Inorganic Chemistry                                                           | Eur. J. Inorg. Chem.                               |
+| EJMC       | European Journal of Medicinal Chemistry                                                           | Eur. J. Med. Chem.                                 |
+| EJMSM      | European Journal of Mass Spectrometry                                                             | Eur. J. Mass Spectrom.                             |
+| EJOC       | European Journal of Organic Chemistry                                                             | Eur. J. Org. Chem.                                 |
+|            |                                                                                                   |                                                    |
+| EODMT      | Expert Opinion on Drug Metabolism & Toxicology                                                    | Expert Opin. Drug Metab. Toxicol.                  |
+| EMR        | eMagRes                                                                                           | eMagRes                                            |
+| ENP        | Environmental Pollution                                                                           | Environ. Pollut.                                   |
+| EP         | Environmental Progress                                                                            | Environ. Prog.                                     |
+| EPL        | EPL                                                                                               | EPL                                                |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<F>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| FE         | Ferroelectrics                                                                                    | Ferroelectrics                                     |
+| FEBS       | FEBS Journal                                                                                      | FEBS J.                                            |
+| FMC        | Future Medicinal Chemistry                                                                        | Future Med. Chem.                                  |
+| FNL        | Future Neurology                                                                                  | Future Neurol.                                     |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<G>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| GC         | Green Chemistry                                                                                   | Green Chem.                                        |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<H>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| H          | Heterocycles                                                                                      | Heterocycles                                       |
+| HC         | Heteroatom Chemistry                                                                              | Heteroatom Chem.                                   |
+| HCA        | Helvetica Chimica Acta                                                                            | Helv. Chim. Acta                                   |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<I>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| IAN-SK     | Izvestiya Akademii Nauk SSSR, Seriya Khimicheskaya                                                | Izv. Akad. Nauk SSSR, Ser. Khim.                   |
+|            |                                                                                                   |                                                    |
+| IC         | Inorganic Chemistry                                                                               | Inorg. Chem.                                       |
+| ICC        | Inorganic Chemistry Communnications                                                               | Inorg. Chem. Commun.                               |
+| ICA        | Inorganica Chimica Acta                                                                           | Inorg. Chim. Acta                                  |
+|            |                                                                                                   |                                                    |
+| IECR       | Industrial & Engineering Chemistry Research                                                       | Ind. Eng. Chem. Res.                               |
+| IF         | Il Farmaco                                                                                        | Il Farmaco                                         |
+| IJC        | Israel Journal of Chemistry                                                                       | Isr. J. Chem.                                      |
+| IJCS       | International Journal of Chemical Science                                                         | Int. J. Chem. Sci.                                 |
+|            |                                                                                                   |                                                    |
+| IS         | Inorganic Synthesis                                                                               | Inorg. Synth.                                      |
+| ISRNOC     | ISRN Organic Chemistry                                                                            | ISRN Organic Chemistry                             |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<J>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| JACS       | Journal of the American Chemical Society                                                          | J. Am. Chem. Soc.                                  |
+| JAPS       | Journal of Applied Polymer Science                                                                | J. Appl. Polym. Sci.                               |
+| JAST       | Journal of Adhesion Science and Technology                                                        | J. Adhes. Sci. Technol.                            |
+| JAWWA      | Journal of the America Water Works Association                                                    | J. Am. Water Works Ass.                            |
+|            |                                                                                                   |                                                    |
+| JBC        | Journal of Biological Chemistry                                                                   | J. Biol. Chem.                                     |
+| JBMC       | Journal of Bone and Mineral Research                                                              | J. Bone Miner. Res.                                |
+| JBMR-A     | Journal of Biomedical Materials Research. Part A                                                  | J. Biomed. Mat. Res., Part A                       |
+| JBMR-B     | Journal of Biomedical Materials Research. Part B                                                  | J. Biomed. Mat. Res., Part B                       |
+|            |                                                                                                   |                                                    |
+| JC         | Journal of Chemistry                                                                              | J. Chem.                                           |
+| JCE        | Journal of Chemical Ecology                                                                       | J. Chem. Ecol.                                     |
+| JCED       | Journal of Chemical Engineering Data                                                              | J. Chem. Eng. Data                                 |
+| JCG        | Journal of Chromatography                                                                         | J. Chromatogr.                                     |
+| JCP        | Journal of Chemical Physics                                                                       | J. Chem. Phys.                                     |
+| JCR-S      | Journal of Chemical Research, Synopses                                                            | J. Chem. Res., Synop.                              |
+| JCSC       | Journal of Chemical Science                                                                       | J. Chem. Sci.                                      |
+|            |                                                                                                   |                                                    |
+| JCS-CC     | Journal of the Chemical Society D: Chemical Communications                                        | J. Chem. Soc., Chem. Commun.                       |
+| JCS-DT     | Journal of the Chemical Society, Dalton Transactions                                              | J. Chem. Soc. Dalton Trans.                        |
+| JCS-O      | Journal of the Chemical Society C: Organic                                                        | J. Chem. Soc. C                                    |
+| JCS-P1     | Journal of the Chemical Society, Perkin Transactions 1                                            | J. Chem. Soc., Perkin Trans. 1                     |
+| JCS-P2     | Journal of the Chemical Society, Perkin Transactions 2                                            | J. Chem. Soc., Perkin Trans. 2                     |
+|            |                                                                                                   |                                                    |
+| JEAC-      | Journal of Electroanalitical Chemistry                                                            | J. Electroanal. Chem.                              |
+| JECS       | Journal of the Electrochemical Society                                                            | J. Electrochem. Soc.                               |
+| JESH-A     | Journal of Environmental Science and Health, Part A                                               | J. Environ. Sci. Health., Part A                   |
+| JESH-B     | Journal of Environmental Science and Health, Part B                                               | J. Environ. Sci. Health., Part B                   |
+|            |                                                                                                   |                                                    |
+| JFC-       | Journal of Fluorine Chemistry                                                                     | J. Fluorine Chem.                                  |
+| JHC        | Journal of Heterocyclic Chemistry                                                                 | J. Heterocycl. Chem.                               |
+| JIB        | Journal of Inorganic Biochemistry                                                                 | J. Inorg. Biochem.                                 |
+| JINC       | Journal of Inorganic and Nuclear Chemistry                                                        | J. Inorg. Nucl. Chem.                              |
+| JLAC       | Justus Liebigs Annalen der Chemie                                                                 | Justus Liebigs Ann. Chem.                          |
+| JLCR       | Journal of Labelled Compounds and Radiopharmaceuticals                                            | J. Labelled Compd. Rad.                            |
+|            |                                                                                                   |                                                    |
+| JMAC       | Journal of Materials Chemistry                                                                    | J. Mater. Chem.                                    |
+| JMAC-A     | Journal of Materials Chemistry A                                                                  | J. Mater. Chem. A                                  |
+| JMB        | Journal of Molecular Biology                                                                      | J. Molecular Biol.                                 |
+| JMC        | Journal of Medicinal Chemistry                                                                    | J. Med. Chem.                                      |
+| JMCL-AC    | Journal of Molecular Catalysis A: Chemical                                                        | J. Mol. Catal. A-Chem.                             |
+| JMGM       | Journal of Molecular Graphics and Modelling                                                       | J. Mol. Graphics Modell.                           |
+| JML-       | Journal of Molecular Liquids                                                                      | J. Mol. Liq.                                       |
+| JMMS-AC    | Journal of Macromolecular Science: Part A - Chemistry                                             | J. Macromol. Sci. Chem.                            |
+| JMS        | Journal of Molecular Structure                                                                    | J. Mol. Struct.                                    |
+| JMSM       | Journal of Mass Spectrometry                                                                      | J. Mass Spectrom.                                  |
+| JMSC-      | Journal o  Membrane Science                                                                       | J. Membrane Sci.                                   |
+| JNM        | Journal of Nuclear Medicine                                                                       | J. Nucl. Med.                                      |
+|            |                                                                                                   |                                                    |
+| J          | Joule                                                                                             | Joule                                              |
+| JOC        | The Journal of Organic Chemistry                                                                  | J. Org. Chem.                                      |
+| JOMC:      | Journal of Organometalic Chemistry                                                                | J. Organomet. Chem.                                |
+| JPC-A      | Journal of Physical Chemistry A                                                                   | J. Phys. Chem. A                                   |
+| JPC-B      | Journal of Physical Chemistry B                                                                   | J. Phys. Chem. B                                   |
+| JPC-C      | Journal of Physical Chemistry C                                                                   | J. Phys. Chem. C                                   |
+| JPOC       | Journal of Physical Organic Chemistry                                                             | J. Phys. Org. Chem.                                |
+| JPWS-      | Journal of Power Sources                                                                          | J. Power Sources                                   |
+| JPS-A-PC   | Journal of Polymer Science Part A: Polymer Chemistry                                              | J. Polym. Sci. Part A: Polym. Chem.                |
+| JPS-A1     | Journal of Polymer Science Part A-1                                                               | J. Polym. Sci. A-1                                 |
+| JPST       | Journal of Photopolymer Science and Technology                                                    | J. Photopolym. Sci. Technol.                       |
+| JSC        | Journal of Solution Chemistry                                                                     | J. Solution Chem.                                  |
+| JSSE       | Journal of Solid State Electrochemistry                                                           | J. Solid State Electr.                             |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<K>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| KMJ        | Korean Membrane Journal                                                                           | Korean Membr. J.                                   |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<L>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| L          | Langmuir                                                                                          | Langmuir                                           |
+| LAC        | Liebigs Annelen der Chemie                                                                        | Liebigs Ann. Chem.                                 |
+| LC-        | Liquid Crystals                                                                                   | Liq. Cryst.                                        |
+| LOC        | Letters in Organic Chemistry                                                                      | Lett. Org. Chem.                                   |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<M>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| M          | Molecules                                                                                         | Molecules                                          |
+| MC         | Mendeleev Communications                                                                          | Mendeleev Commun.                                  |
+| MCLC       | Molecular Crystals and Liquid Crystals                                                            | Mol. Cryst. Liq. Cryst.                            |
+| MCR        | Medicinal Chemistry Research                                                                      | Med. Chem. Res.                                    |
+| MEE-       | Microelectronic Engineering                                                                       | Microelectron. Eng.                                |
+|            |                                                                                                   |                                                    |
+| MHC        | Monatshefte für Chemie                                                                            | Montash. Chem.                                     |
+| MKITE      | Memoirs of the Kyushu Institute of Technology. Engineering                                        | Memoirs KIT.Engineering                            |
+| MM         | Macromolecules                                                                                    | Macromolecules                                     |
+| MMB        | Methods in Molecular Biology                                                                      | Meth. Mol. Biol.                                   |
+| MMRC       | Macromolecular Rapid Communications                                                               | Macromol. Rapid Commun.                            |
+|            |                                                                                                   |                                                    |
+| MP         | Molecular Pharmacology                                                                            | Mol. Pharmacol.                                    |
+| MRC        | Magnetic Resonance in Chemistry                                                                   | Magn. Res. Chem.                                   |
+| MRR        | Medicinal Research Reviews                                                                        | Med. Res. Rev                                      |
+| MRSB       | MRS Bulletin                                                                                      | MRS Bull.                                          |
+| MSC        | Monatschefte für Chemie                                                                           | Monatsch. Chem.                                    |
+| MSE-C      | Material Science & Engineering, C: Materials for Biological Applications                          | Mater. Sci. Eng., C                                |
+| MT         | Materials Today                                                                                   | Mater. Today                                       |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<N>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| N          | Nature                                                                                            | Nature                                             |
+| NC         | Nature Communications                                                                             | Nat. Commun.                                       |
+| NATO-ASI-C | NATO ASI Series, Series C:  Mathematical and Physical Sciences                                    | NATO ASI Ser., Ser. C                              |
+| NE-        | Nano Energy                                                                                       | Nano Energy                                        |
+| NL         | Nano Letters                                                                                      | Nano Lett.                                         |
+|            |                                                                                                   |                                                    |
+| NM         | Neuromethods                                                                                      | Neuromethods                                       |
+| NMB        | Nuclear Medicine and Biology                                                                      | Nucl. Med. Biol.                                   |
+| NN         | Nucleosides and Nucleotides                                                                       | Nucleos. Nucleot.                                  |
+| NNN        | Nucleosides, Nucleotides and Nucleic Acids                                                        | Nucleos. Nucleot. Nucl.                            |
+| NPR        | Natural Product Reports                                                                           | Nat. Prod. Rep.                                    |
+| NJC        | New Journal of Chemistry                                                                          | New J. Chem.                                       |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<O>>  [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                       |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| OBC        | Organic & Biomolecular Chemistry                                                                  | Org. Biomol. Chem.                                 |
+| OCF        | Organic Chemistry Frontiers                                                                       | Org. Chem. Front.                                  |
+| OER        | Opto-Electronics Review                                                                           | Opto-Electron. Rev.                                |
+|            |                                                                                                   |                                                    |
+| OL         | Organic Letters                                                                                   | Org. Lett.                                         |
+| OM         | Organometallics                                                                                   | Organometallics                                    |
+|            |                                                                                                   |                                                    |
+| OPRD       | Organic Process Research & Development                                                            | Org. Process Res. Dev.                             |
+| OR         | Organic Reactions (book series)                                                                   | Organic Reactions                                  |
+| OS         | Organic Synthesis                                                                                 | Org. Synth.                                        |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<P>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| P          | Polyhedron                                                                                        | Polyhedron                                         |
+| PAC        | Pure and Applied Chemistry                                                                        | Pure Appl. Chem.                                   |
+| PC         | Phytochemistry                                                                                    | Phytochemistry                                     |
+| PCPB       | Photochemistry and Photobiology                                                                   | Photochem. Photobiol.                              |
+| PES        | Polymer Engineering & Science                                                                     | Polym. Eng. Sci.                                   |
+|            |                                                                                                   |                                                    |
+|            |                                                                                                   |                                                    |
+| PHCH       | Der Pharma Chemica                                                                                | Chemica, Pharma.                                   |
+| PI         | Polymer International                                                                             | Polym. Int.                                        |
+| PJ         | Polymer Journal                                                                                   | Polymer J.                                         |
+| PJC        | Polish Journal of Chemistry                                                                       | Pol. J. Chem.                                      |
+| PM         | Polymer                                                                                           | Polymer                                            |
+| PMC        | Polymer Communications                                                                            | Polym. Commun.                                     |
+| PMS        | Pesticide Management Science                                                                      | Pest. Manag. Sci.                                  |
+| PMSE       | Polymer Materials: Science and Engineering                                                        | Polym. Mater. Sci. Eng.                            |
+|            |                                                                                                   |                                                    |
+| PNAS       | Proceedings of the National Academy of Sciences of the United States of America                   | Proc. Nat. Acad. Sci. U. S. A.                     |
+| PNICOBBPW  | Prace Naukowe Instytutu Chemii Organicznej, Biochemii i Biotechnologii Politechniki Wroclawskiej. | Prac. Nauk. ICOBB Politech. Wroclaw.               |
+| PPS        | Progress in Polymer Science                                                                       | Prog. Polym. Sci.                                  |
+|            |                                                                                                   |                                                    |
+| PP         | Photochemistry and Photobiology                                                                   | Photochem. Photobiol.                              |
+| PR         | Pharmaceutical Research                                                                           | Pharm. Res.                                        |
+| PS-D       | Polymer Science, Series D                                                                         | Polym. Sci., Ser. D                                |
+| PSPIE      | Proceedings of SPIE-The International Society for Optical Engineering                             | Proc. SPIE-Int. Soc. Opt. Eng.                     |
+| PSS:       | Phosphorus, Sulfur, and Silicon and the Related Elements                                          | Phosphorus, Sulfur Silicon Relat Elem.             |
+| PSSC       | Progress in Solid State Chemistry                                                                 | Prog. Solid State Chem.                            |
+| PT:        | Phase Transitions                                                                                 | Phase Transitions                                  |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<Q>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<R>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| RCCPP      | Research Communications in Chemical Pathology and Pharmacology                                    | Res. Comm. Chem. Pathol. Pharmacol.                |
+| RCR        | Russian Chemical Reviews                                                                          | Russ. Chem. Rev.                                   |
+|            |                                                                                                   |                                                    |
+| RFP        | Reactive and Functional Polymers                                                                  | React. Func. Polym.                                |
+| RHC        | Reviews on Heteroatom Chemistry                                                                   | Rev. Heteroat Chem.                                |
+| RJEC       | Russian Journal of Electrochemistry                                                               | Russ. J. Electrochem.                              |
+| RJGC       | Russian Journal of General Chemistry                                                              | Russ. J. Gen. Chem.                                |
+| RJOC       | Russian Journal of Organic Chemistry                                                              | Russ. J. Org. Chem.                                |
+|            |                                                                                                   |                                                    |
+| RPQ        | Revista Portuguesa de Quimica                                                                     | Rev. Port. Quim.                                   |
+| RRDOC      | Recent Research Developments in Organic Chemistry                                                 | Rec. Res. Devel. Org. Chem.                        |
+| RSCA       | RSC Advances                                                                                      | RSC Adv.                                           |
+| RSCDDS     | RSC Drug Discovery Series                                                                         | RSC Drug Discovery Ser.                            |
+| RTCPB      | Recueil des Travaux Chimiques des Pays-Bas                                                        | Recl. Trav. Chim. Pay-B.                           |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<S>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| S          | Synthesis                                                                                         | Synthesis                                          |
+| SA-A       | Spectrochimica Acta, Part A:  Molecular and Biomolecular Spectroscopy                             | Spectrochim. Acta, Part A                          |
+| SAM        | Science of Advanced Materials                                                                     | Sci. Adv. Mater.                                   |
+| SAJC       | South African Journal of Chemistry                                                                | South Afr. J. Chem.                                |
+|            |                                                                                                   |                                                    |
+| SC         | Synthetic Communications                                                                          | Synth. Commun.                                     |
+| SCI-       | Science                                                                                           | Science                                            |
+| SIA        | Surface and Interface Analysis                                                                    | Surf. Interface Anal.                              |
+| SL         | Synlett                                                                                           | Synlett                                            |
+|            |                                                                                                   |                                                    |
+| SEMSC      | Solar Energy Materials and Solar Cells                                                            | Sol. Energ. Mater. Sol. C.                         |
+| SPM        | Separation and Purification Methods                                                               | Separ. Purif. Method.                              |
+| SPT        | Separation adn Purification Technology                                                            | Sep. Purif. Technol.                               |
+| SRIMOC     | Synthesis and Reactivity in Inorganic and Metal-Organic                                           | Synth. React. Inorg. Met.-Org. Chem.               |
+| SRIMONMC   | Synthesis and Reactivity in Inorganic, Metal-Organic, and Nano-Metal Chemistry                    | Synth. React. Inorg. Met.-Org. Nano-Met. Chem.     |
+| SS         | Science of Synthesis                                                                              | Sci. Synth.                                        |
+| SSS        | Solid State Sciences                                                                              | Solid State Sci.                                   |
+| SST        | Separation Science and Technology                                                                 | Separ. Sci. Technol.                               |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<T>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| T          | Tetrahedron                                                                                       | Tetrahedron                                        |
+| TA         | Tetrahedron: Asymmetry                                                                            | Tetrahedron: Asymmetry                             |
+| TAL        | Talanta                                                                                           | Talanta                                            |
+| TI-        | Tribology International                                                                           | Tribol. Int.                                       |
+| TCC        | Topics in Current Chemistry                                                                       | Top. Curr. Chem.                                   |
+|            |                                                                                                   |                                                    |
+| TFS        | Transactions of the Faraday Society                                                               | Trans. Faraday Soc.                                |
+| TL         | Tetrahedron Letters                                                                               | Tetrahedron Lett.                                  |
+| TOMC       | Topic in Organometallic Chemistry                                                                 | TOMC                                               |
+| TSF        | Thin Solid Films                                                                                  | Thin Solid Films                                   |
+| TXL        | Toxicology Letters                                                                                | Toxicol. Lett.                                     |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<U>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| UW         | Ultrapure Water                                                                                   | Ultrapure Water                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<V>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<W>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| WIRNN      | Wiley Interdisciplinary Reviews: Nanomedicine and Nanobiotechnology                               | Wiley Interdiscip. Rev.: Nanomed. Nanobiotechnol.  |
+|            |                                                                                                   |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<X>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<Y>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| YJBM       | Yale Journal of Biology and Medicine                                                              | Yale J. Biol. Med.                                 |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+|            | <<Z>>   [[Journal%20titles,%20abbreviations%20and%20letter%20codes][Back]]                                                                                      |                                                    |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+| ZC         | Zeitschrift für Chemie                                                                            | Z. Chem.                                           |
+| ZAAC       | Zeitschrift fuer Anorganische und Allgemeine Chemie                                               | Z. Anorg. Allg. Chem.                              |
+| ZN-B-CS    | Zeitschrift fuer Naturforschung, B:  Chemical Sciences                                            | Z. Naturforsch., B:  Chem. Sci.                    |
+|            |                                                                                                   |                                                    |
+| ZOK        | Zhurnal Obshchej Khimii                                                                           | Zh. Obshch. Khim.                                  |
+| ZORK       | Zhurnal Organicheskoi Khimii                                                                      | Zh. Org. Khim.                                     |
+| ZPC        | Zeitschrift fuer Physikalische Chemie                                                             | Z. Phys. Chem.                                     |
+|------------+---------------------------------------------------------------------------------------------------+----------------------------------------------------|
+
+This source code block exports the above table into a tsv file in the default bib directory.
+
+#+name: table2csv
+#+begin_src elisp :var table=journal-titles filename="journal_titles.tsv" :results silent
+(let* ((titles (orgtbl-to-tsv table nil))
+       (regexp1 "^\t*<<[A-Z]>>\t*[A-z0-9% ,]*")
+       (regexp2 "^[ \t]*\n")
+       (result (concat "abbreviation" "\t" "title" "\t" "shorttitle\n"
+                       (replace-regexp-in-string regexp2 ""
+                                                 (replace-regexp-in-string regexp1 "" titles))))
+       (file (f-join (f-dirname (buffer-file-name)) filename)))
+  (write-region result nil file nil nil nil nil))
+#+end_src
