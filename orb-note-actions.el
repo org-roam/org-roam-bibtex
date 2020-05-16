@@ -44,7 +44,7 @@
 ;; * Library requires
 
 (require 'org-roam-bibtex)
-(require 'orb-reference-scrapper)
+(require 'orb-pdf-scrapper)
 
 (require 'warnings)
 (require 'cl-lib)
@@ -72,7 +72,7 @@
 (defcustom orb-note-actions-extra
   '(("Save citekey to kill-ring and clipboard" . orb-note-actions-copy-citekey)
     ("Show record in the bibtex file" . bibtex-completion-show-entry)
-    ("Scrap pdf file for references" . orb-note-actions-scrap-pdf))
+    ("Run Orb PDF Scrapper" . orb-note-actions-scrap-pdf))
   "Extra actions for `orb-note-actions'.
 Each action is a cons cell DESCRIPTION . FUNCTION."
   :type '(alist
@@ -190,9 +190,9 @@ CITEKEY is a list whose car is a citation key."
     (copy-region-as-kill (point-min) (point-max))))
 
 (defun orb-note-actions-scrap-pdf (citekey)
-  "Wrapper around `orb-reference-scrapper-insert'.
+  "Wrapper around `orb-pdf-scrapper-insert'.
 CITEKEY is a list whose car is a citation key."
-  (orb-reference-scrapper-run (car citekey)))
+  (orb-pdf-scrapper-run (car citekey)))
 
 
 ;; * Main functions
