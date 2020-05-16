@@ -28,7 +28,7 @@
 
 ;;; Commentary:
 ;;
-;; Obsolete definitions live here. For a while.
+;; Obsolete definitions live here.  For a while.
 
 ;;; Code:
 
