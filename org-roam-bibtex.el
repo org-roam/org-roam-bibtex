@@ -433,6 +433,8 @@ Otherwise, behave as if called interactively."
          (setq org-ref-notes-function 'orb-notes-fn)
          (add-to-list 'bibtex-completion-find-note-functions
                       #'orb-find-note-file)
+         (add-to-list 'bibtex-completion-key-at-point-functions
+                      #'bibtex-completion-get-key-org-roam)
          (advice-add 'bibtex-completion-edit-notes
                      :override #'orb-edit-notes-ad))
         (t
@@ -440,8 +442,22 @@ Otherwise, behave as if called interactively."
          (setq bibtex-completion-find-note-functions
                (delq #'orb-find-note-file
                      bibtex-completion-find-note-functions))
+         (setq bibtex-completion-key-at-point-functions
+               (delq #'bibtex-completion-get-key-org-roam
+                     bibtex-completion-key-at-point-functions))
          (advice-remove 'bibtex-completion-edit-notes
                         #'orb-edit-notes-ad))))
+
+;;;###autoload
+(defun bibtex-completion-get-key-org-roam ()
+  "Return the key of the BibTeX entry at point, nil otherwise.
+This function can be used by `bibtex-completion-key-at-point' to
+find the key of the BibTeX entry at point in an Org-roam buffer."
+  (when (require 'org-roam nil t)
+    (if-let ((data (org-roam--extract-ref)))
+        (pcase-let* ((`(,type . ,ref) data))
+          (when (string= type "cite")
+            ref)))))
 
 ;;;###autoload
 (defun orb-edit-notes (citekey)
