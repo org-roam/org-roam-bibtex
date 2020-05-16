@@ -44,6 +44,7 @@
 ;; * Library requires
 
 (require 'org-roam-bibtex)
+
 (require 'warnings)
 (require 'cl-lib)
 ;; TODO: get rid of after we have our own format function
@@ -209,7 +210,7 @@ user actions can be set in `orb-note-actions-user'."
                               '("ROAM_KEY"))))))
     ;; remove format from citekey
     (when orb-citekey-format
-      (setq citekey (orb--unformat-citekey citekey)))
+      (setq citekey (orb-unformat-citekey citekey)))
     (if citekey
         (cond ((member
                 orb-note-actions-frontend
