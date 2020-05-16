@@ -412,7 +412,7 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
   "Find note file associated from BibTeX’s CITEKEY.
 Returns the path to the note file, or nil if it doesn’t exist."
   (let* ((completions (org-roam--get-ref-path-completions)))
-    (cdr (assoc citekey completions))))
+    (gethash citekey completions)))
 
 ;;;###autoload
 (define-minor-mode org-roam-bibtex-mode
