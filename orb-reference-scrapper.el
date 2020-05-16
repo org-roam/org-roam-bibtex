@@ -27,6 +27,11 @@
 ;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ;; Boston, MA 02110-1301, USA.
 
+;; N.B. This file contains code snippets adopted from other
+;; open-source projects. These snippets are explicitly marked as such
+;; in place. They are not subject to the above copyright and
+;; authorship claims.
+
 ;;; Commentary:
 ;;
 
@@ -190,6 +195,12 @@ temporary buffer that does not have corresponding file."
 
 ;; * Minor mode
 
+;;; Code in this section was adopted from org-capture.el
+;;
+;; Copyright (C) 2010-2020 Free Software Foundation, Inc.
+;;
+;; Author: Carsten Dominik <carsten at orgmode dot org>
+
 (defvar orb-reference-scrapper-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-c" #'orb-reference-scrapper--dispatcher)
@@ -224,6 +235,9 @@ Turning on this mode runs the normal hook `orb-reference-scrapper-mode-hook'."
 (defun orb-reference-scrapper--get (prop)
   "Get PROP from `orb-reference-scrapper--mode-plist'."
   (plist-get orb-reference-scrapper--mode-plist prop))
+
+;;; End of code adopted from org-capture.el
+
 
 (defun orb-reference-scrapper--dispatcher ()
   "Finalize editing Orb Reference Scrapper intermediate buffer."
@@ -260,7 +274,7 @@ Turning on this mode runs the normal hook `orb-reference-scrapper-mode-hook'."
 
 (defun orb-reference-scrapper--edit-txt ()
   "Get references from pdf and edit them in a temporary buffer."
-  (let ((temp-txt (make-temp-file "orb-ref-scrapper-" nil ".txt"))
+  (let ((temp-txt (orb-temp-file "orb-reference-scrapper-" ".txt"))
         (pdf (orb-reference-scrapper--get :pdf)))
     (orb-reference-scrapper--put :txt temp-txt)
     (switch-to-buffer-other-window
@@ -295,7 +309,7 @@ Turning on this mode runs the normal hook `orb-reference-scrapper-mode-hook'."
       (progn
         (orb-reference-scrapper--put :context 'error)
         (orb-reference-scrapper--dispatcher))
-    (let* ((temp-bib (make-temp-file "orb-ref-scrapper-" nil ".bib")))
+    (let* ((temp-bib (orb-temp-file "orb-reference-scrapper-" ".bib")))
       (orb-reference-scrapper--put :bib temp-bib)
       (with-current-buffer orb-reference-scrapper--buffer
         (shell-command

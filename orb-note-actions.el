@@ -44,6 +44,7 @@
 ;; * Library requires
 
 (require 'org-roam-bibtex)
+(require 'orb-reference-scrapper)
 
 (require 'warnings)
 (require 'cl-lib)

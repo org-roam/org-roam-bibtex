@@ -27,6 +27,11 @@
 ;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ;; Boston, MA 02110-1301, USA.
 
+;; N.B. This file contains code snippets adopted from other
+;; open-source projects. These snippets are explicitly marked as such
+;; in place. They are not subject to the above copyright and
+;; authorship claims.
+
 ;;; Commentary:
 ;;
 ;; This file contains macros and helper functions used accross different
@@ -52,6 +57,63 @@ Format is `orb-citekey-format'."
                 (- (match-beginning 2)
                    (length orb-citekey-format)))))
     (substring citekey beg end)))
+
+;;; Code in this section was adopted from ob-core.el
+;;
+;; Copyright (C) 2009-2020 Free Software Foundation, Inc.
+;;
+;; Authors: Eric Schulte
+;;          Dan Davison
+
+(defvar orb-temp-dir)
+(unless (or noninteractive (boundp 'orb-temp-dir))
+  (defvar orb-temp-dir
+    (or (and (boundp 'orb-temp-dir)
+             (file-exists-p orb-temp-dir)
+             orb-temp-dir)
+        (make-temp-file "orb-" t))
+"Directory to hold temporary files created during reference parsing.
+Used by `orb-temp-file'.  This directory will be removed on Emacs
+shutdown."))
+
+(defun orb-temp-file (prefix &optional suffix)
+  "Create a temporary file in the `orb-temp-dir'.
+Passes PREFIX and SUFFIX directly to `make-temp-file' with the
+value of variable `temporary-file-directory' temporarily set to
+the value of `orb-temp-dir'."
+  (let ((temporary-file-directory
+         (or (and (boundp 'orb-temp-dir)
+                  (file-exists-p orb-temp-dir)
+                  orb-temp-dir)
+             temporary-file-directory)))
+    (make-temp-file prefix nil suffix)))
+
+(defun orb-remove-temp-dir ()
+  "Remove `orb-temp-dir' on Emacs shutdown."
+  (when (and (boundp 'orb-temp-dir)
+             (file-exists-p orb-temp-dir))
+    ;; taken from `delete-directory' in files.el
+    (condition-case nil
+        (progn
+          (mapc (lambda (file)
+                  ;; This test is equivalent to
+                  ;; (and (file-directory-p fn) (not (file-symlink-p fn)))
+                  ;; but more efficient
+                  (if (eq t (car (file-attributes file)))
+                      (delete-directory file)
+                    (delete-file file)))
+                (directory-files orb-temp-dir 'full
+                                 directory-files-no-dot-files-regexp))
+          (delete-directory orb-temp-dir))
+      (error
+       (message "Failed to remove temporary Org-roam-bibtex directory %s"
+                (if (boundp 'orb-temp-dir)
+                    orb-temp-dir
+                  "[directory not defined]"))))))
+
+(add-hook 'kill-emacs-hook 'orb-remove-temp-dir)
+
+;;; End of code adopted from ob-core.el
 
 (provide 'orb-macs)
 ;;; orb-macs.el ends here
