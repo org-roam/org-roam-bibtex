@@ -387,19 +387,17 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
                                    :on (= titles:file tags:file)
                                    :left :join refs :on (= titles:file refs:file)
                                    :where refs:file :is :null]))
-         (ht (make-hash-table :test 'equal)))
-    (dolist (row rows)
+         completions)
+    (dolist (row rows completions)
       (pcase-let ((`(,file-path ,titles ,tags) row))
         (let ((titles (or titles (list (org-roam--path-to-slug file-path)))))
           (dolist (title titles)
             (let ((k (concat
-                      (if tags
-                          (concat "(" (s-join org-roam-tag-separator tags) ") ")
-                        "")
+                      (when tags
+                        (format "(%s) " (s-join org-roam-tag-separator tags)))
                       title))
                   (v (list :path file-path :title title)))
-              (puthash k v ht))))))
-    ht))
+              (push (cons k v) completions))))))))
 
 
 ;; * Main functions
