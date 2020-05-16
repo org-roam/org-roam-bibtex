@@ -199,12 +199,7 @@ modified, there is a number of prefined extra actions
 user actions can be set in `orb-note-actions-user'."
   (interactive)
   (let ((non-default-frontends (list 'hydra 'ido 'ivy 'helm))
-        (citekey (cdr (assoc "ROAM_KEY"
-                             (org-roam--extract-global-props
-                              '("ROAM_KEY"))))))
-    ;; remove format from citekey
-    (when orb-citekey-format
-      (setq citekey (orb-unformat-citekey citekey)))
+        (citekey (cdr (org-roam--extract-ref))))
     (if citekey
         (cond ((member
                 orb-note-actions-frontend
@@ -221,7 +216,7 @@ user actions can be set in `orb-note-actions-user'."
                (orb-note-actions--run
                 'default
                 citekey)))
-      (message "#+ROAM_KEY is not found in this buffer."))))
+      (user-error "No #+ROAM_KEY found in current buffer"))))
 
 (provide 'orb-note-actions)
 ;;; orb-note-actions.el ends here
