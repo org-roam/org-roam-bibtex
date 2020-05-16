@@ -199,12 +199,8 @@ modified, there is a number of prefined extra actions
 user actions can be set in `orb-note-actions-user'."
   (interactive)
   (let ((non-default-frontends (list 'hydra 'ido 'ivy 'helm))
-        (citekey (cdr (assoc "ROAM_KEY"
-                             (org-roam--extract-global-props
-                              '("ROAM_KEY"))))))
+        (citekey (cdr (org-roam--extract-ref))))
     ;; remove format from citekey
-    (when orb-citekey-format
-      (setq citekey (orb-unformat-citekey citekey)))
     (if citekey
         (cond ((member
                 orb-note-actions-frontend
