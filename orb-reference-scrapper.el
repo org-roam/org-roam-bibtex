@@ -224,7 +224,7 @@ Turning on this mode runs the normal hook `orb-reference-scrapper-mode-hook'."
 
 (defvar orb-reference-scrapper--buffer "*Orb Reference Scrapper*")
 
-(defvar orb-reference-scrapper--mode-plist '(:temp-dir "orb-reference-scrapper/"))
+(defvar orb-reference-scrapper--mode-plist nil)
 
 (defun orb-reference-scrapper--put (&rest props)
   "Add properties PROPS to `orb-reference-scrapper--mode-plist'."
@@ -245,6 +245,19 @@ Turning on this mode runs the normal hook `orb-reference-scrapper-mode-hook'."
   (interactive)
   (let ((context (orb-reference-scrapper--get :context)))
     (cond
+     ((orb-reference-scrapper--get :prevent-concurring)
+      (if (y-or-n-p
+           (concat
+            "Another Org Reference Scrapper process is running on "
+            (orb-reference-scrapper--get :current-key)
+            ". Kill it and start a new one with "
+            (orb-reference-scrapper--get :new-key) "? "))
+          (progn
+            (message "Killing the old process...")
+            (orb-reference-scrapper--cleanup)
+            (message "Killing the old process...done")
+            (orb-reference-scrapper-run (orb-reference-scrapper--get :new-key)))
+        (orb-reference-scrapper--put :prevent-concurring nil)))
      ((equal context 'edit-txt)
       (orb-reference-scrapper--edit-txt))
      ((equal context 'edit-bib)
@@ -390,7 +403,10 @@ Turning on this mode runs the normal hook `orb-reference-scrapper-mode-hook'."
   (and (get-buffer orb-reference-scrapper--buffer)
        (kill-buffer orb-reference-scrapper--buffer))
   (set-window-configuration (orb-reference-scrapper--get :window-conf))
-  (setq orb-reference-scrapper--mode-plist '(:temp-dir "orb-reference-scrapper/")))
+  (dolist (prop (list :running :context :current-key
+                      :prevent-concurring :pdf :txt :bib
+                      :window-conf :original-buffer))
+    (orb-reference-scrapper--put prop nil)))
 
 (defun orb-reference-scrapper--kill ()
   "Kill the interactive orb-reference-scrapper process."
@@ -400,24 +416,28 @@ Turning on this mode runs the normal hook `orb-reference-scrapper-mode-hook'."
 
 ;; * Main functions
 
-;; entry point for (interactive)
-(defun orb-reference-scrapper-scrap-pdf (key)
-  "Scrap references from a pdf file associated with citation KEY."
-  (interactive)
-  (let ((pdf (file-truename (orb-process-file-field key))))
-    (orb-reference-scrapper--put :context 'edit-txt
-                                 :pdf pdf))
-  (orb-reference-scrapper--dispatcher))
+;; entry point
 
 ;;;###autoload
-(defun orb-reference-scrapper-insert (key)
+(defun orb-reference-scrapper-run (key)
   "Insert scrapped references as Org-mode tree.
 KEY is note's citation key."
   (interactive)
-  (setq orb-reference-scrapper--refs nil)
-  (orb-reference-scrapper--put :original-buffer (current-buffer)
-                               :window-conf (current-window-configuration))
-  (orb-reference-scrapper-scrap-pdf key))
+  (if (orb-reference-scrapper--get :running)
+      (progn
+        (orb-reference-scrapper--put :prevent-concurring t
+                                     :new-key key)
+        (orb-reference-scrapper--dispatcher))
+    (setq orb-reference-scrapper--refs nil)
+    (orb-reference-scrapper--put :context 'edit-txt
+                                 :current-key key
+                                 :new-key nil
+                                 :pdf (file-truename (orb-process-file-field key))
+                                 :running t
+                                 :prevent-concurring nil
+                                 :original-buffer (current-buffer)
+                                 :window-conf (current-window-configuration))
+    (orb-reference-scrapper--dispatcher)))
 
 (provide 'orb-reference-scrapper)
 ;;; orb-reference-scrapper.el ends here

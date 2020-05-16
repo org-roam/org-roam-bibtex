@@ -183,15 +183,16 @@ CITEKEY is the citekey." (capitalize frontend-name))
 ;; * Note actions
 
 (defun orb-note-actions-copy-citekey (citekey)
-  "Save note's citekey to kill-ring and copy it to clipboard.
-Since CITEKEY is actually a list of one element, the car of the list is used."
+  "Save note's citation key to `kill-ring' and copy it to clipboard.
+CITEKEY is a list whose car is a citation key."
   (with-temp-buffer
     (insert (car citekey))
     (copy-region-as-kill (point-min) (point-max))))
 
 (defun orb-note-actions-scrap-pdf (citekey)
-  "Wrapper around `orb-reference-scrapper-insert'."
-  (orb-reference-scrapper-insert (car citekey)))
+  "Wrapper around `orb-reference-scrapper-insert'.
+CITEKEY is a list whose car is a citation key."
+  (orb-reference-scrapper-run (car citekey)))
 
 
 ;; * Main functions
