@@ -217,7 +217,7 @@ user actions can be set in `orb-note-actions-user'."
                (orb-note-actions--run
                 'default
                 citekey)))
-      (message "#+ROAM_KEY is not found in this buffer."))))
+      (user-error "No #+ROAM_KEY found in current buffer"))))
 
 (provide 'orb-note-actions)
 ;;; orb-note-actions.el ends here
