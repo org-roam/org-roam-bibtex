@@ -200,7 +200,6 @@ user actions can be set in `orb-note-actions-user'."
   (interactive)
   (let ((non-default-frontends (list 'hydra 'ido 'ivy 'helm))
         (citekey (cdr (org-roam--extract-ref))))
-    ;; remove format from citekey
     (if citekey
         (cond ((member
                 orb-note-actions-frontend
