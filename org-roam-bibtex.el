@@ -68,12 +68,15 @@
 ;; We do not require `org-ref' here, because it is too expensive to be
 ;; loaded unconditionally and the user might not even need
 ;; it. Instead, we require it in the body of `orb-notes-fn'.
+
 (require 'org-roam)
-(require 'orb-compat)
 (require 'bibtex-completion)
 (eval-when-compile
   (require 'subr-x)
   (require 'cl-lib))
+
+(require 'orb-compat)
+(require 'orb-macs)
 
 (defvar org-ref-notes-function)
 
@@ -388,16 +391,6 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
       (let ((path (cdr candidate)))
         (unless (member path refs-path)
           (push candidate completions))))))
-
-(defun orb--unformat-citekey (citekey)
-  "Remove format from CITEKEY.
-Format is `orb-citekey-format'."
-  (string-match "\\(.*\\)%s\\(.*\\)" orb-citekey-format)
-  (let ((beg (match-end 1))
-        (end (+ (length citekey)
-                (- (match-beginning 2)
-                   (length orb-citekey-format)))))
-    (substring citekey beg end)))
 
 
 ;; * Main functions
