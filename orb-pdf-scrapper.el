@@ -39,6 +39,7 @@
 ;; * Library requires
 
 (require 'org-roam-bibtex)
+(require 'orb-macs)
 
 ;; * Customize definitions
 
@@ -179,14 +180,13 @@ as valid will are sorted into four groups:
     (erase-buffer)
     (setq buffer-file-name nil)
     (setq mark-active nil)
-    (message "Scrapping %s.pdf..." (f-base pdf))
-    (shell-command
-     (format "anystyle -f ref find --no-layout \"%s\" -" pdf)
-     orb-pdf-scrapper--buffer)
+    (orb-with-message (format "Scrapping %s.pdf" (f-base pdf))
+      (shell-command
+       (format "anystyle -f ref find --no-layout \"%s\" -" pdf)
+       orb-pdf-scrapper--buffer))
     (orb-pdf-scrapper-sanitize-text (buffer-string))
     (goto-char (point-min))
     (orb-pdf-scrapper--put :context 'edit-bib)
-    (message "Scrapping %s.pdf...done" (f-base pdf))
     (orb-pdf-scrapper-mode +1)))
 
 (defun orb-pdf-scrapper--review-bib ()
@@ -212,30 +212,32 @@ as valid will are sorted into four groups:
       (goto-char (point-min)))))
 
 (defun orb-pdf-scrapper--checkout ()
-  "Parse bib file or buffer and populate `orb-pdf-scrapper--validated-refs'."
-  (message "Generating citation keys...")
-  (cond ((equal (orb-pdf-scrapper--get :context) 'parse-bib-non-interactive)
-         (with-current-buffer (get-buffer-create orb-pdf-scrapper--buffer)
-           (shell-command
-            (format "anystyle -f bib parse \"%s\" -"
-                    (orb-pdf-scrapper--get :txt))
-            orb-pdf-scrapper--buffer)
-           (bibtex-mode)
-           (bibtex-set-dialect 'BibTeX t)
-           (orb-pdf-scrapper-generate-keys (orb-pdf-scrapper--get :bib))
-           (message "Generating citation keys...done"))
-         (orb-pdf-scrapper--insert))
-        ((equal (orb-pdf-scrapper--get :context) 'parse-bib-interactive)
-         (with-current-buffer (find-buffer-visiting (orb-pdf-scrapper--get :bib))
-           (when (> (cl-random 10) 9)
-             (message "Generating citation keys...Pressing the RED button..."))
-           (orb-pdf-scrapper-generate-keys)
-           (message "Generating citation keys...done"))
-         (orb-pdf-scrapper--insert))
-        (t
-         (message "Generating citation keys...Pressing the RED button...")
-         (orb-pdf-scrapper--put :context 'error)
-         (orb-pdf-scrapper-dispatcher))))
+  "Parse bib buffer and populate `orb-pdf-scrapper--validated-refs'."
+  (let ((context (orb-pdf-scrapper--get :context)))
+    (cond ((equal context 'parse-bib-non-interactive)
+           (orb-with-message "Generating citation keys"
+             (with-current-buffer
+                 (get-buffer-create orb-pdf-scrapper--buffer)
+               (shell-command
+                (format "anystyle -f bib parse \"%s\" -"
+                        (orb-pdf-scrapper--get :txt))
+                orb-pdf-scrapper--buffer)
+               (bibtex-mode)
+               (bibtex-set-dialect 'BibTeX t)
+               (orb-pdf-scrapper-generate-keys
+                (orb-pdf-scrapper--get :bib))))
+           (orb-pdf-scrapper--insert))
+          ((equal context 'parse-bib-interactive)
+           (orb-with-message (or (and (> (cl-random 100) 98)
+                                      "Pressing the RED button")
+                                 "Generating citation keys")
+             (with-current-buffer
+                 (find-buffer-visiting (orb-pdf-scrapper--get :bib))
+               (orb-pdf-scrapper-generate-keys)))
+           (orb-pdf-scrapper--insert))
+          (t
+           (orb-pdf-scrapper--put :context 'error)
+           (orb-pdf-scrapper-dispatcher)))))
 
 (defun orb-pdf-scrapper--insert ()
   "Checkout from Orb PDF Scrapper interactive mode."
@@ -395,15 +397,13 @@ numbers."
     (cond
      ((orb-pdf-scrapper--get :prevent-concurring)
       (if (y-or-n-p
-           (concat
-            "Another Orb PDF Scrapper process is running on "
-            (orb-pdf-scrapper--get :current-key)
-            ". Kill it and start a new one with "
-            (orb-pdf-scrapper--get :new-key) "? "))
+           (format "Another Orb PDF Scrapper process is running: %s.  \
+Kill it and start a new one %s? "
+                   (orb-pdf-scrapper--get :current-key)
+                   (orb-pdf-scrapper--get :new-key)))
           (progn
-            (message "Killing the old process...")
-            (orb-pdf-scrapper--cleanup)
-            (message "Killing the old process...done")
+            (orb-with-message "Killing current process..."
+              (orb-pdf-scrapper--cleanup))
             (orb-pdf-scrapper-run (orb-pdf-scrapper--get :new-key)))
         (orb-pdf-scrapper--put :prevent-concurring nil)))
      ((equal context 'edit-txt)
@@ -422,13 +422,14 @@ numbers."
       (save-buffer)
       (orb-pdf-scrapper--checkout))
      (t
-      (when (> (cl-random 10) 9)
+      ;; 1 in 100 should not be too annoying
+      (when (> (cl-random 100) 98)
         (message "Oops...")
         (sleep-for 1)
         (message "Oops...Did you just ACCIDENTALLY press the RED button?")
         (sleep-for 2)
         (message "Activating self-destruction subroutine...")
-        (sleep-for 1)
+        (sleep-for 2)
         (message "Activating self-destruction subroutine...Bye-bye")
         (sleep-for 2))
       (orb-pdf-scrapper--cleanup)))))

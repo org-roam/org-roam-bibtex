@@ -45,6 +45,15 @@
 
 ;; * Macros
 
+(defmacro orb-with-message (message &rest body)
+  "Put MESSAGE before and after BODY.
+Append ... to the first message and ...done to the second.
+Return result of evaluating BODY."
+  (declare (indent 1) (debug (stringp &rest form)))
+  `(prog2
+       (message "%s..." ,message)
+       (progn ,@body)
+     (message "%s...done" ,message)))
 
 ;; * Functions
 
