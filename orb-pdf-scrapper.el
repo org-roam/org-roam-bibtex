@@ -59,6 +59,23 @@
          (or load-file-name buffer-file-name))
         "journal_titles.tsv")))
 
+
+(defun orb-pdf-scrapper--sanitize-txt (contents)
+  "Run string processing on CONTENTS.
+Try to get every reference into newline and remove reference
+numbers."
+   (let* ((numbered-regex
+           "\\(([0-9]\\{1,3\\}) \\|\\[[0-9]\\{1,3\\}] \\) ")
+          (lettered-regex "([a-z]) ")
+          (result (--> contents
+                       (s-replace "\n" "" it)
+                       (split-string it numbered-regex)
+                       (--map (split-string it lettered-regex) it)
+                       (-flatten it)
+                       (s-join "\n" it))))
+     (erase-buffer)
+     (insert result)))
+
 (defvar orb-pdf-scrapper--refs nil)
 (defvar orb-pdf-scrapper--validated-refs '((in-roam) (in-bib) (valid) (invalid)))
 
@@ -299,18 +316,7 @@ Turning on this mode runs the normal hook `orb-pdf-scrapper-mode-hook'."
     (shell-command
      (format "anystyle -f ref find --no-layout \"%s\" -" pdf)
      orb-pdf-scrapper--buffer)
-    (let* ((contents (buffer-string))
-           (numbered-regex
-            "\\(([0-9]\\{1,3\\}) \\|\\[[0-9]\\{1,3\\}] \\) ")
-           (lettered-regex "([a-z]) ")
-           (result (--> contents
-                        (s-replace "\n" "" it)
-                        (split-string it numbered-regex)
-                        (--map (split-string it lettered-regex) it)
-                        (-flatten it)
-                        (s-join "\n" it))))
-      (erase-buffer)
-      (insert result))
+    (orb-pdf-scrapper--sanitize-txt (buffer-string))
     (goto-char (point-min))
     (orb-pdf-scrapper--put :context 'edit-bib)
     (message "Scrapping %s.pdf...done" (f-base pdf))
