@@ -379,10 +379,11 @@ Turning on this mode runs the normal hook `orb-reference-scrapper-mode-hook'."
 
 (defun orb-reference-scrapper--cleanup ()
   "Clean up."
-  (let ((txt (find-buffer-visiting (orb-reference-scrapper--get :txt)))
-        (bib (find-buffer-visiting (orb-reference-scrapper--get :bib))))
+  (let ((txt (orb-reference-scrapper--get :txt))
+        (bib (orb-reference-scrapper--get :bib)))
     (dolist (buf (list txt bib))
       (and buf
+           (find-buffer-visiting buf)
            (set-buffer buf)
            (set-buffer-modified-p nil)
            (kill-buffer buf))))
