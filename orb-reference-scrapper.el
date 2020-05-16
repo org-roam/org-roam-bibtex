@@ -383,9 +383,9 @@ Turning on this mode runs the normal hook `orb-reference-scrapper-mode-hook'."
         (bib (orb-reference-scrapper--get :bib)))
     (dolist (buf (list txt bib))
       (and buf
-           (find-buffer-visiting buf)
+           (setq buf (find-buffer-visiting buf))
            (set-buffer buf)
-           (set-buffer-modified-p nil)
+           (not (set-buffer-modified-p nil))
            (kill-buffer buf))))
   (and (get-buffer orb-reference-scrapper--buffer)
        (kill-buffer orb-reference-scrapper--buffer))
