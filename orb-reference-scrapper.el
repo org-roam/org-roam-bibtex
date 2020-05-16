@@ -57,7 +57,7 @@
 (defvar orb-reference-scrapper--refs nil)
 (defvar orb-reference-scrapper--validated-refs '((in-roam) (in-bib) (valid) (invalid)))
 
-(defun orb-reference-scrapper--validate-refs (&optional bib-file)
+(defun orb-reference-scrapper--validate-refs ()
   "Validate references.
 References marked by `orb-reference-scrapper-keygen-fun' function
 as valid will are sorted into four groups:
@@ -104,13 +104,14 @@ It should take a bibtex entry as returned by
 Technically, only :key and :entry are strictly required.")
 
 (defun orb-reference-scrapper--year-verb-page-keygen-fun (entry)
-  "Generate `year-verb-page' key."
+  "Generate `year-verb-page' key from ENTRY."
   (let* ((authors (or (bibtex-completion-get-value "author" entry) "N/A"))
          (journal (or (bibtex-completion-get-value "journal" entry) "N/A"))
          (year (or (bibtex-completion-get-value "date" entry) "N/A"))
          (volume (or (bibtex-completion-get-value "volume" entry) "N/A"))
          (pages (or (bibtex-completion-get-value "pages" entry) "N/A"))
-         ;; TODO: would be nice to already have this regex in `orb-reference-scrapper--journal-title-abbrevs'
+         ;; TODO: would be nice to already have this regex in
+         ;; `orb-reference-scrapper--journal-title-abbrevs'
          ;; regexp similar "J[ ,.;]Am[ ,.;]Chem[ ,.;]Soc[ ,.;]"
          (journal-regexp
           (format "^%s[ ,.;]*$" (--reduce (format "%s[ ,.;]+%s" acc it)
@@ -149,7 +150,10 @@ Technically, only :key and :entry are strictly required.")
 (defun orb-reference-scrapper-generate-keys (&optional bib-file)
   "Generate citation keys in the current buffer.
 Validate and push the retreived references to
-`orb-reference-scrapper--validated-refs'."
+`orb-reference-scrapper--validated-refs'.
+
+Optional BIB-FILE is required when this function is called in a
+temporary buffer that does not have corresponding file."
   (interactive)
   (save-excursion
     (let ((bibtex-completion-bibliography (or bib-file (buffer-file-name)))
@@ -183,49 +187,161 @@ Validate and push the retreived references to
         (bibtex-skip-to-valid-entry))))
   (orb-reference-scrapper--validate-refs))
 
+
+;; * Minor mode
+
+(defvar orb-reference-scrapper-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "\C-c\C-c" #'orb-reference-scrapper--dispatcher)
+    (define-key map "\C-c\C-k" #'orb-reference-scrapper--kill)
+    map)
+  "Keymap for `orb-reference-scrapper-mode' minor mode.")
+
+(defvar orb-reference-scrapper-mode-hook nil
+  "Hook for the `orb-reference-scrapper-mode' minor mode.")
+
+(define-minor-mode orb-reference-scrapper-mode
+  "Minor mode for special key bindings in a orb-reference-scrapper buffer.
+
+Turning on this mode runs the normal hook `orb-reference-scrapper-mode-hook'."
+  nil " ORS" orb-reference-scrapper-mode-map
+  (setq-local
+   header-line-format
+   (substitute-command-keys
+    "\\<orb-reference-scrapper-mode-map>Orb reference scrapper.  Finish \
+`\\[orb-reference-scrapper--dispatcher]', abort `\\[orb-reference-scrapper--kill]'.")))
+
 (defvar orb-reference-scrapper--buffer "*Orb Reference Scrapper*")
 
-(defun orb-reference-scrapper-scrap-pdf (key)
-  "Scrap references from a pdf file associated with citation KEY."
+(defvar orb-reference-scrapper--mode-plist '(:temp-dir "orb-reference-scrapper/"))
+
+(defun orb-reference-scrapper--put (&rest props)
+  "Add properties PROPS to `orb-reference-scrapper--mode-plist'."
+  (while props
+    (setq orb-reference-scrapper--mode-plist
+          (plist-put orb-reference-scrapper--mode-plist (pop props) (pop props)))))
+
+(defun orb-reference-scrapper--get (prop)
+  "Get PROP from `orb-reference-scrapper--mode-plist'."
+  (plist-get orb-reference-scrapper--mode-plist prop))
+
+(defun orb-reference-scrapper--dispatcher ()
+  "Finalize editing Orb Reference Scrapper intermediate buffer."
+  ;; TODO: check for whether user killed any of the buffers
   (interactive)
-  (let ((file (file-truename (orb-process-file-field key)))
-        (temp-txt (make-temp-file "orb-ref-scrapper-" nil ".txt"))
-        (temp-bib (make-temp-file "orb-ref-scrapper-" nil ".bib")))
-    (with-current-buffer (get-buffer-create orb-reference-scrapper--buffer)
-      ;; adjusted from org-capture
-      ;; (org-switch-to-buffer-other-window (get-buffer-create orb-reference-scrapper--buffer))
+  (let ((context (orb-reference-scrapper--get :context)))
+    (cond
+     ((equal context 'edit-txt)
+      (orb-reference-scrapper--edit-txt))
+     ((equal context 'edit-bib)
+      (with-current-buffer orb-reference-scrapper--buffer
+        (write-region (buffer-string) nil
+                      (orb-reference-scrapper--get :txt) nil -1))
+      (if (y-or-n-p "Review the bib file? ")
+          (orb-reference-scrapper--review-bib)
+        ;; proceed to checkout; bib file was not edited interactively
+        (orb-reference-scrapper--put :context 'parse-bib-non-interactive)
+        (orb-reference-scrapper--checkout)))
+     ;; proceed to checkout; bib file was edited interactively
+     ((equal context 'parse-bib-interactive)
+      (save-buffer)
+      (orb-reference-scrapper--checkout))
+     (t
+      (when (> (cl-random 10) 9)
+        (message "Oops...")
+        (sleep-for 1)
+        (message "Oops...Did you just ACCIDENTALLY press the RED button?")
+        (sleep-for 2)
+        (message "Activating self-destruction subroutine...")
+        (sleep-for 1)
+        (message "Activating self-destruction subroutine...Bye-bye")
+        (sleep-for 2))
+      (orb-reference-scrapper--cleanup)))))
+
+(defun orb-reference-scrapper--edit-txt ()
+  "Get references from pdf and edit them in a temporary buffer."
+  (let ((temp-txt (make-temp-file "orb-ref-scrapper-" nil ".txt"))
+        (pdf (orb-reference-scrapper--get :pdf)))
+    (orb-reference-scrapper--put :txt temp-txt)
+    (switch-to-buffer-other-window
+     (get-buffer-create orb-reference-scrapper--buffer))
+    (erase-buffer)
+    (setq buffer-file-name nil)
+    (setq mark-active nil)
+    (message "Scrapping %s.pdf..." (f-base pdf))
+    (shell-command
+     (format "anystyle -f ref find --no-layout \"%s\" -" pdf)
+     orb-reference-scrapper--buffer)
+    (let* ((contents (buffer-string))
+           (numbered-regex
+            "\\(([0-9]\\{1,3\\}) \\|\\[[0-9]\\{1,3\\}] \\) ")
+           (lettered-regex "([a-z]) ")
+           (result (--> contents
+                        (s-replace "\n" "" it)
+                        (split-string it numbered-regex)
+                        (--map (split-string it lettered-regex) it)
+                        (-flatten it)
+                        (s-join "\n" it))))
       (erase-buffer)
-      (setq buffer-file-name nil)
-      (setq mark-active nil)
-      (message "Scrapping %s.pdf..." (f-base file))
-      (shell-command (format "anystyle -f ref find --no-layout \"%s\" -" file) orb-reference-scrapper--buffer)
-      (let* ((contents (buffer-string))
-             (split-numbers (split-string (s-replace "\n" "" contents) "([0-9]\\{1,3\\}) "))
-             (split-letters (--map (split-string it "([a-z]) ") split-numbers))
-             (result (s-join "\n" (-flatten split-letters))))
-        (erase-buffer)
-        (insert result)
-        (with-temp-file temp-txt
-          (insert result)))
-      (shell-command (format "anystyle -f bib parse \"%s\" -" temp-txt) orb-reference-scrapper--buffer)
+      (insert result))
+    (goto-char (point-min))
+    (orb-reference-scrapper--put :context 'edit-bib)
+    (message "Scrapping %s.pdf...done" (f-base pdf))
+    (orb-reference-scrapper-mode +1)))
+
+(defun orb-reference-scrapper--review-bib ()
+  "Review the generated temporary bib file."
+  (if (not (equal (orb-reference-scrapper--get :context) 'edit-bib))
+      (progn
+        (orb-reference-scrapper--put :context 'error)
+        (orb-reference-scrapper--dispatcher))
+    (let* ((temp-bib (make-temp-file "orb-ref-scrapper-" nil ".bib")))
+      (orb-reference-scrapper--put :bib temp-bib)
+      (with-current-buffer orb-reference-scrapper--buffer
+        (shell-command
+         (format "anystyle -f bib parse \"%s\" -"
+                 (orb-reference-scrapper--get :txt))
+         orb-reference-scrapper--buffer)
+        (write-region (buffer-string) nil temp-bib nil -1)
+        (kill-buffer (current-buffer)))
+      (find-file temp-bib)
       (bibtex-mode)
       (bibtex-set-dialect 'BibTeX t)
-      (message "Scrapping %s.pdf...done" (f-base file))
-      ;; needed for bibtex-completion
-      (write-region (buffer-string) nil temp-bib nil)
-      ;; (find-file temp-bib)
-      ;; (kill-buffer)
-      (message "Generating citation keys...")
-      (goto-char (point-min))
-      (orb-reference-scrapper-generate-keys temp-bib)
-      (message "Generating citation keys...done"))))
+      (orb-reference-scrapper--put :context 'parse-bib-interactive)
+      (orb-reference-scrapper-mode +1)
+      (goto-char (point-min)))))
 
-;;;###autoload
-(defun orb-reference-scrapper-insert (key)
-  "Insert scrapped references as Org-mode tree."
-  (interactive)
-  (setq orb-reference-scrapper--refs nil)
-  (orb-reference-scrapper-scrap-pdf key)
+(defun orb-reference-scrapper--checkout ()
+  "Parse bib file or buffer and populate `orb-reference-scrapper--validated-refs'."
+  (message "Generating citation keys...")
+  (cond ((equal (orb-reference-scrapper--get :context) 'parse-bib-non-interactive)
+         (with-current-buffer (get-buffer-create orb-reference-scrapper--buffer)
+           (shell-command
+            (format "anystyle -f bib parse \"%s\" -"
+                    (orb-reference-scrapper--get :txt))
+            orb-reference-scrapper--buffer)
+           (bibtex-mode)
+           (bibtex-set-dialect 'BibTeX t)
+           (orb-reference-scrapper-generate-keys (orb-reference-scrapper--get :bib))
+           (message "Generating citation keys...done"))
+         (orb-reference-scrapper--insert))
+        ((equal (orb-reference-scrapper--get :context) 'parse-bib-interactive)
+         (with-current-buffer (find-buffer-visiting (orb-reference-scrapper--get :bib))
+           (when (> (cl-random 10) 9)
+             (message "Generating citation keys...Pressing the RED button..."))
+           (orb-reference-scrapper-generate-keys)
+           (message "Generating citation keys...done"))
+         (orb-reference-scrapper--insert))
+        (t
+         (message "Generating citation keys...Pressing the RED button...")
+         (orb-reference-scrapper--put :context 'error)
+         (orb-reference-scrapper--dispatcher))))
+
+(defun orb-reference-scrapper--insert ()
+  "Checkout from orb reference scrapper interactive mode."
+  ;; (find-file temp-bib)
+  ;; (kill-buffer)
+  (set-buffer (orb-reference-scrapper--get :original-buffer))
   (save-excursion
     (save-restriction
       (widen)
@@ -244,7 +360,49 @@ Validate and push the retreived references to
         ;; when setting the variable to nil with setq. Maybe some
         ;; memory allocation/garbage collection specifics, most
         ;; likely though not enough understanding of global variables.
-        (setf (cdr group) nil)))))
+        (setf (cdr group) nil))))
+  (orb-reference-scrapper--cleanup))
+
+(defun orb-reference-scrapper--cleanup ()
+  "Clean up."
+  (let ((txt (find-buffer-visiting (orb-reference-scrapper--get :txt)))
+        (bib (find-buffer-visiting (orb-reference-scrapper--get :bib))))
+    (dolist (buf (list txt bib))
+      (and buf
+           (set-buffer buf)
+           (set-buffer-modified-p nil)
+           (kill-buffer buf))))
+  (and (get-buffer orb-reference-scrapper--buffer)
+       (kill-buffer orb-reference-scrapper--buffer))
+  (set-window-configuration (orb-reference-scrapper--get :window-conf))
+  (setq orb-reference-scrapper--mode-plist '(:temp-dir "orb-reference-scrapper/")))
+
+(defun orb-reference-scrapper--kill ()
+  "Kill the interactive orb-reference-scrapper process."
+  (interactive)
+  (orb-reference-scrapper--put :context 'kill)
+  (orb-reference-scrapper--dispatcher))
+
+;; * Main functions
+
+;; entry point for (interactive)
+(defun orb-reference-scrapper-scrap-pdf (key)
+  "Scrap references from a pdf file associated with citation KEY."
+  (interactive)
+  (let ((pdf (file-truename (orb-process-file-field key))))
+    (orb-reference-scrapper--put :context 'edit-txt
+                                 :pdf pdf))
+  (orb-reference-scrapper--dispatcher))
+
+;;;###autoload
+(defun orb-reference-scrapper-insert (key)
+  "Insert scrapped references as Org-mode tree.
+KEY is note's citation key."
+  (interactive)
+  (setq orb-reference-scrapper--refs nil)
+  (orb-reference-scrapper--put :original-buffer (current-buffer)
+                               :window-conf (current-window-configuration))
+  (orb-reference-scrapper-scrap-pdf key))
 
 (provide 'orb-reference-scrapper)
 ;;; orb-reference-scrapper.el ends here
