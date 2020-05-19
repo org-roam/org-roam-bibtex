@@ -37,8 +37,14 @@
 
 ;;; Code:
 ;; * Library requires
+(require 'dash)
+(require 'f)
+
 (require 'orb-macs)
-(require 'orb-pdf-scrapper)             ;for now
+
+(eval-when-compile
+  (require 'subr-x)
+  (require 'cl-macs))
 
 ;; * Customize definitions
 
@@ -120,6 +126,7 @@ anystyle [global options] command [command options] [arguments...].
 Homepage: https://anystyle.io
 Github: https://github.com/inukshuk/anystyle-cli
 Courtesy of its authors."
+  (declare (indent 1))
   (-let* (((&plist :exec exec
                    :global-options global-options
                    :finder-model fmodel
@@ -228,12 +235,14 @@ find, parse, check, train, help or license" input)))
         ;; format
         (when format
           (when (stringp format)
-            (setq format (-map #'intern
-                               (split-string (s-trim format) "[, ]" t " "))))
+            (setq format
+                  (-map #'intern
+                        (split-string (string-trim format)
+                                      "[, ]" t " "))))
           (unless (listp format)
             (setq format (list format)))
           (let ((accepted-formats
-                 (case command
+                 (cl-case command
                    ('find '(bib csl json ref txt ttx xml))
                    ('parse '(bib csl json ref txt xml))
                    ('check '(ttx xml)))))

@@ -40,6 +40,7 @@
 
 (require 'org-roam-bibtex)
 (require 'orb-macs)
+(require 'orb-anystyle)
 
 ;; * Customize definitions
 
@@ -91,7 +92,7 @@ Technically, only :key and :entry are strictly required.")
 (defmacro orb-with-scrapper-buffer (&rest body)
   "Execute BODY with `orb-pdf-scrapper--buffer' as current.
 If the buffer does not exist it will be created."
-  (declare (indent 1) (debug t))
+  (declare (indent 0) (debug t))
   `(save-current-buffer
      (set-buffer (get-buffer-create orb-pdf-scrapper--buffer))
      ,@body))
@@ -196,9 +197,12 @@ as valid will are sorted into four groups:
     (setq buffer-file-name nil)
     (setq mark-active nil)
     (orb-with-message (format "Scrapping %s.pdf" (f-base pdf))
-      (shell-command
-       (format "anystyle -f ref find --no-layout \"%s\" -" pdf)
-       orb-pdf-scrapper--buffer))
+      (orb-anystyle 'find
+        :format 'ref
+        :layout nil
+        :input pdf
+        :stdout t
+        :buffer orb-pdf-scrapper--buffer))
     (orb-pdf-scrapper-sanitize-text (buffer-string))
     (goto-char (point-min))
     (orb-pdf-scrapper--put :context 'edit-bib)
@@ -213,10 +217,11 @@ as valid will are sorted into four groups:
     (let* ((temp-bib (orb-temp-file "orb-pdf-scrapper-" ".bib")))
       (orb-pdf-scrapper--put :bib-file temp-bib)
       (orb-with-scrapper-buffer
-        (shell-command
-         (format "anystyle -f bib parse \"%s\" -"
-                 (orb-pdf-scrapper--get :txt-file))
-         orb-pdf-scrapper--buffer)
+        (orb-anystyle 'parse
+          :format 'bib
+          :input (orb-pdf-scrapper--get :txt-file)
+          :stdout t
+          :buffer orb-pdf-scrapper--buffer)
         (write-region (buffer-string) nil temp-bib nil -1)
         (kill-buffer (current-buffer)))
       (find-file temp-bib)
@@ -232,10 +237,11 @@ as valid will are sorted into four groups:
     (cond ((equal context 'parse-bib-non-interactive)
            (orb-with-message "Generating citation keys"
              (orb-with-scrapper-buffer
-               (shell-command
-                (format "anystyle -f bib parse \"%s\" -"
-                        (orb-pdf-scrapper--get :txt-file))
-                orb-pdf-scrapper--buffer)
+               (orb-anystyle 'parse
+                 :format 'bib
+                 :input (orb-pdf-scrapper--get :txt-file)
+                 :stdout t
+                 :buffer orb-pdf-scrapper--buffer)
                (bibtex-mode)
                (bibtex-set-dialect 'BibTeX t)
                (condition-case nil

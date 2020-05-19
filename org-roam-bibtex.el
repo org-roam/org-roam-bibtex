@@ -71,12 +71,14 @@
 
 (require 'org-roam)
 (require 'bibtex-completion)
+
+(require 'orb-compat)
+(require 'orb-macs)
+
 (eval-when-compile
   (require 'subr-x)
   (require 'cl-lib))
 
-(require 'orb-compat)
-(require 'orb-macs)
 
 (defvar org-ref-notes-function)
 
