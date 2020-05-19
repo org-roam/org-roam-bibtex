@@ -83,10 +83,12 @@ Anystyle CLI options
 :version      => boolean
 :overwrite    => boolean
 :format       => string, symbol or list of unquoted symbols
-- must be one of formats accepted by anystyle commands:
+- must be one or more formats accepted by anystyle commands:
   check => ttx xml
   parse => bib csl json ref txt xml
   find  => bib csl json ref txt ttx xml
+- string must be space- or comma-separated, additional spaces are
+  ignored
 
 3a) :command-options => string
 - apart from stringp type check, no other checks are made!
@@ -227,7 +229,7 @@ find, parse, check, train, help or license" input)))
         (when format
           (when (stringp format)
             (setq format (-map #'intern
-                               (s-split "," (s-trim format)))))
+                               (split-string (s-trim format) "[, ]" t " "))))
           (unless (listp format)
             (setq format (list format)))
           (let ((accepted-formats
