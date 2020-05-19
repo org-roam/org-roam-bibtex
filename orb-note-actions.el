@@ -58,7 +58,7 @@
 ;; * Customize definitions
 
 (defgroup orb-note-actions nil
-  "Org-ref and Bibtex-completion integration for Org-roam."
+  "Orb Note Actions - run actions useful in note's context."
   :group 'org-roam-bibtex
   :prefix "orb-note-actions-")
 
