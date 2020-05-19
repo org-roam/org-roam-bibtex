@@ -40,119 +40,84 @@
 (require 'orb-macs)
 (require 'orb-pdf-scrapper)             ;for now
 
-(defvar orb-pdf-scrapper-anystyle-exec "anystyle") ; TODO: make it defcustom
+;; * Customize definitions
 
-(defun orb-pdf-scrapper-anystyle (buffer-or-name &rest args)
-  "Run anystyle-cli with `shell-command'.
+(defvar orb-anystyle-executable "anystyle") ; TODO: make it defcustom
+(defvar orb-anystyle-pdfinfo-executable "pdfinfo") ; TODO: make it defcustom
+(defvar orb-anystyle-pdftotext-executable "pdftotext") ; TODO: make it defcustom
+(defvar orb-anystyle-default-buffer orb-pdf-scrapper--buffer) ; TODO: make it defcustom
+
+;; * Main functions
+
+;;;###autoload
+(defun orb-anystyle (command &rest args)
+  "Run anystyle COMMAND with `shell-command'.
 BUFFER-OR-NAME is buffer or buffer name, which will be passed to
 `shell-command' as OUTPUT-BUFFER.  It can also be a cons cell
 \(OUTPUT-BUFFER . ERROR-BUFFER).  If BUFFER-OR-NAME is nil,
 `orb-pdf-scrapper--buffer' will be used.
 
-ARGS is a plist with following recognized keys.
+ARGS is a plist with following recognized keys:
 
-1) :command symbol or string
-  - valid values are find,parse,help,check,license,train
 
-2a) :global-options string
-  - no checks are made!
+Anystyle CLI options
+==========
 
-2b) Alternatively, the following global options are supported as
-plist keys:
+1) :command          => symbol or string
+- valid values: find parse help check license train
 
-:finder-model string (file path) :parser-model string (file path)
-:stdout boolean :format symbol or list of unquoted symbols - if
-:global-options is present, these keywords will be ignored
+2a) :global-options  => string
+- apart from stringp type check, no other checks are made!
 
-3a) :command-options string
-  - no checks made
-  - ignored when :command is anything else find
+2b) Alternatively, global options can be passed as plist keys.
+- these keys are completely ignored if :global-options is non-nil
+
+:finder-model => string (valid file path)
+:parser-model => string (valid file path)
+:pdfinfo      => string (valid executable)
+:pdftotext    => string (valid executable)
+:adapter      => anything
+:stdout       => boolean
+:help         => boolean
+:verbose      => boolean
+:version      => boolean
+:overwrite    => boolean
+:format       => string, symbol or list of unquoted symbols
+- must be one of formats accepted by anystyle commands:
+  check => ttx xml
+  parse => bib csl json ref txt xml
+  find  => bib csl json ref txt ttx xml
+
+3a) :command-options => string
+- apart from stringp type check, no other checks are made!
+- ignored for commands other than find or parse
 
 3b) Alternatively, command options can be passed as plist keys:
 
-:crop integer or cons cell of integers
-:layout boolean
-:solo boolean
+:crop         => integer or cons cell of integers
+:layout       => boolean
+:solo         => boolean
 
+- help -c flag is not supported
 4) :input string (file path)
 
 5) :output string (file path)
 
+`shell-command'-related keys
+==========
+
+1) :buffer buffer-or-name
+
+- `shell-command''s OUTPUT-BUFFER
+- can be a cons cell (OUTPUT-BUFFER . ERROR-BUFFER)
+- when nil defaults to (`orb-anystyle-default-buffer' . nil)
+
+anystyle CLI command synopsis:
+anystyle [global options] command [command options] [arguments...].
+
 Homepage: https://anystyle.io
 Github: https://github.com/inukshuk/anystyle-cli
 Courtesy of its authors."
-
-  ;; command synopsis:
-  ;; anystyle [global options] command [command options] [arguments...]
-  ;;
-  ;; * command
-  ;; :command - symbol or string, one of:
-  ;; check find help license parse train
-  ;;
-  ;; * global options
-  ;; :global-options - a string as per anystyle command line options,
-  ;; no checks are made!
-  ;;
-  ;; -F, --finder-model=file - set the finder model file (default: none)
-  ;; -P, --parser-model=file - set the parser model file (default: none)
-  ;; --adapter=name          - set the dictionary adapter (default: ruby)
-  ;; -f, --format=name       - set the output format (default: ["json"])
-  ;; --pdfinfo=path          - set the path for pdfinfo (default: none)
-  ;; --pdftotext=path        - set the path for pdftotext (default: none)
-  ;; --help                  - show this message
-  ;; --[no-]stdout           - print results directly to stdout
-  ;; --[no-]verbose          - print status messages to stderr
-  ;; --version               - display the program version
-  ;; -w, --[no-]overwrite    - allow overwriting existing files
-  ;;
-  ;; Alternatively, the following global options are supported as
-  ;; individual keys:
-  ;;
-  ;; :finder-model "/path/to/finder/model"
-  ;; :parser-model "/path/to/parser/model"
-  ;; :adapter symbol or string
-  ;; :format 'symbol or list of several formats ('bib 'csl 'json 'ref 'txt 'ttx 'xml)
-  ;; :pdfinfo "/path/to/pdfinfo/exec"
-  ;; :pdftotext "/path/to/pdftotext/exec"
-  ;; :help boolean
-  ;; :stdout boolean
-  ;; :verbose boolean
-  ;; :version boolean
-  ;; :overwrite boolean
-  ;;
-  ;; find supports all the above formats
-  ;; parse supports ('bib 'csl 'json 'ref 'txt 'xml)
-  ;; check supports ('ttx 'xml)
-  ;;
-  ;; if :global-options is present, these keywords will be ignored
-  ;;
-  ;; * command options
-  ;;
-  ;; :command-options only relevant for :command 'find, will be
-  ;; ignored otherwise. same as with :global-options, no checks are
-  ;; made.
-  ;;
-  ;; -c, --crop=pt - set cropping boundary for text extraction (default: none)
-  ;; --[no-]layout - use layout mode for pdf text extraction (default: enabled)
-  ;; --[no-]solo   - include references outside of reference sections
-  ;;
-  ;; Alternatively, they can be passed as individual keys:
-  ;;
-  ;; :crop integer or (integer . integer)
-  ;; :layout boolean
-  ;; :solo boolean
-  ;;
-  ;; * input and output
-  ;;
-  ;; todo: should multiple documents be supported here?
-  ;; :input - "/path/to/input/file"
-  ;;
-  ;; :output - "/path/to/output/directory" - find and parse
-  ;;           "/path/to/output/file" - train
-
-  ;;
-  ;; "anystyle -f bib parse \"%s\" -"
-
   (-let* (((&plist :exec exec
                    :global-options global-options
                    :finder-model fmodel
@@ -166,160 +131,217 @@ Courtesy of its authors."
                    :verbose verbose
                    :version version
                    :overwrite overwrite
-                   :command command
                    :command-options command-options
                    :crop crop
                    :layout layout
                    :solo solo
                    :input input
-                   :output output) args)
+                   :output output
+                   :buffer buffer) args)
           (commands '(list find parse check train help license))
-          (formats '(bib csl json ref txt ttx xml))
           (exec (executable-find
-                 (or exec orb-pdf-scrapper-anystyle-exec "anystyle")))
-          (buf (or (if (consp buffer-or-name)
-                       buffer-or-name
-                     (list buffer-or-name))
-                   (list orb-pdf-scrapper--buffer)))
-          (shell-run (lambda (str)
-                       (message "command: %s \nbuffers: %s and %s" str (car buf) (cdr buf))))
-          (make-format (lambda (str)
+                 (or exec orb-anystyle-executable)))
+          (buf (if (consp buffer)
+                   buffer
+                 (list (or buffer orb-anystyle-default-buffer))))
+          ;; '(a b c) => "a,b,c"
+          (collapse (lambda (str)
                          (--reduce-from
                           (format "%s,%s" acc it)
                           (car str) (cdr str))))
+          ;; debug
           ;; (shell-run (lambda (str)
-          ;;             (shell-command str (car buf) (cdr buf))))
-          options acceptable-formats anystyle)
+          ;;              (message "command: %s \nbuffers: %s and %s" str (car buf) (cdr buf))))
+          (shell-run (lambda (str)
+                      (shell-command str (car buf) (cdr buf))))
+          anystyle)
     ;; executable is a must
-    (cond
-     ((not exec)
+    (unless exec
       (user-error "Anystyle executable not found!  \
 Install anystyle-cli before running Orb PDF Scrapper"))
-     ;; :command is a must
-     ((not command)
-      (user-error "Anystyle command required: \
+    ;; we must process :version and :help before checking command
+    ;; but still ignore them if :global-options
+    (unless global-options
+      (cond
+       ;; help flag takes priority
+       (help
+        (setq global-options " --help"
+              command-options ""
+              input nil
+              output nil))
+       ;; anystyle ignores everything with --version flag except the
+       ;; --help flag, which we've just resolved above
+       (version
+        (setq global-options "--version"
+              command nil
+              command-options ""
+              input nil
+              output nil))))
+    ;;
+    ;; command is a must
+    (unless version
+      (unless command
+        (user-error "Anystyle command required: \
 find, parse, check, train, help or license"))
-     ;; requested models, a must when requested
-     ((and fmodel (not (f-exists? fmodel)))
-      (user-error "Finder model file not found: %s" fmodel))
-     ((and pmodel (not (f-exists? pmodel)))
-      (user-error "Parser model file not found: %s" pmodel))
-     (t
-      ;; command may be a string, convert it into symbol
+      ;; check if command is a valid command
       (when (stringp command)
         (setq command (intern command)))
-      ;; check if command is valid
       (unless (memq command commands)
         (user-error "Invalid command %s.  Valid commands are \
-find, parse, check, train, help and license" command))
-      ;; Set the global options
-      (if global-options
-          ;; If :global-options value is provided only stringp sanity
-          ;; check is performed
-          (progn
-            (unless (stringp global-options)
-              (user-error ":global-options value type must be string"))
-            (setq global-options (format " %s" (s-trim global-options))))
-        ;; Otherwise, construct global-options from plist keys
-        ;; First, options relevant for all commands
-        (setq global-options (orb-format
-                              " --help" help
-                              " --version" version
-                              " --verbose" (cons verbose " --no-verbose")
-                              " --stdout" (cons stdout " --no-stdout")))
-        ;;
-        ;; Then make checks for specific commands
-        ;; If an option is irrelevant for the command,
-        ;; ignore it silently
-        ;;
-        ;; find, parse, and check require format
-        (when (memq command '(find parse check))
-          (when (and format (stringp format))
+find, parse, check, train, help and license" command)))
+    ;;
+    ;; process help and license before global commands
+    (cl-case command
+      ('help
+       (when (stringp input)
+         (setq input (intern input)))
+       (unless (or (and global-options
+                        (string= global-options " --help"))
+                   (memq input commands))
+         (user-error "Invalid input %s.  Valid input for 'anystyle help': \
+find, parse, check, train, help or license" input)))
+      ('license
+       (setq input nil
+             output nil
+             global-options ""
+             command-options "")))
+    ;;
+    ;; * Global options
+    ;;
+    (if global-options
+        ;; If :global-options value is non-nil, only stringp sanity
+        ;; check is performed
+          (unless (stringp global-options)
+            (user-error "String is expected for :global-options"))
+      ;; Otherwise, construct global-options from plist keys.
+      ;;
+      ;; If an option does nothing for the command, ignore it silently
+      ;;
+      ;; find, parse, and check:
+      ;;
+      ;; 1) format option should be one of accepted types if present
+      ;; 2) finder and parser models should be valid file paths
+      ;; if present
+      (when (memq command '(find parse check))
+        ;; format
+        (when format
+          (when (stringp format)
             (setq format (-map #'intern
                                (s-split "," (s-trim format)))))
+          (unless (listp format)
+            (setq format (list format)))
           (let ((accepted-formats
                  (case command
                    ('find '(bib csl json ref txt ttx xml))
                    ('parse '(bib csl json ref txt xml))
                    ('check '(ttx xml)))))
-            ;; TODO: compare list agains list
-            (unless (--none? (memq it acceptable-formats)
-                             format)
+            (when (--none? (memq it accepted-formats) format)
               (user-error
-               "Invalid format(s) %s.  Valid formats for %s: %s"
-               (funcall make-format format)
+               "Invalid format(s) %s.  Valid formats for command %s: %s"
+               (funcall collapse format)
                command
-               (funcall make-format acceptable-formats)))
-            ;; convert format to a comma-separated string
-            ;; and attach it to global options
+               (funcall collapse accepted-formats)))
+            ;; convert format to a comma-separated string and append
+            ;; it to global options
             (setq global-options
                   (orb-format "%s" global-options
-                              " -f %s" (funcall make-format format)))))
-        ;; commands find and train use pdfinfo and pdftotext, so
-        ;; these must be present in the system
-        (when (memq command '(find train))
-          (unless (executable-find (or pdfinfo "pdfinfo"))
-            (user-error "Could not find pdfinfo executable"))
-          (unless (executable-find (or pdftotext "pdftotext"))
-            (user-error "Could not find pdftotext executable"))
-          (setq global-options
-                (orb-format "%s" global-options
-                            " --pdfinfo=\"%s\"" pdfinfo
-                            " --pdftotext=\"%s\"" pdftotext)))
-        ;; find, train, parse and check require input, which should be a valid path
-        (when (memq command '(find train parse check))
-          (unless input
-            (user-error "Input required for command %s" command))
-          (unless (f-exists? input)
-            (user-error "Invalid input file or directory %s" input))
-          (setq global-options
-                (orb-format
-                 "%s" global-options
-                 " --adapter=\"%s\"" adapter
-                 " --overwrite" (cons overwrite " --no-overwrite")))))
-      ;; find and parse also accept command options
-      ;; well, actually help also does but it's totally irrelevant for us:
-      ;; -c - List commands one per line, to assist with shell completion
-      (when (memq command '(find parse))
+                              " -f %s" (funcall collapse format)))))
+        ;; finder and parser models
+        (when (and fmodel (not (f-exists? fmodel)))
+          (user-error "Finder model file not found: %s" fmodel))
+        (when (and pmodel (not (f-exists? pmodel)))
+          (user-error "Parser model file not found: %s" pmodel))
+        (setq global-options (orb-format "%s" global-options
+                                         " -F %s" fmodel
+                                         " -P %s" pmodel)))
+      ;;
+      ;; find and train:
+      ;;
+      ;; 1) pdfinfo and pdftotext must be present in the system
+      (when (memq command '(find train))
+        (unless (executable-find
+                 (or pdfinfo orb-anystyle-pdfinfo-executable))
+          (user-error "Could not find pdfinfo executable: %s"
+                      (or pdfinfo
+                          orb-anystyle-pdfinfo-executable)))
+        (unless (executable-find
+                 (or pdftotext orb-anystyle-pdftotext-executable))
+          (user-error "Could not find pdftotext executable: %s"
+                      (or pdftotext
+                          orb-anystyle-pdftotext-executable)))
+        (setq global-options
+              (orb-format "%s" global-options
+                          " --pdfinfo=\"%s\"" pdfinfo
+                          " --pdftotext=\"%s\"" pdftotext)))
+      ;; find, train, parse and check:
+      ;;
+      ;; 1) require input, which should be a valid path
+      ;; 2) something called ruby adapter, probably a right place here
+      ;; 3) --verbose, --stdout, --overwrite if non-nil
+      (when (memq command '(find train parse check))
+        (unless input
+          (user-error "Input required for command %s" command))
+        (unless (and (stringp input) (f-exists? input))
+          (user-error "Invalid input file or directory %s" input))
+        (setq global-options
+              (orb-format
+               "%s" global-options
+               " --verbose" (cons verbose " --no-verbose")
+               " --stdout" (cons stdout " --no-stdout")
+               " --adapter=\"%s\"" adapter
+               " --overwrite" (cons overwrite " --no-overwrite")))))
+    ;;
+    ;; * Command options
+    ;;
+    ;; find and parse:
+    ;;
+    ;; N.B. Help command accepts a command option -c but it's totally
+    ;; irrelevant for us:
+    ;;
+    ;; [COMMAND OPTIONS]
+    ;; -c - List commands one per line, to assist with shell completion
+    ;;
+    ;; so we do not implement it as a plist key
+    ;; it can, however, be called with :global-options
+    (when (memq command '(find parse))
+      (if command-options
+            (unless (stringp command-options)
+              (user-error ":command-options value type must be string"))
+        ;; :crop's value should be a number or string
+        ;; nil is equivalent to 0
+        (when crop
+          (unless (consp crop)
+            (setq crop (list crop)))
+          (let ((x (or (car crop) 0))
+                (y (or (cdr crop) 0)))
+            (unless (and (or (numberp x)
+                             (stringp x))
+                         (or (numberp y)
+                             (stringp y)))
+              (user-error "Invalid value %s,%y.  Number or string expected"
+                          x y))
+            (setq crop (format "%s,%s" x y))))
+        ;; parse only accepts --[no]-layout, so we ignore the rest
+        (setq command-options (orb-format
+                               " --crop=%s" (and (eq command 'find)
+                                                 crop)
+                               " --layout" (cons layout " --no-layout")
+                               " --solo" (and (eq command 'find)
+                                              (cons solo " --no-solo")))))
+      ;; append command options to command
+      (setq command (orb-format "%s" command
+                                "%s" command-options)))
 
-        )
-      (if command-options)
-      ;; build command specific anystyle cli-strings
-      ;; and perform some additional checks
-      (cl-case command
-        ('license
-         (setq input nil
-               output nil))
-        ('help
-         ;; help's input should be other command's name
-         (when (stringp input)
-           (setq input (intern input)))
-         (unless (memq input commands)
-           (user-error "Invalid input.  Valid input for 'anystyle help': \
-find, parse, check, train, help or license"))
-         (setq output nil))
-        ('check
-         (setq output nil))
-        ('find
-         ;; find also accepts command options
-         (unless command-options
-           (when crop
-             (setq crop (if (consp crop)
-                            (format "%s,%s" (car crop) (cdr crop))
-                          (format "%s" crop))))
-           (setq command-options (orb-format
-                                  " --crop=%s" crop
-                                  " --layout" (cons layout " --no-layout")
-                                  " --solo" (cons solo " --no-solo"))))
-         (setq command (orb-format "%s" command
-                                   " %s" command-options))))
-      ;; Run the program
-      (setq anystyle (orb-format "%s" exec
-                                 "%s" global-options
-                                 " %s" command
-                                 " \"%s\"" input
-                                 " \"%s\"" output))
-      (funcall shell-run anystyle)))))
+    (setq output (if (eq command 'check) nil output))
+    ;;
+    ;; Run the program
+    ;;
+    (setq anystyle (orb-format "%s" exec
+                               "%s" global-options
+                               " %s" command
+                               " \"%s\"" input
+                               " \"%s\"" output))
+    (funcall shell-run anystyle)))
 
 (provide 'orb-anystyle)
 ;;; orb-anystyle.el ends here

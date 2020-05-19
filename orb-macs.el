@@ -47,8 +47,8 @@
 
 (defmacro orb-with-message (message &rest body)
   "Put MESSAGE before and after BODY.
-Append ... to the first message and ...done to the second.
-Return result of evaluating BODY."
+Append \"...\" to the first message and \"...done\" to the second.
+Return result of evaluating the BODY."
   (declare (indent 1) (debug (stringp &rest form)))
   `(prog2
        (message "%s..." ,message)
@@ -68,21 +68,44 @@ Format is `orb-citekey-format'."
     (substring citekey beg end)))
 
 (defun orb-format (&rest args)
-  "Format ARGS and return a string.
+  "Format ARGS conditionally and return a string.
 ARGS must be a plist, whose keys are `format' control strings and
 values are `format' objects.  Thus only one object per control
 string is allowed.  The result will be concatenated into a single
-string.  If object is nil, it will be formatted as empty string.
+string.
 
-\(orb-format \"A: %s\" \"hello\" \" B: %s\" nil \" C: %d\" \"!\")
-=> 'A: hello C: !'.
+In the simplest case, it behaves as a sort of interleaved `format':
+==========
 
-Object can also be a cons cell.  In such case, if its car is nil
-then its cdr will be formatted as \"%s\".
+\(orb-format \"A: %s\" 'hello
+            \" B: %s\" 'world
+            \" C: %s\" \"!\")
 
-If the control string is nil, the object will be formatted as \"%s\".
+  => 'A: hello B: world C: !'
 
-\(orb-format \"A: %s\" \"hello\" \" B: %s\" '(nil . \"world\") nil \"!\")
+If format object is nil, it will be formatted as empty string:
+==========
+
+\(orb-format \"A: %s\" 'hello
+            \" B: %s\" nil
+            \" C: %s\" \"!\")
+  => 'A: hello C: !'
+
+Object can also be a cons cell.  If its car is nil then its cdr
+will be treated as default value and formatted as \"%s\":
+==========
+
+\(orb-format \"A: %s\" 'hello
+            \" B: %s\" '(nil . dworl)
+            \" C: %s\" \"!\")
+  => 'A: hellodworl C: !'
+
+Finally, if the control string is nil, the object will be formatted as \"%s\":
+==========
+
+\(orb-format \"A: %s\" 'hello
+            \" B: %s\" '(nil . \" world\")
+             nil \"!\")
 => 'A: hello world!'."
   (let ((res ""))
     (while args
