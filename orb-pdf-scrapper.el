@@ -75,11 +75,26 @@ Technically, only :key and :entry are strictly required.")
          (or load-file-name buffer-file-name))
         "journal_titles.tsv")))
 
-(defvar orb-pdf-scrapper--buffer "*Orb PDF Scrapper*")
-(defvar orb-pdf-scrapper--plist nil)
 (defvar orb-pdf-scrapper--refs nil)
 (defvar orb-pdf-scrapper--validated-refs '((in-roam) (in-bib)
                                            (valid) (invalid)))
+
+(defvar orb-pdf-scrapper--buffer "*Orb PDF Scrapper*"
+  "Orb PDF Scrapper special buffer.")
+
+(defvar orb-pdf-scrapper--plist nil
+  "Communication channel for Orb PDF Scrapper.")
+
+(defconst orb-pdf-scrapper--messages
+  (list ))
+
+(defmacro orb-with-scrapper-buffer (&rest body)
+  "Execute BODY with `orb-pdf-scrapper--buffer' as current.
+If the buffer does not exist it will be created."
+  (declare (indent 1) (debug t))
+  `(save-current-buffer
+     (set-buffer (get-buffer-create orb-pdf-scrapper--buffer))
+     ,@body))
 
 (defun orb-pdf-scrapper--validate-refs ()
   "Validate references.
@@ -173,8 +188,8 @@ as valid will are sorted into four groups:
 (defun orb-pdf-scrapper--edit-txt ()
   "Get references from pdf and edit them in a temporary buffer."
   (let ((temp-txt (orb-temp-file "orb-pdf-scrapper-" ".txt"))
-        (pdf (orb-pdf-scrapper--get :pdf)))
-    (orb-pdf-scrapper--put :txt temp-txt)
+        (pdf (orb-pdf-scrapper--get :pdf-file)))
+    (orb-pdf-scrapper--put :txt-file temp-txt)
     (switch-to-buffer-other-window
      (get-buffer-create orb-pdf-scrapper--buffer))
     (erase-buffer)
@@ -196,11 +211,11 @@ as valid will are sorted into four groups:
         (orb-pdf-scrapper--put :context 'error)
         (orb-pdf-scrapper-dispatcher))
     (let* ((temp-bib (orb-temp-file "orb-pdf-scrapper-" ".bib")))
-      (orb-pdf-scrapper--put :bib temp-bib)
-      (with-current-buffer orb-pdf-scrapper--buffer
+      (orb-pdf-scrapper--put :bib-file temp-bib)
+      (orb-with-scrapper-buffer
         (shell-command
          (format "anystyle -f bib parse \"%s\" -"
-                 (orb-pdf-scrapper--get :txt))
+                 (orb-pdf-scrapper--get :txt-file))
          orb-pdf-scrapper--buffer)
         (write-region (buffer-string) nil temp-bib nil -1)
         (kill-buffer (current-buffer)))
@@ -216,23 +231,26 @@ as valid will are sorted into four groups:
   (let ((context (orb-pdf-scrapper--get :context)))
     (cond ((equal context 'parse-bib-non-interactive)
            (orb-with-message "Generating citation keys"
-             (with-current-buffer
-                 (get-buffer-create orb-pdf-scrapper--buffer)
+             (orb-with-scrapper-buffer
                (shell-command
                 (format "anystyle -f bib parse \"%s\" -"
-                        (orb-pdf-scrapper--get :txt))
+                        (orb-pdf-scrapper--get :txt-file))
                 orb-pdf-scrapper--buffer)
                (bibtex-mode)
                (bibtex-set-dialect 'BibTeX t)
-               (orb-pdf-scrapper-generate-keys
-                (orb-pdf-scrapper--get :bib))))
+               (condition-case nil
+                   (orb-pdf-scrapper-generate-keys
+                    (orb-pdf-scrapper--get :bib-file))
+                 (t
+                  (orb-pdf-scrapper--put :context 'parse-bib-interactive)
+                  (orb-pdf-scrapper--checkout)))))
            (orb-pdf-scrapper--insert))
           ((equal context 'parse-bib-interactive)
            (orb-with-message (or (and (> (cl-random 100) 98)
                                       "Pressing the RED button")
                                  "Generating citation keys")
              (with-current-buffer
-                 (find-buffer-visiting (orb-pdf-scrapper--get :bib))
+                 (find-buffer-visiting (orb-pdf-scrapper--get :bib-file))
                (orb-pdf-scrapper-generate-keys)))
            (orb-pdf-scrapper--insert))
           (t
@@ -241,8 +259,6 @@ as valid will are sorted into four groups:
 
 (defun orb-pdf-scrapper--insert ()
   "Checkout from Orb PDF Scrapper interactive mode."
-  ;; (find-file temp-bib)
-  ;; (kill-buffer)
   (set-buffer (orb-pdf-scrapper--get :original-buffer))
   (save-excursion
     (save-restriction
@@ -250,25 +266,26 @@ as valid will are sorted into four groups:
       (goto-char (point-max))
       (insert "\n* References\n")
       (dolist (group orb-pdf-scrapper--validated-refs)
-        ;; for a yet unclear reason, `orb-pdf-scrapper--refs'
-        ;; cdrs are not erased in consecutive runs despite setting it
-        ;; to nil in multiple places.
+        ;; for a yet unclear reason, `orb-pdf-scrapper--refs' cdrs
+        ;; are not erased in consecutive runs despite setting it to
+        ;; nil in multiple places.
         (insert (format "** %s\n" (car group)))
         (dolist (ref (cdr group))
           (insert (format "- %s\n" ref)))
         (insert "\n")
-        ;; reset `orb-pdf-scrapper--validate-refs' after using
-        ;; it otherwise values get appended on consecutive runs even
+        ;; reset `orb-pdf-scrapper--validate-refs' after using it
+        ;; otherwise values get appended on consecutive runs even
         ;; when setting the variable to nil with setq. Maybe some
         ;; memory allocation/garbage collection specifics, most
-        ;; likely though not enough understanding of global variables.
+        ;; likely though not enough understanding of global
+        ;; variables.
         (setf (cdr group) nil))))
   (orb-pdf-scrapper--cleanup))
 
 (defun orb-pdf-scrapper--cleanup ()
   "Clean up."
-  (let ((txt (orb-pdf-scrapper--get :txt))
-        (bib (orb-pdf-scrapper--get :bib)))
+  (let ((txt (orb-pdf-scrapper--get :txt-file))
+        (bib (orb-pdf-scrapper--get :bib-file)))
     (dolist (buf (list txt bib))
       (and buf
            (setq buf (find-buffer-visiting buf))
@@ -279,7 +296,7 @@ as valid will are sorted into four groups:
        (kill-buffer orb-pdf-scrapper--buffer))
   (set-window-configuration (orb-pdf-scrapper--get :window-conf))
   (dolist (prop (list :running :context :current-key
-                      :prevent-concurring :pdf :txt :bib
+                      :prevent-concurring :pdf-file :txt-file :bib-file
                       :window-conf :original-buffer))
     (orb-pdf-scrapper--put prop nil)))
 
@@ -395,23 +412,29 @@ numbers."
   (interactive)
   (let ((context (orb-pdf-scrapper--get :context)))
     (cond
+     ;; Prevent another Orb PDF Scrapper process
+     ;; Ask user whether to kill currently running process
      ((orb-pdf-scrapper--get :prevent-concurring)
       (if (y-or-n-p
            (format "Another Orb PDF Scrapper process is running: %s.  \
 Kill it and start a new one %s? "
                    (orb-pdf-scrapper--get :current-key)
                    (orb-pdf-scrapper--get :new-key)))
+          ;; Kill the process and start a new one
           (progn
-            (orb-with-message "Killing current process..."
+            (orb-with-message "Killing current process"
               (orb-pdf-scrapper--cleanup))
             (orb-pdf-scrapper-run (orb-pdf-scrapper--get :new-key)))
+        ;; Do nothing
         (orb-pdf-scrapper--put :prevent-concurring nil)))
      ((equal context 'edit-txt)
       (orb-pdf-scrapper--edit-txt))
      ((equal context 'edit-bib)
-      (with-current-buffer orb-pdf-scrapper--buffer
-        (write-region (buffer-string) nil
-                      (orb-pdf-scrapper--get :txt) nil -1))
+      (orb-with-scrapper-buffer
+        (let ((data (buffer-string)))
+          (write-region data nil
+                        (orb-pdf-scrapper--get :txt-file) nil -1)
+          (orb-pdf-scrapper--put :txt-data data)))
       (if (y-or-n-p "Review the bib file? ")
           (orb-pdf-scrapper--review-bib)
         ;; proceed to checkout; bib file was not edited interactively
@@ -459,10 +482,11 @@ KEY is note's citation key."
     (orb-pdf-scrapper--put :context 'edit-txt
                            :current-key key
                            :new-key nil
-                           :pdf (file-truename
+                           :pdf-file (file-truename
                                  (orb-process-file-field key))
                            :running t
                            :prevent-concurring nil
+                           :caller 'run
                            :original-buffer (current-buffer)
                            :window-conf (current-window-configuration))
     (orb-pdf-scrapper-dispatcher)))

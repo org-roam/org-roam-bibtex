@@ -67,6 +67,36 @@ Format is `orb-citekey-format'."
                    (length orb-citekey-format)))))
     (substring citekey beg end)))
 
+(defun orb-format (&rest args)
+  "Format ARGS and return a string.
+ARGS must be a plist, whose keys are `format' control strings and
+values are `format' objects.  Thus only one object per control
+string is allowed.  The result will be concatenated into a single
+string.  If object is nil, it will be formatted as empty string.
+
+\(orb-format \"A: %s\" \"hello\" \" B: %s\" nil \" C: %d\" \"!\")
+=> 'A: hello C: !'.
+
+Object can also be a cons cell.  In such case, if its car is nil
+then its cdr will be formatted as \"%s\".
+
+If the control string is nil, the object will be formatted as \"%s\".
+
+\(orb-format \"A: %s\" \"hello\" \" B: %s\" '(nil . \"world\") nil \"!\")
+=> 'A: hello world!'."
+  (let ((res ""))
+    (while args
+      (let ((str (pop args))
+            (obj (pop args)))
+        (unless (consp obj)
+          (setq obj (cons obj nil)))
+        (setq res
+              (concat res
+                      (format (or (and (car obj) str) "%s")
+                              (or (car obj) (cdr obj) ""))))))
+    res))
+
+
 ;;; Code in this section was adopted from ob-core.el
 ;;
 ;; Copyright (C) 2009-2020 Free Software Foundation, Inc.
