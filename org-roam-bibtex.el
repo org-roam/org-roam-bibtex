@@ -124,7 +124,7 @@ See `orb-edit-notes' for details."
   :group 'org-roam-bibtex)
 
 (defcustom orb-preformat-keywords
-  '("citekey" "type" "pdf?" "note?"
+  '("citekey" "date" "type" "pdf?" "note?"
     "author" "editor"
     "author-abbrev" "editor-abbrev" "author-or-editor-abbrev")
   "The template prompt wildcards for preformatting.
