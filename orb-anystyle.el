@@ -51,20 +51,14 @@
 (defvar orb-anystyle-executable "anystyle") ; TODO: make it defcustom
 (defvar orb-anystyle-pdfinfo-executable "pdfinfo") ; TODO: make it defcustom
 (defvar orb-anystyle-pdftotext-executable "pdftotext") ; TODO: make it defcustom
-(defvar orb-anystyle-default-buffer orb-pdf-scrapper--buffer) ; TODO: make it defcustom
+(defvar orb-anystyle-default-buffer "*Orb Anystyle Output*") ; TODO: make it defcustom
 
 ;; * Main functions
 
 ;;;###autoload
 (defun orb-anystyle (command &rest args)
   "Run anystyle COMMAND with `shell-command'.
-BUFFER-OR-NAME is buffer or buffer name, which will be passed to
-`shell-command' as OUTPUT-BUFFER.  It can also be a cons cell
-\(OUTPUT-BUFFER . ERROR-BUFFER).  If BUFFER-OR-NAME is nil,
-`orb-pdf-scrapper--buffer' will be used.
-
-ARGS is a plist with following recognized keys:
-
+ARGS is a plist with the following recognized keys:
 
 Anystyle CLI options
 ==========
@@ -118,7 +112,7 @@ Anystyle CLI options
 
 - `shell-command''s OUTPUT-BUFFER
 - can be a cons cell (OUTPUT-BUFFER . ERROR-BUFFER)
-- when nil defaults to (`orb-anystyle-default-buffer' . nil)
+- when nil, defaults to (`orb-anystyle-default-buffer' . nil)
 
 anystyle CLI command synopsis:
 anystyle [global options] command [command options] [arguments...].
@@ -304,7 +298,7 @@ find, parse, check, train, help or license" input)))
     ;;
     ;; * Command options
     ;;
-    ;; find and parse:
+    ;; find:
     ;;
     ;; N.B. Help command accepts a command option -c but it's totally
     ;; irrelevant for us:
@@ -314,7 +308,7 @@ find, parse, check, train, help or license" input)))
     ;;
     ;; so we do not implement it as a plist key
     ;; it can, however, be called with :global-options
-    (when (memq command '(find parse))
+    (when (eq command 'find)
       (if command-options
             (unless (stringp command-options)
               (user-error ":command-options value type must be string"))
@@ -334,11 +328,9 @@ find, parse, check, train, help or license" input)))
             (setq crop (format "%s,%s" x y))))
         ;; parse only accepts --[no]-layout, so we ignore the rest
         (setq command-options (orb-format
-                               " --crop=%s" (and (eq command 'find)
-                                                 crop)
+                               " --crop=%s" crop
                                " --layout" (cons layout " --no-layout")
-                               " --solo" (and (eq command 'find)
-                                              (cons solo " --no-solo")))))
+                               " --solo" (cons solo " --no-solo"))))
       ;; append command options to command
       (setq command (orb-format "%s" command
                                 "%s" command-options)))
