@@ -151,7 +151,7 @@ as valid are sorted into four groups:
          (journal-regexp
           (format "^%s[ ,.;-]*$"
                   (--reduce (format "%s[ ,.;-]+%s" acc it)
-                            (split-string journal "[,.;-]+" t "[ ]+"))))
+                            (split-string journal "[ ,.;-]+" t "[ ]+"))))
          ;; (journal . abbrev)
          ;; instead of comparing strings, try to match the key with
          ;; the above regexp
@@ -161,7 +161,8 @@ as valid are sorted into four groups:
                            ;; if not, just return (journal . nil)
                            (list journal)))
          ;; use verb field to store journal abbreviation
-         (verb (cdr journal-cons))
+         (verb (or (bibtex-completion-get-value "verb" entry)
+                   (cdr journal-cons)))
          ;; Generate new key similar to "2020-JACS-1999"
          ;; or "2020-JFC-199-1999"
          (new-key (concat year "-"
@@ -272,9 +273,8 @@ as valid are sorted into four groups:
           ((equal context 'parse-bib-interactive)
            (when (> (cl-random 100) 98)
              (orb-with-message "Pressing the RED button"))
-           (orb-with-scrapper-buffer
-             (write-region (buffer-string) nil
-                           (orb-pdf-scrapper--get :bib-file) nil -1))
+           (when (buffer-modified-p (get-buffer orb-pdf-scrapper--buffer))
+             (orb-pdf-scrapper-generate-keys))
            (orb-pdf-scrapper--insert))
           (t
            (orb-pdf-scrapper--put :context 'error)
@@ -441,7 +441,10 @@ Validate and push the retreived references to
              (cons (cons new-key formatted-entry) validp) refs))
           (bibtex-end-of-entry)
           (bibtex-skip-to-valid-entry)))
-      (orb-pdf-scrapper--validate-refs refs))))
+      (orb-pdf-scrapper--validate-refs refs))
+    (orb-with-scrapper-buffer
+      (write-region (buffer-string) nil
+                    (orb-pdf-scrapper--get :bib-file) t -1))))
 
 (defun orb-pdf-scrapper-sanitize-text (&optional contents)
   "Run string processing on CONTENTS.
@@ -449,15 +452,16 @@ Try to get every reference into newline and remove reference
 numbers."
   (interactive)
   (let* ((contents (or contents (buffer-string)))
-         (numbered-regex
-          "\\(([0-9]\\{1,3\\}) \\|\\[[0-9]\\{1,3\\}] \\) ")
-         (lettered-regex "([a-z]) ")
+         (rx1 '(and "(" (** 1 2 (any "0-9")) ")"))
+         (rx2 '(and "[" (** 1 2 (any "0-9")) "]"))
+         (rx3 '(and "(" (any "a-z") ")"))
+         (regexp (rx-to-string
+                 `(group-n 1 (or (or (and ,rx1 " " ,rx3)
+                                     (and ,rx2 " " ,rx3))
+                                 ,rx1 ,rx2 ,rx3)) t))
          (result (--> contents
-                      (s-replace "\n" "" it)
-                      (split-string it numbered-regex)
-                      (--map (split-string it lettered-regex) it)
-                      (-flatten it)
-                      (s-join "\n" it))))
+                      (s-replace "\n" " " it)
+                      (s-replace-regexp regexp "\n\\1" it))))
     (erase-buffer)
     (insert result)
     (goto-char (point-min))))
@@ -548,7 +552,7 @@ KEY is note's citation key."
                            :current-key key
                            :new-key nil
                            :pdf-file (file-truename
-                                 (orb-process-file-field key))
+                                      (orb-process-file-field key))
                            :running t
                            :prevent-concurring nil
                            :caller 'run
