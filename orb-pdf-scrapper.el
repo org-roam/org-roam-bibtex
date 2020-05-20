@@ -143,15 +143,15 @@ as valid are sorted into four groups:
           (or (bibtex-completion-get-value "volume" entry) "N/A"))
          (pages
           (replace-regexp-in-string
-           " " "--" (or (bibtex-completion-get-value "pages" entry)
+           "[– ]" "--" (or (bibtex-completion-get-value "pages" entry)
                         "N/A")))
          ;; TODO: would be nice to already have this regex in
          ;; `orb-pdf-scrapper--journal-title-abbrevs'
-         ;; regexp similar "J[ ,.;]Am[ ,.;]Chem[ ,.;]Soc[ ,.;]"
+         ;; regexp similar "J[ ,.;-]Am[ ,.;-]Chem[ ,.;-]Soc[ ,.;-]"
          (journal-regexp
-          (format "^%s[ ,.;]*$"
-                  (--reduce (format "%s[ ,.;]+%s" acc it)
-                            (split-string journal "[,.;]+" t "[ ]+"))))
+          (format "^%s[ ,.;-]*$"
+                  (--reduce (format "%s[ ,.;-]+%s" acc it)
+                            (split-string journal "[,.;-]+" t "[ ]+"))))
          ;; (journal . abbrev)
          ;; instead of comparing strings, try to match the key with
          ;; the above regexp
@@ -219,6 +219,7 @@ as valid are sorted into four groups:
           :stdout t
           :buffer orb-pdf-scrapper--buffer))))
   (goto-char (point-min))
+  (text-mode)
   (orb-pdf-scrapper-mode -1)
   (orb-pdf-scrapper--put :context 'edit-bib)
   (orb-pdf-scrapper-mode +1))
@@ -269,8 +270,8 @@ as valid are sorted into four groups:
                   (orb-pdf-scrapper--checkout)))))
            (orb-pdf-scrapper--insert))
           ((equal context 'parse-bib-interactive)
-           (orb-with-message (when (> (cl-random 100) 98)
-                                  "Pressing the RED button"))
+           (when (> (cl-random 100) 98)
+             (orb-with-message "Pressing the RED button"))
            (orb-with-scrapper-buffer
              (write-region (buffer-string) nil
                            (orb-pdf-scrapper--get :bib-file) nil -1))
@@ -335,10 +336,11 @@ as valid are sorted into four groups:
   "Minor mode for special key bindings in a orb-pdf-scrapper buffer.
 Turning on this mode runs the normal hook `orb-pdf-scrapper-mode-hook'."
   nil " ORS" orb-pdf-scrapper-mode-map
-  (orb-pdf-reference-scrapper--update-keymap)
-  (setq-local
-   header-line-format
-   (orb-pdf-scrapper--format-header-line)))
+  (when orb-pdf-scrapper-mode
+    (orb-pdf-reference-scrapper--update-keymap)
+    (setq-local
+     header-line-format
+     (orb-pdf-scrapper--format-header-line))))
 
 (defun orb-pdf-scrapper--put (&rest props)
   "Add properties PROPS to `orb-pdf-scrapper--plist'."
@@ -386,11 +388,11 @@ Press the RED button `\\[orb-pdf-scrapper-kill]'."))))
        "\C-c\C-r" #'orb-pdf-scrapper-return-to-txt))
     (t
      (define-key orb-pdf-scrapper-mode-map
-       "C-c\C-c" nil)
+       "\C-c\C-c" nil)
      (define-key orb-pdf-scrapper-mode-map
-       "C-c\C-u" nil)
+       "\C-c\C-u" nil)
      (define-key orb-pdf-scrapper-mode-map
-       "C-c\C-r" nil))))
+       "\C-c\C-r" nil))))
 
 ;; * Interactive functions
 
