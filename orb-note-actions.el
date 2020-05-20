@@ -58,8 +58,25 @@
 
 ;; * Customize definitions
 
+(defgroup orb-note-actions nil
+  "Orb Note Actions - run actions useful in note's context."
+  :group 'org-roam-bibtex
+  :prefix "orb-note-actions-")
+
 (defcustom orb-note-actions-frontend 'default
-  "Interface frontend for `orb-note-actions'."
+  "Interface frontend for `orb-note-actions'.
+
+Supported values (frontends) are 'default, 'ido, 'hydra, 'ivy and 'helm.
+
+Alternatively, it can be set to a function, in which case the
+function should expect one argument CITEKEY, which is a list
+whose car is the citation key associated with the org-roam note
+the current buffer is visiting.  Also, it should ideally make use
+of `orb-note-actions-default', `orb-note-actions-extra' and
+`orb-note-actions-user' for providing an interactive interface,
+through which the combined set of note actions is presented as a
+list of candidates and the function associated with the candidate
+is executed upon selecting it."
   :type '(radio
           (const :tag "Default" default)
           (const :tag "Ido" ido)
@@ -67,7 +84,7 @@
           (const :tag "Ivy" ivy)
           (const :tag "Helm" helm)
           (function :tag "Custom function"))
-  :group 'org-roam-bibtex)
+  :group 'orb-note-actions)
 
 (defcustom orb-note-actions-extra
   '(("Save citekey to kill-ring and clipboard" . orb-note-actions-copy-citekey)
@@ -79,7 +96,7 @@ Each action is a cons cell DESCRIPTION . FUNCTION."
           :tag "Extra actions for `orb-note-actions'"
           :key-type (string :tag "Prompt")
           :value-type (symbol :tag "Function name (unquoted)"))
-  :group 'org-roam-bibtex)
+  :group 'orb-note-actions)
 
 (defcustom orb-note-actions-user nil
   "User actions for `orb-note-actions'.
@@ -88,7 +105,7 @@ Each action is a cons cell DESCRIPTION . FUNCTION."
           :tag "User actions for `orb-note-actions'"
           :key-type (string :tag "Prompt")
           :value-type (symbol :tag "Function name (unquoted)"))
-  :group 'org-roam-bibtex)
+  :group 'orb-note-actions)
 
 
 ;; * Helper functions
@@ -121,7 +138,7 @@ CITEKEY is the citekey." (capitalize frontend-name))
              ;;        (bibtex-completion-get-entry citekey)
              ;;        (window-body-width)))
              (candidates
-              ,(unless (string= frontend-name "hydra")
+              ,(unless (eq frontend 'hydra)
                  '(append  orb-note-actions-default
                            orb-note-actions-extra
                            orb-note-actions-user))))
@@ -138,19 +155,28 @@ CITEKEY is the citekey." (capitalize frontend-name))
 
 (declare-function orb-note-actions-hydra/body "orb-note-actions" nil t)
 (orb-note-actions--frontend! 'hydra
-  (let ((n ?a)
+  (ignore candidates)                   ; silence the byte compiler
+                                        ; for a nice hydra we need
+                                        ; each group separately
+  (let ((k ?a)
         actions)
     (dolist (type (list "Default" "Extra" "User"))
       (let ((actions-var (intern (concat "orb-note-actions-" (downcase type)))))
         (dolist (action (symbol-value actions-var))
+          ;; this pushes defhydra HEADS list of form:
+          ;; ("a" (some-action citekey-value) "Some-action description" :column "Type")
           (cl-pushnew
-           `(,(format "%c" n) (,(cdr action) (list ,citekey)) ,(car action) :column ,(concat type " actions"))
+           `(,(format "%c" k) (,(cdr action) (list ,citekey))
+             ,(car action) :column ,(concat type " actions"))
            actions)
-          (setq n (1+ n)))))            ; TODO: figure out a way to supply mnemonic keys
+          ;; increment key a->b->c...
+          (setq k (1+ k))))) ; TODO: figure out a way to supply mnemonic keys
     (setq actions (nreverse actions))
     (eval
      `(defhydra orb-note-actions-hydra (:color blue :hint nil)
+        ;; defhydra docstring
         ,(format  "^\n  %s \n\n^"  (s-word-wrap (- (window-body-width) 2) name))
+        ;; defhydra HEADS
         ,@actions)))
   (orb-note-actions-hydra/body))
 
@@ -207,12 +233,7 @@ modified, there is a number of prefined extra actions
 user actions can be set in `orb-note-actions-user'."
   (interactive)
   (let ((non-default-frontends (list 'hydra 'ido 'ivy 'helm))
-        (citekey (cdr (assoc "ROAM_KEY"
-                             (org-roam--extract-global-props
-                              '("ROAM_KEY"))))))
-    ;; remove format from citekey
-    (when orb-citekey-format
-      (setq citekey (orb-unformat-citekey citekey)))
+        (citekey (cdr (org-roam--extract-ref))))
     (if citekey
         (cond ((member
                 orb-note-actions-frontend
@@ -229,7 +250,7 @@ user actions can be set in `orb-note-actions-user'."
                (orb-note-actions--run
                 'default
                 citekey)))
-      (message "#+ROAM_KEY is not found in this buffer."))))
+      (user-error "No #+ROAM_KEY found in current buffer"))))
 
 (provide 'orb-note-actions)
 ;;; orb-note-actions.el ends here

@@ -126,7 +126,7 @@ See `orb-edit-notes' for details."
   :group 'org-roam-bibtex)
 
 (defcustom orb-preformat-keywords
-  '("citekey" "type" "pdf?" "note?"
+  '("citekey" "date" "type" "pdf?" "note?"
     "author" "editor"
     "author-abbrev" "editor-abbrev" "author-or-editor-abbrev")
   "The template prompt wildcards for preformatting.
@@ -412,7 +412,7 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
   "Find note file associated from BibTeX’s CITEKEY.
 Returns the path to the note file, or nil if it doesn’t exist."
   (let* ((completions (org-roam--get-ref-path-completions)))
-    (cdr (assoc citekey completions))))
+    (plist-get (cdr (assoc citekey completions)) :path)))
 
 ;;;###autoload
 (define-minor-mode org-roam-bibtex-mode
@@ -506,7 +506,8 @@ before calling any Org-roam functions."
     (unless (ignore-errors (org-roam--find-ref citekey))
       ;; Check if the requested entry actually exists and fail gracefully
       (if-let* ((entry (bibtex-completion-get-entry citekey))
-                ;; Depending on the templates used, run org-roam--capture or call org-roam-find-file
+                ;; Depending on the templates used, run
+                ;; org-roam-capture--capture or call org-roam-find-file
                 (templates (or orb-templates
                                org-roam-capture-templates
                                (and (display-warning :warning "Could not find the requested templates.")
@@ -534,7 +535,7 @@ before calling any Org-roam functions."
                                                   (cons 'ref citekey-formatted)
                                                   (cons 'slug (org-roam--title-to-slug citekey)))))
                 (add-hook 'org-capture-after-finalize-hook #'org-roam-capture--find-file-h)
-                (org-roam--capture))
+                (org-roam-capture--capture))
             (org-roam-find-file title))
         (message "Something went wrong. Check the *Warnings* buffer.")))))
 
