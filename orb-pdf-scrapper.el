@@ -8,7 +8,7 @@
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
 ;; Version: 0.2.3
-;; Package-Requires: ((emacs "26.1") (f "0.20.0") (s "1.12.0") (org "9.3") (org-roam "1.0.0") (bibtex-completion "2.0.0"))
+;; Package-Requires: ((org-roam-bibtex))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -37,10 +37,17 @@
 
 ;;; Code:
 ;; * Library requires
-
 (require 'org-roam-bibtex)
 (require 'orb-macs)
 (require 'orb-anystyle)
+
+(require 'bibtex)
+(require 'rx)
+(require 'cl-extra)
+
+(eval-when-compile
+  (require 'cl-lib)
+  (require 'subr-x))
 
 ;; * Customize definitions
 
@@ -447,10 +454,14 @@ numbers."
          (rx1 '(and "(" (** 1 2 (any "0-9")) ")"))
          (rx2 '(and "[" (** 1 2 (any "0-9")) "]"))
          (rx3 '(and "(" (any "a-z") ")"))
+         (rx4 '(and " " (any "a-z") ")"))
          (regexp (rx-to-string
-                 `(group-n 1 (or (or (and ,rx1 " " ,rx3)
-                                     (and ,rx2 " " ,rx3))
-                                 ,rx1 ,rx2 ,rx3)) t))
+                  `(group-n 1 (or (or (and ,rx1 " " ,rx3)
+                                      (and ,rx2 " " ,rx3))
+                                  (or (and ,rx1 " " ,rx4)
+                                      (and ,rx2 " " ,rx4))
+                                  (or ,rx1 ,rx2)
+                                  (or ,rx3 ,rx4))) t))
          (result (--> contents
                       (s-replace "\n" " " it)
                       (s-replace-regexp regexp "\n\\1" it))))

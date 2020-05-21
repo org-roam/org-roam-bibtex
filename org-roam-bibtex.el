@@ -10,7 +10,7 @@
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
 ;; Version: 0.2.3
-;; Package-Requires: ((emacs "26.1") (f "0.20.0") (s "1.12.0") (org "9.3") (org-roam "1.0.0") (bibtex-completion "2.0.0"))
+;; Package-Requires: ((emacs "26.1") (dash "2.17.0") (f "0.20.0") (s "1.12.0") (org "9.3") (org-roam "1.1.1") (bibtex-completion "2.0.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
