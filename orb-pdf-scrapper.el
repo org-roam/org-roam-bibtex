@@ -52,7 +52,7 @@
 ;; * Customize definitions
 
 ;; TODO: make it defcustom
-(defvar orb-pdf-scrapper-keygen-fun #'orb-pdf-scrapper--YAP-keygen-fn
+(defvar orb-pdf-scrapper-keygen-function #'orb-pdf-scrapper--YAP-keygen-fn
   "Function to generate citation key.
 It should take a bibtex entry as returned by
 `bibtex-completion-get-entry' and return a plist of form
@@ -104,7 +104,7 @@ If the buffer does not exist it will be created."
 Auxiliary function for `orb-pdf-scrapper-generate-keys'.
 REFS should be an alist of form ((CITEKEY . FORMATTED-ENTRY) . VALIDP).
 
-References marked by `orb-pdf-scrapper-keygen-fun' function
+References marked by `orb-pdf-scrapper-keygen-function' function
 as valid are sorted into four groups:
 'in-roam - those that are in the `org-roam' database;
 'in-bib - those that are in `bibtex-completion-bibliography' file(s);
@@ -418,7 +418,7 @@ Validate and push the retreived references to
           (let* ((key (bibtex-key-in-head))
                  ;; TODO: consider using more more low-level parsebib
                  (entry (bibtex-completion-get-entry key))
-                 (key-plist (funcall orb-pdf-scrapper-keygen-fun entry))
+                 (key-plist (funcall orb-pdf-scrapper-keygen-function entry))
                  (new-key (plist-get key-plist :key))
                  (validp (plist-get key-plist :validp))
                  (fields-to-set (plist-get key-plist :fields))
@@ -443,7 +443,7 @@ Validate and push the retreived references to
       (orb-pdf-scrapper--validate-refs refs))
     (orb-with-scrapper-buffer
       (write-region (buffer-string) nil
-                    (orb-pdf-scrapper--get :bib-file) t -1))))
+                    (orb-pdf-scrapper--get :bib-file) nil -1))))
 
 (defun orb-pdf-scrapper-sanitize-text (&optional contents)
   "Run string processing on CONTENTS.
