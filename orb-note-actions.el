@@ -64,7 +64,6 @@
 
 (defcustom orb-note-actions-frontend 'default
   "Interface frontend for `orb-note-actions'.
-
 Supported values (frontends) are 'default, 'ido, 'hydra, 'ivy and 'helm.
 
 Alternatively, it can be set to a function, in which case the
@@ -186,7 +185,8 @@ CITEKEY is the citekey." (capitalize frontend-name))
                 :caller #'orb-note-actions
                 :action (lambda (c)
                           (funcall (cdr c) (list citekey))))
-    (display-warning :warning "You must have Ivy installed to use it! Falling back to default.")
+    (display-warning :warning "You must have Ivy installed to use it!  \
+Falling back to default.")
     (orb-note-actions--default citekey)))
 
 (orb-note-actions--frontend! 'helm
@@ -196,7 +196,8 @@ CITEKEY is the citekey." (capitalize frontend-name))
                (candidates . ,candidates)
                (action . (lambda (f)
                            (funcall f (list ,citekey)))))))
-    (display-warning :warning "You must have Helm installed to use it! Falling back to default.")
+    (display-warning :warning "You must have Helm installed to use it!  \
+Falling back to default.")
     (orb-note-actions--default citekey)))
 
 (defun orb-note-actions--run (frontend citekey )
@@ -208,7 +209,8 @@ CITEKEY is the citekey." (capitalize frontend-name))
 
 (defun orb-note-actions-copy-citekey (citekey)
   "Save note's citekey to `kill-ring' and copy it to clipboard.
-Since CITEKEY is actually a list of one element, the car of the list is used."
+Since CITEKEY is actually a list of one element, the car of the
+list is used."
   (with-temp-buffer
     (insert (car citekey))
     (copy-region-as-kill (point-min) (point-max))))
