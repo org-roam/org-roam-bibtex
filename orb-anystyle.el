@@ -208,7 +208,7 @@ find, parse, check, train, help or license" input)))
              output nil
              global-options ""
              command-options "")))
-    ;;
+
     ;; * Global options
     ;;
     (if global-options
@@ -225,7 +225,7 @@ find, parse, check, train, help or license" input)))
       ;; 1) format option should be one of accepted types if present
       ;; 2) finder and parser models should be valid file paths
       ;; if present
-      (when (memq command '(find parse check))
+      (when (memq command '(find parse))
         ;; format
         (when format
           (when (stringp format)
@@ -238,8 +238,7 @@ find, parse, check, train, help or license" input)))
           (let ((accepted-formats
                  (cl-case command
                    ('find '(bib csl json ref txt ttx xml))
-                   ('parse '(bib csl json ref txt xml))
-                   ('check '(ttx xml)))))
+                   ('parse '(bib csl json ref txt xml)))))
             (when (--none? (memq it accepted-formats) format)
               (user-error
                "Invalid format(s) %s.  Valid formats for command %s: %s"

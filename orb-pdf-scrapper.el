@@ -80,21 +80,21 @@ Usefull for matching short journal names.
 Example:
 ========
 \"abc. def-ghi, jkl;\" =>
-\"^abc[ ,.;-]def[ ,.;-]ghi[ ,.;-]jkl[ ,.;-]$\"."
-  (format "^%s[ ,.;-]*$"
-          (--reduce (format "%s[ ,.;-]+%s" acc it)
-                    (split-string str "[ ,.;-]+" t "[ ]+"))))
+\"\\(abc[ ,.;–-]def[ ,.;–-]ghi[ ,.;–-]jkl[ ,.;–-]\\)\"."
+  (format "\\(%s[ ,.;–-]*\\)"
+          (--reduce (format "%s[ ,.;–-]+%s" acc it)
+                    (split-string str "[ ,.;–-]+" t "[ ]+"))))
 
-(defvar orb-pdf-scrapper--journal-title-abbrevs)
+(defvar orb-pdf-scrapper--journal-titles)
 ;; read journal title abbreviations
-(setq orb-pdf-scrapper--journal-title-abbrevs
+(setq orb-pdf-scrapper--journal-titles
       (orb-pdf-scrapper--tsv-to-list
        (f-join
         (f-dirname
          (or load-file-name buffer-file-name))
         "journal_titles.tsv")))
 
-(defvar orb-pdf-scrapper--validated-refs nil)
+(defvar orb-pdf-scrapper--sorted-refs nil)
 
 (defvar orb-pdf-scrapper--buffer "*Orb PDF Scrapper*"
   "Orb PDF Scrapper special buffer.")
@@ -110,22 +110,23 @@ If the buffer does not exist it will be created."
      (set-buffer (get-buffer-create orb-pdf-scrapper--buffer))
      ,@body))
 
-(defun orb-pdf-scrapper--validate-refs (refs)
-  "Validate references REFS.
+(defun orb-pdf-scrapper--sort-refs (refs)
+  "Sort references REFS.
 Auxiliary function for `orb-pdf-scrapper-generate-keys'.
 REFS should be an alist of form ((CITEKEY . FORMATTED-ENTRY) . VALIDP).
 
-References marked by `orb-pdf-scrapper-keygen-function' function
-as valid are sorted into four groups:
-'in-roam - those that are in the `org-roam' database;
-'in-bib - those that are in `bibtex-completion-bibliography' file(s);
-'valid - marked valid by the keygen function but are not
-  in the above two groups;
+References marked valid by `orb-pdf-scrapper-keygen-function' function
+are further sorted into four groups:
+
+'in-roam - available in the `org-roam' database;
+'in-bib  - available in `bibtex-completion-bibliography' file(s);
+'valid   - marked valid by the keygen function but are not
+available in the user databases;
 'invalid - marked invalid by the keygen function."
   (let* ((bibtex-completion-bibliography (orb-pdf-scrapper--get :global-bib))
-        ;; When using a quoted list here, validated-refs is not erased
+        ;; When using a quoted list here, sorted-refs is not erased
         ;; upon consecutive runs
-        (validated-refs (list (list 'in-roam) (list 'in-bib)
+        (sorted-refs (list (list 'in-roam) (list 'in-bib)
                               (list 'valid) (list 'invalid))))
     (dolist (citation refs)
       (cond ((org-roam-db-query [:select [ref]
@@ -134,20 +135,20 @@ as valid are sorted into four groups:
                                 (format "%s" (caar citation)))
              (cl-pushnew
               (format "cite:%s" (caar citation))
-              (cdr (assoc 'in-roam validated-refs))))
+              (cdr (assoc 'in-roam sorted-refs))))
             ((bibtex-completion-get-entry (caar citation))
              (cl-pushnew
               (format "cite:%s" (caar citation))
-              (cdr (assoc 'in-bib validated-refs))))
+              (cdr (assoc 'in-bib sorted-refs))))
             ((cdr citation)
              (cl-pushnew
               (format "cite:%s %s" (caar citation) (cdar citation))
-              (cdr (assoc 'valid validated-refs))))
+              (cdr (assoc 'valid sorted-refs))))
             (t
              (cl-pushnew
               (format "%s" (cdar citation))
-              (cdr (assoc 'invalid validated-refs))))))
-    (setq orb-pdf-scrapper--validated-refs validated-refs)))
+              (cdr (assoc 'invalid sorted-refs))))))
+    (setq orb-pdf-scrapper--sorted-refs sorted-refs)))
 
 (defun orb-pdf-scrapper--YAP-keygen-fn (entry)
   "Generate `year-abbreviaton-page' key from ENTRY."
@@ -165,14 +166,14 @@ as valid are sorted into four groups:
            (or (bibtex-completion-get-value "pages" entry) "N/A")
            nil nil 1))
          ;; TODO: would be nice to already have this regex in
-         ;; `orb-pdf-scrapper--journal-title-abbrevs'
-         ;; regexp similar "J[ ,.;-]Am[ ,.;-]Chem[ ,.;-]Soc[ ,.;-]"
+         ;; `orb-pdf-scrapper--journal-titles'
+         ;; regexp similar "J[ ,.;–-]Am[ ,.;–-]Chem[ ,.;–-]Soc[ ,.;–-]"
          (journal-regexp (orb-pdf-scrapper--str-to-regexp journal))
          ;; (journal . abbrev)
          ;; instead of comparing strings, try to match the key with
          ;; the above regexp
          (journal-cons (or (assoc journal-regexp
-                                  orb-pdf-scrapper--journal-title-abbrevs
+                                  orb-pdf-scrapper--journal-titles
                                   (lambda (a b) (string-match b a)))
                            ;; if not, just return (journal . nil)
                            (list journal)))
@@ -268,7 +269,7 @@ as valid are sorted into four groups:
       (goto-char (point-min)))))
 
 (defun orb-pdf-scrapper--checkout ()
-  "Parse bib buffer and populate `orb-pdf-scrapper--validated-refs'."
+  "Parse bib buffer and populate `orb-pdf-scrapper--sorted-refs'."
   (let ((context (orb-pdf-scrapper--get :context)))
     (cond ((equal context 'parse-bib-non-interactive)
            (orb-with-message "Generating citation keys"
@@ -304,7 +305,7 @@ as valid are sorted into four groups:
       (widen)
       (goto-char (point-max))
       (insert "\n* References\n")
-      (dolist (ref-group orb-pdf-scrapper--validated-refs)
+      (dolist (ref-group orb-pdf-scrapper--sorted-refs)
         (insert (format "** %s\n" (car ref-group)))
         (dolist (ref (cdr ref-group))
           (insert (format "- %s\n" ref)))
@@ -407,7 +408,7 @@ Press the RED button `\\[orb-pdf-scrapper-kill]'."))))
 (defun orb-pdf-scrapper-generate-keys ()
   "Generate citation keys in the current buffer.
 Validate and push the retreived references to
-`orb-pdf-scrapper--validate-refs'."
+`orb-pdf-scrapper--sort-refs'."
   (interactive)
   (orb-with-scrapper-buffer
     (write-region (buffer-string) nil
@@ -449,7 +450,7 @@ Validate and push the retreived references to
              (cons (cons new-key formatted-entry) validp) refs))
           (bibtex-end-of-entry)
           (bibtex-skip-to-valid-entry)))
-      (orb-pdf-scrapper--validate-refs refs))
+      (orb-pdf-scrapper--sort-refs refs))
     (orb-with-scrapper-buffer
       (write-region (buffer-string) nil
                     (orb-pdf-scrapper--get :bib-file) nil -1))))
@@ -559,7 +560,7 @@ KEY is note's citation key."
         (orb-pdf-scrapper--put :prevent-concurring t
                                :new-key key)
         (orb-pdf-scrapper-dispatcher))
-    (setq orb-pdf-scrapper--validated-refs nil)
+    (setq orb-pdf-scrapper--sorted-refs nil)
     (orb-pdf-scrapper--put :context 'edit-txt
                            :current-key key
                            :new-key nil
