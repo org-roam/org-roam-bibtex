@@ -64,8 +64,8 @@ Technically, only :key and :entry are strictly required.")
 
 ;; * Helper functions
 
-(defun orb--tsv-to-list (file)
-  "Convert tab-separated values FILE into a list."
+(defun orb-pdf-scrapper--tsv-to-list (file)
+  "Convert tab-separated values in FILE into a list."
   (with-temp-buffer
     (insert-file-contents file)
     (let ((orig-list (split-string (buffer-string) "\n" t)))
@@ -74,10 +74,21 @@ Technically, only :key and :entry are strictly required.")
                   (cons (nth 2 it) (car it)))
              orig-list))))
 
+(defun orb-pdf-scrapper--str-to-regexp (str)
+  "Convert STR with punctuation into its regexp exression.
+Usefull for matching short journal names.
+Example:
+========
+\"abc. def-ghi, jkl;\" =>
+\"^abc[ ,.;-]def[ ,.;-]ghi[ ,.;-]jkl[ ,.;-]$\"."
+  (format "^%s[ ,.;-]*$"
+          (--reduce (format "%s[ ,.;-]+%s" acc it)
+                    (split-string str "[ ,.;-]+" t "[ ]+"))))
+
 (defvar orb-pdf-scrapper--journal-title-abbrevs)
 ;; read journal title abbreviations
 (setq orb-pdf-scrapper--journal-title-abbrevs
-      (orb--tsv-to-list
+      (orb-pdf-scrapper--tsv-to-list
        (f-join
         (f-dirname
          (or load-file-name buffer-file-name))
@@ -150,15 +161,13 @@ as valid are sorted into four groups:
           (or (bibtex-completion-get-value "volume" entry) "N/A"))
          (pages
           (replace-regexp-in-string
-           "[– ]" "--" (or (bibtex-completion-get-value "pages" entry)
-                        "N/A")))
+           "\\([ –-]+\\)" "--"
+           (or (bibtex-completion-get-value "pages" entry) "N/A")
+           nil nil 1))
          ;; TODO: would be nice to already have this regex in
          ;; `orb-pdf-scrapper--journal-title-abbrevs'
          ;; regexp similar "J[ ,.;-]Am[ ,.;-]Chem[ ,.;-]Soc[ ,.;-]"
-         (journal-regexp
-          (format "^%s[ ,.;-]*$"
-                  (--reduce (format "%s[ ,.;-]+%s" acc it)
-                            (split-string journal "[ ,.;-]+" t "[ ]+"))))
+         (journal-regexp (orb-pdf-scrapper--str-to-regexp journal))
          ;; (journal . abbrev)
          ;; instead of comparing strings, try to match the key with
          ;; the above regexp
