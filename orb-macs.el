@@ -150,8 +150,6 @@ the value of `orb-temp-dir'."
              temporary-file-directory)))
     (make-temp-file prefix nil suffix)))
 
-;; TODO: this doesn't actually do the job
-;; And it doesn't do it for babel too.
 (defun orb-remove-temp-dir ()
   "Remove `orb-temp-dir' on Emacs shutdown."
   (when (and (boundp 'orb-temp-dir)

@@ -104,7 +104,7 @@ as valid are sorted into four groups:
 'valid - marked valid by the keygen function but are not
   in the above two groups;
 'invalid - marked invalid by the keygen function."
-  (let ((bibtex-completion-bibliography (orb-pdf-scrapper--get :global-bib))
+  (let* ((bibtex-completion-bibliography (orb-pdf-scrapper--get :global-bib))
         ;; When using a quoted list here, validated-refs is not erased
         ;; upon consecutive runs
         (validated-refs (list (list 'in-roam) (list 'in-bib)
@@ -199,7 +199,7 @@ as valid are sorted into four groups:
   (if-let ((temp-txt (orb-pdf-scrapper--get :txt-file)))
       (progn
         (orb-pdf-scrapper--put :txt-file temp-txt)
-        (switch-to-buffer orb-pdf-scrapper--buffer)
+        (pop-to-buffer orb-pdf-scrapper--buffer)
         (erase-buffer)
         (insert-file-contents temp-txt)
         (setq buffer-file-name nil)
@@ -207,8 +207,8 @@ as valid are sorted into four groups:
     (let ((temp-txt (orb-temp-file "orb-pdf-scrapper-" ".txt"))
           (pdf (orb-pdf-scrapper--get :pdf-file)))
       (orb-pdf-scrapper--put :txt-file temp-txt)
-      (switch-to-buffer-other-window
-       (get-buffer-create orb-pdf-scrapper--buffer))
+      (let ((same-window-buffer-names (list orb-pdf-scrapper--buffer)))
+        (pop-to-buffer orb-pdf-scrapper--buffer))
       (erase-buffer)
       (setq buffer-file-name nil)
       (setq mark-active nil)
@@ -242,7 +242,7 @@ as valid are sorted into four groups:
             :stdout t
             :buffer orb-pdf-scrapper--buffer)
           (write-region (buffer-string) nil temp-bib nil -1)))
-      (switch-to-buffer orb-pdf-scrapper--buffer)
+      (pop-to-buffer orb-pdf-scrapper--buffer)
       (setq buffer-file-name nil)
       (bibtex-mode)
       (bibtex-set-dialect 'BibTeX t)
@@ -282,7 +282,7 @@ as valid are sorted into four groups:
 
 (defun orb-pdf-scrapper--insert ()
   "Checkout from Orb PDF Scrapper interactive mode."
-  (set-buffer (orb-pdf-scrapper--get :original-buffer))
+  (pop-to-buffer (orb-pdf-scrapper--get :original-buffer))
   (save-excursion
     (save-restriction
       (widen)
@@ -297,14 +297,6 @@ as valid are sorted into four groups:
 
 (defun orb-pdf-scrapper--cleanup ()
   "Clean up."
-  ;; (let ((txt (orb-pdf-scrapper--get :txt-file))
-  ;;       (bib (orb-pdf-scrapper--get :bib-file)))
-  ;;   (dolist (buf (list txt bib))
-  ;;     (and buf
-  ;;          (setq buf (find-buffer-visiting buf))
-  ;;          (set-buffer buf)
-  ;;          (not (set-buffer-modified-p nil))
-  ;;          (kill-buffer buf))))
   (and (get-buffer orb-pdf-scrapper--buffer)
        (kill-buffer orb-pdf-scrapper--buffer))
   (set-window-configuration (orb-pdf-scrapper--get :window-conf))
