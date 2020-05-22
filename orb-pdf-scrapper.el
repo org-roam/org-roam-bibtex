@@ -89,10 +89,7 @@ Example:
 ;; read journal title abbreviations
 (setq orb-pdf-scrapper--journal-titles
       (orb-pdf-scrapper--tsv-to-list
-       (f-join
-        (f-dirname
-         (or load-file-name buffer-file-name))
-        "journal_titles.tsv")))
+       (f-join orb-data-dir "journal_titles.tsv")))
 
 (defvar orb-pdf-scrapper--sorted-refs nil)
 
@@ -168,7 +165,7 @@ available in the user databases;
          ;; TODO: would be nice to already have this regex in
          ;; `orb-pdf-scrapper--journal-titles'
          ;; regexp similar "J[ ,.;–-]Am[ ,.;–-]Chem[ ,.;–-]Soc[ ,.;–-]"
-         (journal-regexp (orb-pdf-scrapper--str-to-regexp journal))
+         (journal-regexp (format "^%s$" (orb-pdf-scrapper--str-to-regexp journal)))
          ;; (journal . abbrev)
          ;; instead of comparing strings, try to match the key with
          ;; the above regexp
@@ -233,6 +230,7 @@ available in the user databases;
         (orb-anystyle 'find
           :format 'ref
           :layout nil
+          :finder-model orb-anystyle-finder-model
           :input pdf
           :stdout t
           :buffer orb-pdf-scrapper--buffer))))
@@ -255,6 +253,7 @@ available in the user databases;
         (orb-with-message "Generating BibTeX data"
           (orb-anystyle 'parse
             :format 'bib
+            :parser-mode orb-anystyle-parser-model
             :input (orb-pdf-scrapper--get :txt-file)
             :stdout t
             :buffer orb-pdf-scrapper--buffer)
@@ -276,6 +275,7 @@ available in the user databases;
              (orb-with-scrapper-buffer
                (orb-anystyle 'parse
                  :format 'bib
+                 :parser-model orb-anystyle-parser-model
                  :input (orb-pdf-scrapper--get :txt-file)
                  :stdout t
                  :buffer orb-pdf-scrapper--buffer)

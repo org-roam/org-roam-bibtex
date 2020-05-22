@@ -51,6 +51,8 @@
 (defvar orb-anystyle-executable "anystyle") ; TODO: make it defcustom
 (defvar orb-anystyle-pdfinfo-executable "pdfinfo") ; TODO: make it defcustom
 (defvar orb-anystyle-pdftotext-executable "pdftotext") ; TODO: make it defcustom
+(defvar orb-anystyle-parser-model nil)
+(defvar orb-anystyle-finder-model nil)
 (defvar orb-anystyle-default-buffer "*Orb Anystyle Output*") ; TODO: make it defcustom
 
 ;; * Main functions
