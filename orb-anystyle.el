@@ -258,8 +258,8 @@ find, parse, check, train, help or license" input)))
         (when (and pmodel (not (f-exists? pmodel)))
           (user-error "Parser model file not found: %s" pmodel))
         (setq global-options (orb-format "%s" global-options
-                                         " -F %s" fmodel
-                                         " -P %s" pmodel)))
+                                         " -F \"%s\"" fmodel
+                                         " -P \"%s\"" pmodel)))
       ;;
       ;; find and train:
       ;;

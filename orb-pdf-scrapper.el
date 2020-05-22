@@ -38,7 +38,6 @@
 ;;; Code:
 ;; * Library requires
 (require 'org-roam-bibtex)
-(require 'orb-macs)
 (require 'orb-anystyle)
 
 (require 'bibtex)
@@ -456,12 +455,14 @@ Validate and push the retreived references to
                     (orb-pdf-scrapper--get :bib-file) nil -1))))
 
 (defun orb-pdf-scrapper-sanitize-text (&optional contents)
-  "Run string processing on CONTENTS.
-Try to get every reference into newline and remove reference
-numbers."
+  "Run string processing in current buffer.
+Try to get every reference onto newline.  Return this buffer's
+contents (`buffer-string').
+
+If optional string CONTENTS was specified, run processing on this
+string instead.  Return modified CONTENTS."
   (interactive)
-  (let* ((contents (or contents (buffer-string)))
-         (rx1 '(and "(" (** 1 2 (any "0-9")) ")"))
+  (let* ((rx1 '(and "(" (** 1 2 (any "0-9")) ")"))
          (rx2 '(and "[" (** 1 2 (any "0-9")) "]"))
          (rx3 '(and "(" (any "a-z") ")"))
          (rx4 '(and " " (any "a-z") ")"))
@@ -471,13 +472,19 @@ numbers."
                                   (or (and ,rx1 " " ,rx4)
                                       (and ,rx2 " " ,rx4))
                                   (or ,rx1 ,rx2)
-                                  (or ,rx3 ,rx4))) t))
-         (result (--> contents
-                      (s-replace "\n" " " it)
-                      (s-replace-regexp regexp "\n\\1" it))))
-    (erase-buffer)
-    (insert result)
-    (goto-char (point-min))))
+                                  (or ,rx3 ,rx4))) t)))
+    (if contents
+        (--> contents
+             (s-replace "\n" " " it)
+             (s-replace-regexp regexp "\n\\1" it))
+      (goto-char (point-min))
+      (while (re-search-forward "\n" nil t)
+        (replace-match " " nil nil))
+      (goto-char (point-min))
+      (while (re-search-forward regexp nil t)
+        (replace-match "\n\\1" nil nil))
+      (goto-char (point-min))
+      (buffer-string))))
 
 (defun orb-pdf-scrapper-return-to-txt ()
   "Return to editing text references in Orb PDF Scrpapper."
