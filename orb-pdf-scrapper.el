@@ -67,7 +67,7 @@ Technically, only :key and :entry are strictly required.")
   "Convert tab-separated values in FILE into a list."
   (with-temp-buffer
     (insert-file-contents file)
-    (let ((orig-list (split-string (buffer-string) "\n" t)))
+    (let ((orig-list (split-string (orb--buffer-string) "\n" t)))
       (--map (--> it
                   (split-string it "\t" t)
                   (cons (nth 2 it) (car it)))
@@ -208,7 +208,7 @@ available in the user databases;
 ;; * Dispatcher functions
 
 (defun orb-pdf-scrapper--edit-txt ()
-  "Get references from pdf and edit them in a temporary buffer."
+  "Edit text references in `orb-pdf-scrapper--buffer'."
   (if-let ((temp-txt (orb-pdf-scrapper--get :txt-file)))
       (progn
         (orb-pdf-scrapper--put :txt-file temp-txt)
@@ -217,7 +217,7 @@ available in the user databases;
         (insert-file-contents temp-txt)
         (setq buffer-file-name nil)
         (setq mark-active nil))
-    (let ((temp-txt (orb-temp-file "orb-pdf-scrapper-" ".txt"))
+    (let ((temp-txt (orb--temp-file "orb-pdf-scrapper-" ".txt"))
           (pdf (orb-pdf-scrapper--get :pdf-file)))
       (orb-pdf-scrapper--put :txt-file temp-txt)
       (let ((same-window-buffer-names (list orb-pdf-scrapper--buffer)))
@@ -225,7 +225,7 @@ available in the user databases;
       (erase-buffer)
       (setq buffer-file-name nil)
       (setq mark-active nil)
-      (orb-with-message (format "Scrapping %s.pdf" (f-base pdf))
+      (orb--with-message! (format "Scrapping %s.pdf" (f-base pdf))
         (orb-anystyle 'find
           :format 'ref
           :layout nil
@@ -239,24 +239,24 @@ available in the user databases;
   (orb-pdf-scrapper--put :context 'edit-bib)
   (orb-pdf-scrapper-mode +1))
 
-(defun orb-pdf-scrapper--review-bib ()
-  "Review the generated temporary bib file."
+(defun orb-pdf-scrapper--edit-bib ()
+  "Edit BibTeX data in `orb-pdf-scrapper--buffer'."
   (if (not (equal (orb-pdf-scrapper--get :context) 'edit-bib))
       (progn
         (orb-pdf-scrapper--put :context 'error)
         (orb-pdf-scrapper-dispatcher))
     (let* ((temp-bib (or (orb-pdf-scrapper--get :bib-file)
-                         (orb-temp-file "orb-pdf-scrapper-" ".bib"))))
+                         (orb--temp-file "orb-pdf-scrapper-" ".bib"))))
       (orb-pdf-scrapper--put :bib-file temp-bib)
       (orb-with-scrapper-buffer
-        (orb-with-message "Generating BibTeX data"
+        (orb--with-message! "Generating BibTeX data"
           (orb-anystyle 'parse
             :format 'bib
-            :parser-mode orb-anystyle-parser-model
+            :parser-model orb-anystyle-parser-model
             :input (orb-pdf-scrapper--get :txt-file)
             :stdout t
             :buffer orb-pdf-scrapper--buffer)
-          (write-region (buffer-string) nil temp-bib nil -1)))
+          (write-region (orb--buffer-string) nil temp-bib nil -1)))
       (pop-to-buffer orb-pdf-scrapper--buffer)
       (setq buffer-file-name nil)
       (bibtex-mode)
@@ -270,7 +270,7 @@ available in the user databases;
   "Parse bib buffer and populate `orb-pdf-scrapper--sorted-refs'."
   (let ((context (orb-pdf-scrapper--get :context)))
     (cond ((equal context 'parse-bib-non-interactive)
-           (orb-with-message "Generating citation keys"
+           (orb--with-message! "Generating citation keys"
              (orb-with-scrapper-buffer
                (orb-anystyle 'parse
                  :format 'bib
@@ -288,7 +288,7 @@ available in the user databases;
            (orb-pdf-scrapper--insert))
           ((equal context 'parse-bib-interactive)
            (when (> (cl-random 100) 98)
-             (orb-with-message "Pressing the RED button"))
+             (orb--with-message! "Pressing the RED button"))
            (when (buffer-modified-p (get-buffer orb-pdf-scrapper--buffer))
              (orb-pdf-scrapper-generate-keys))
            (orb-pdf-scrapper--insert))
@@ -367,21 +367,23 @@ Turning on this mode runs the normal hook `orb-pdf-scrapper-mode-hook'."
 (defun orb-pdf-scrapper--format-header-line ()
   "Return formatted buffer header line depending on context."
   (substitute-command-keys
-   (cl-case (orb-pdf-scrapper--get :context)
-     ('edit-bib
-      "\\<orb-pdf-scrapper-mode-map>Orb PDF Scrapper.  \
+   (format "\\<orb-pdf-scrapper-mode-map>Orb PDF Scrapper: %s.  %s"
+           (orb-pdf-scrapper--get :current-key)
+           (cl-case (orb-pdf-scrapper--get :context)
+             ('edit-bib
+              "\
 Proceed to bibtex `\\[orb-pdf-scrapper-dispatcher]', \
 sanitize text `\\[orb-pdf-scrapper-sanitize-text]', \
 abort `\\[orb-pdf-scrapper-kill]'.")
-     ('parse-bib-interactive
-      "\\<orb-pdf-scrapper-mode-map>Orb PDF Scrapper.  \
+             ('parse-bib-interactive
+              "\
 Finish `\\[orb-pdf-scrapper-dispatcher]', \
 generate keys `\\[orb-pdf-scrapper-generate-keys]', \
 return to text `\\[orb-pdf-scrapper-return-to-txt]', \
 abort `\\[orb-pdf-scrapper-kill]'.")
-     (t
-      "\\<orb-pdf-scrapper-mode-map>Orb PDF Scrapper.  \
-Press the RED button `\\[orb-pdf-scrapper-kill]'."))))
+             (t
+              "\
+Press the RED button `\\[orb-pdf-scrapper-kill]'.")))))
 
 (defun orb-pdf-reference-scrapper--update-keymap ()
   "Update `orb-pdf-scrapper-mode-map' according to context."
@@ -410,9 +412,9 @@ Validate and push the retreived references to
 `orb-pdf-scrapper--sort-refs'."
   (interactive)
   (orb-with-scrapper-buffer
-    (write-region (buffer-string) nil
+    (write-region (orb--buffer-string) nil
                   (orb-pdf-scrapper--get :bib-file) nil -1))
-  (orb-with-message "Generating citation keys"
+  (orb--with-message! "Generating citation keys"
     (let ((bibtex-completion-bibliography
            (or (orb-pdf-scrapper--get :bib-file)
                (buffer-file-name)))
@@ -451,13 +453,13 @@ Validate and push the retreived references to
           (bibtex-skip-to-valid-entry)))
       (orb-pdf-scrapper--sort-refs refs))
     (orb-with-scrapper-buffer
-      (write-region (buffer-string) nil
+      (write-region (orb--buffer-string) nil
                     (orb-pdf-scrapper--get :bib-file) nil -1))))
 
 (defun orb-pdf-scrapper-sanitize-text (&optional contents)
   "Run string processing in current buffer.
 Try to get every reference onto newline.  Return this buffer's
-contents (`buffer-string').
+contents (`orb--buffer-string').
 
 If optional string CONTENTS was specified, run processing on this
 string instead.  Return modified CONTENTS."
@@ -484,7 +486,7 @@ string instead.  Return modified CONTENTS."
       (while (re-search-forward regexp nil t)
         (replace-match "\n\\1" nil nil))
       (goto-char (point-min))
-      (buffer-string))))
+      (orb--buffer-string))))
 
 (defun orb-pdf-scrapper-return-to-txt ()
   "Return to editing text references in Orb PDF Scrpapper."
@@ -512,7 +514,7 @@ Kill it and start a new one %s? "
                    (orb-pdf-scrapper--get :new-key)))
           ;; Kill the process and start a new one
           (progn
-            (orb-with-message "Killing current process"
+            (orb--with-message! "Killing current process"
               (orb-pdf-scrapper--cleanup))
             (orb-pdf-scrapper-run (orb-pdf-scrapper--get :new-key)))
         ;; Do nothing
@@ -521,12 +523,12 @@ Kill it and start a new one %s? "
       (orb-pdf-scrapper--edit-txt))
      ((equal context 'edit-bib)
       (orb-with-scrapper-buffer
-        (let ((data (buffer-string)))
+        (let ((data (orb--buffer-string)))
           (write-region data nil
                         (orb-pdf-scrapper--get :txt-file) nil -1)
           (orb-pdf-scrapper--put :txt-data data)))
       (if (y-or-n-p "Review the bib file? ")
-          (orb-pdf-scrapper--review-bib)
+          (orb-pdf-scrapper--edit-bib)
         ;; proceed to checkout; bib file was not edited interactively
         (orb-pdf-scrapper--put :context 'parse-bib-non-interactive)
         (orb-pdf-scrapper--checkout)))

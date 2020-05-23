@@ -47,6 +47,7 @@
 (require 'bibtex-completion)
 
 (require 'orb-utils)
+(require 'orb-compat)
 
 ;; Customize groups
 (defgroup org-roam-bibtex nil

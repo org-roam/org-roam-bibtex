@@ -247,14 +247,14 @@ find, parse, check, train, help or license" input)))
             ;; convert format to a comma-separated string and append
             ;; it to global options
             (setq global-options
-                  (orb-format "%s" global-options
+                  (orb--format "%s" global-options
                               " -f %s" (funcall collapse format)))))
         ;; finder and parser models
         (when (and fmodel (not (f-exists? fmodel)))
           (user-error "Finder model file not found: %s" fmodel))
         (when (and pmodel (not (f-exists? pmodel)))
           (user-error "Parser model file not found: %s" pmodel))
-        (setq global-options (orb-format "%s" global-options
+        (setq global-options (orb--format "%s" global-options
                                          " -F \"%s\"" fmodel
                                          " -P \"%s\"" pmodel)))
       ;;
@@ -273,7 +273,7 @@ find, parse, check, train, help or license" input)))
                       (or pdftotext
                           orb-anystyle-pdftotext-executable)))
         (setq global-options
-              (orb-format "%s" global-options
+              (orb--format "%s" global-options
                           " --pdfinfo=\"%s\"" pdfinfo
                           " --pdftotext=\"%s\"" pdftotext)))
       ;; find, train, parse and check:
@@ -287,7 +287,7 @@ find, parse, check, train, help or license" input)))
         (unless (and (stringp input) (f-exists? input))
           (user-error "Invalid input file or directory %s" input))
         (setq global-options
-              (orb-format
+              (orb--format
                "%s" global-options
                " --verbose" (cons verbose " --no-verbose")
                " --stdout" (cons stdout " --no-stdout")
@@ -325,19 +325,19 @@ find, parse, check, train, help or license" input)))
                           x y))
             (setq crop (format "%s,%s" x y))))
         ;; parse only accepts --[no]-layout, so we ignore the rest
-        (setq command-options (orb-format
+        (setq command-options (orb--format
                                " --crop=%s" crop
                                " --layout" (cons layout " --no-layout")
                                " --solo" (cons solo " --no-solo"))))
       ;; append command options to command
-      (setq command (orb-format "%s" command
+      (setq command (orb--format "%s" command
                                 "%s" command-options)))
 
     (setq output (if (eq command 'check) nil output))
     ;;
     ;; Run the program
     ;;
-    (setq anystyle (orb-format "%s" exec
+    (setq anystyle (orb--format "%s" exec
                                "%s" global-options
                                " %s" command
                                " \"%s\"" input
