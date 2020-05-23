@@ -1,4 +1,4 @@
-;;; orb-anystyle.el --- Connector between Org-roam, BibTeX-completion, and Org-ref -*- coding: utf-8; lexical-binding: t -*-
+;;; orb-anystyle.el --- Orb Roam BibTeX: Elisp interface to anystyle  -*- coding: utf-8; lexical-binding: t -*-
 
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; Copyright © 2020 Leo Vivier <leo.vivier+dev@gmail.com>
@@ -8,7 +8,6 @@
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
 ;; Version: 0.2.3
-;; Package-Requires: ((emacs "26.1") (dash "2.17.0") (f "0.20.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -37,10 +36,8 @@
 
 ;;; Code:
 ;; * Library requires
-(require 'dash)
-(require 'f)
 
-(require 'orb-macs)
+(require 'orb-core)
 
 (eval-when-compile
   (require 'subr-x)
