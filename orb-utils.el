@@ -1,4 +1,4 @@
-;;; orb-macs.el --- Connector between Org-roam, BibTeX-completion, and Org-ref -*- coding: utf-8; lexical-binding: t -*-
+;;; orb-utils.el --- Org Roam BibTeX: Utility macros and functions -*- coding: utf-8; lexical-binding: t -*-
 
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; Copyright © 2020 Leo Vivier <leo.vivier+dev@gmail.com>
@@ -8,7 +8,7 @@
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
 ;; Version: 0.2.3
-;; Package-Requires: ((emacs "26.1") (f "0.20.0") (s "1.12.0") (org "9.3") (org-roam "1.0.0") (bibtex-completion "2.0.0"))
+;; Package-Requires: ((emacs "26.1"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -29,8 +29,10 @@
 
 ;;; Commentary:
 ;;
-;; This file contains macros and helper functions used accross different
-;; org-mode-bibtex modules.
+;; This file contains utility macros and helper functions used accross
+;; different org-mode-bibtex modules.  This library may be required
+;; directly or through orb-core.el.  Definitions in this file should
+;; only depend on built-in Emacs libraries.
 
 ;;; Code:
 ;; * Library requires
@@ -53,8 +55,8 @@ Format is `orb-citekey-format'."
                    (length orb-citekey-format)))))
     (substring citekey beg end)))
 
-(provide 'orb-macs)
-;;; orb-macs.el ends here
+(provide 'orb-utils)
+;;; orb-utils.el ends here
 ;; Local Variables:
 ;; fill-column: 70
 ;; End:

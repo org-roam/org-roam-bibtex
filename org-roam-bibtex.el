@@ -1,4 +1,4 @@
-;;; org-roam-bibtex.el --- Connector between Org-roam, BibTeX-completion, and Org-ref -*- coding: utf-8; lexical-binding: t -*-
+;;; org-roam-bibtex.el ---  Org Roam meets BibTeX -*- coding: utf-8; lexical-binding: t -*-
 
 ;; Copyright © 2020 Jethro Kuan <jethrokuan95@gmail.com>
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
@@ -10,7 +10,9 @@
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
 ;; Version: 0.2.3
-;; Package-Requires: ((emacs "26.1") (f "0.20.0") (s "1.12.0") (org "9.3") (org-roam "1.0.0") (bibtex-completion "2.0.0"))
+;; Package-Requires: ((emacs "26.1") (org-roam "1.0.0") (bibtex-completion "2.0.0"))
+
+;; Soft dependencies: projectile, persp-mode, helm, ivy, hydra
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -65,36 +67,18 @@
 
 ;;; Code:
 ;; * Library requires
+(require 'orb-core)
 
-;; We do not require `org-ref' here, because it is too expensive to be
-;; loaded unconditionally and the user might not even need
-;; it. Instead, we require it in the body of `orb-notes-fn'.
-
-(require 'org-roam)
-(require 'bibtex-completion)
 (eval-when-compile
   (require 'subr-x)
   (require 'cl-lib))
 
-(require 'orb-compat)
-(require 'orb-macs)
-
-(defvar org-ref-notes-function)
-
-(declare-function org-ref-find-bibliography "org-ref-core")
 (declare-function projectile-relevant-open-projects "projectile")
 (declare-function persp-switch "persp-mode")
 (declare-function persp-names "persp-mode")
 
 
 ;; * Customize definitions
-
-(defgroup org-roam-bibtex nil
-  "Org-ref and Bibtex-completion integration for Org-roam."
-  :group 'org-roam
-  :group 'org-ref
-  :group 'bibtex-completion
-  :prefix "orb-")
 
 (defcustom orb-preformat-templates t
   "Non-nil to enable template preformatting.
@@ -238,6 +222,7 @@ extra integration between the two packages.
 
 This is a wrapper function around `orb-edit-notes'
 intended for use with Org-ref."
+  ;; org-roam softly requires org-ref, so do we
   (when (require 'org-ref nil t)
     (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
       (orb-edit-notes citekey))))
@@ -248,23 +233,6 @@ intended for use with Org-ref."
 This function replaces `bibtex-completion-edit-notes'.  Only the
 first key from KEYS will actually be used."
   (orb-edit-notes (car keys)))
-
-;;;###autoload
-(defun orb-process-file-field (citekey)
-  "Process the 'file' BibTeX field and resolve if there are multiples.
-Search the disk for the document associated with this BibTeX
-entry.  The disk matching is based on looking in the
-`bibtex-completion-library-path' for a file with the
-CITEKEY.
-
-\(Mendeley, Zotero, normal paths) are all supported.  If there
-are multiple files found the user is prompted to select which one
-to enter"
-  (let* ((entry (bibtex-completion-get-entry citekey))
-         (paths (bibtex-completion-find-pdf entry)))
-    (if (= (length paths) 1)
-        (car paths)
-      (completing-read "File to use: " paths))))
 
 
 ;; * Helper functions
@@ -425,12 +393,6 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
 (defvar org-roam-bibtex-mode-map
   (make-sparse-keymap)
   "Keymap for function `org-roam-bibtex-mode'.")
-
-(defun orb-find-note-file (citekey)
-  "Find note file associated from BibTeX’s CITEKEY.
-Returns the path to the note file, or nil if it doesn’t exist."
-  (let* ((completions (org-roam--get-ref-path-completions)))
-    (plist-get (cdr (assoc citekey completions)) :path)))
 
 ;;;###autoload
 (define-minor-mode org-roam-bibtex-mode
