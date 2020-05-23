@@ -1,4 +1,4 @@
-;;; orb-note-actions.el --- Connector between Org-roam, BibTeX-completion, and Org-ref -*- coding: utf-8; lexical-binding: t -*-
+;;; orb-note-actions.el --- Org Roam Bibtex: Note actions -*- coding: utf-8; lexical-binding: t -*-
 
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; Copyright © 2020 Leo Vivier <leo.vivier+dev@gmail.com>
@@ -44,29 +44,19 @@
 ;;; Code:
 ;; * Library requires
 
-(require 'org-roam-bibtex)
-(require 'orb-pdf-scrapper)
+(require 'orb-core)
 
 (require 'warnings)
 (require 'cl-lib)
-;; TODO: get rid of after we have our own format function
-(require 'org-ref)
 
-(declare-function ido-completing-read "ido")
 (declare-function helm "helm")
 (declare-function ivy-read "ivy")
 (declare-function defhydra "hydra")
 
 ;; * Customize definitions
 
-(defgroup orb-note-actions nil
-  "Orb Note Actions - run actions useful in note's context."
-  :group 'org-roam-bibtex
-  :prefix "orb-note-actions-")
-
 (defcustom orb-note-actions-frontend 'default
   "Interface frontend for `orb-note-actions'.
-
 Supported values (frontends) are 'default, 'ido, 'hydra, 'ivy and 'helm.
 
 Alternatively, it can be set to a function, in which case the
@@ -134,10 +124,6 @@ constructed from `orb-note-actions-default',
        ,(format "Provide note actions using %s interface.
 CITEKEY is the citekey." (capitalize frontend-name))
        (let ((name (org-ref-format-entry citekey)) ;; TODO: make a native format function
-             ;; TODO: this throws an error for an unclear reason
-             ;; (name (bibtex-completion-format-entry
-             ;;        (bibtex-completion-get-entry citekey)
-             ;;        (window-body-width)))
              (candidates
               ,(unless (eq frontend 'hydra)
                  '(append  orb-note-actions-default
@@ -155,31 +141,42 @@ CITEKEY is the citekey." (capitalize frontend-name))
     (funcall f (list citekey))))
 
 (declare-function orb-note-actions-hydra/body "orb-note-actions" nil t)
+
 (orb-note-actions--frontend! 'hydra
-  (ignore candidates)                   ; silence the byte compiler
-                                        ; for a nice hydra we need
-                                        ; each group separately
-  (let ((k ?a)
-        actions)
-    (dolist (type (list "Default" "Extra" "User"))
-      (let ((actions-var (intern (concat "orb-note-actions-" (downcase type)))))
-        (dolist (action (symbol-value actions-var))
-          ;; this pushes defhydra HEADS list of form:
-          ;; ("a" (some-action citekey-value) "Some-action description" :column "Type")
-          (cl-pushnew
-           `(,(format "%c" k) (,(cdr action) (list ,citekey))
-             ,(car action) :column ,(concat type " actions"))
-           actions)
-          ;; increment key a->b->c...
-          (setq k (1+ k))))) ; TODO: figure out a way to supply mnemonic keys
-    (setq actions (nreverse actions))
-    (eval
-     `(defhydra orb-note-actions-hydra (:color blue :hint nil)
-        ;; defhydra docstring
-        ,(format  "^\n  %s \n\n^"  (s-word-wrap (- (window-body-width) 2) name))
-        ;; defhydra HEADS
-        ,@actions)))
-  (orb-note-actions-hydra/body))
+;; we don't use candidates here because for a nice hydra we need each
+;; group of completions separately (default, extra, user), so just
+;; silence the compiler
+  (if (fboundp 'defhydra)
+      (progn
+        (ignore candidates)
+        (let ((k ?a)
+              actions)
+          (dolist (type (list "Default" "Extra" "User"))
+            (let ((actions-var
+                   (intern (concat "orb-note-actions-" (downcase type)))))
+              (dolist (action (symbol-value actions-var))
+   ;; this makes defhydra HEADS list of form:
+   ;; ("a" (some-action citekey-value) "Some-action description" :column "Type")
+                (cl-pushnew
+                 `(,(format "%c" k) (,(cdr action) (list ,citekey))
+                   ,(car action) :column ,(concat type " actions"))
+                 actions)
+                ;; increment key a->b->c...
+                (setq k (1+ k))))) ; TODO: figure out a way to supply
+                                   ; mnemonic keys
+          (setq actions (nreverse actions))
+          ;; yes, we redefine hydra on every call
+          (eval
+           `(defhydra orb-note-actions-hydra (:color blue :hint nil)
+              ;; defhydra docstring
+              ,(format  "^\n  %s \n\n^"
+                        (s-word-wrap (- (window-body-width) 2) name))
+              ;; defhydra HEADS
+              ,@actions)))
+        (orb-note-actions-hydra/body))
+    (display-warning :warning "You must have Hydra installed to use it!  \
+Falling back to default.")
+    (orb-note-actions--default citekey)))
 
 (orb-note-actions--frontend! 'ivy
   (if (fboundp 'ivy-read)
@@ -189,7 +186,8 @@ CITEKEY is the citekey." (capitalize frontend-name))
                 :caller #'orb-note-actions
                 :action (lambda (c)
                           (funcall (cdr c) (list citekey))))
-    (display-warning :warning "You must have Ivy installed to use it! Falling back to default.")
+    (display-warning :warning "You must have Ivy installed to use it!  \
+Falling back to default.")
     (orb-note-actions--default citekey)))
 
 (orb-note-actions--frontend! 'helm
@@ -199,7 +197,8 @@ CITEKEY is the citekey." (capitalize frontend-name))
                (candidates . ,candidates)
                (action . (lambda (f)
                            (funcall f (list ,citekey)))))))
-    (display-warning :warning "You must have Helm installed to use it! Falling back to default.")
+    (display-warning :warning "You must have Helm installed to use it!  \
+Falling back to default.")
     (orb-note-actions--default citekey)))
 
 (defun orb-note-actions--run (frontend citekey )
