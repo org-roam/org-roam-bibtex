@@ -551,5 +551,5 @@ details."
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
 ;; Local Variables:
-;; fill-column: 70
+;; fill-column: 79
 ;; End:
