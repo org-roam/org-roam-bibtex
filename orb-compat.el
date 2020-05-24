@@ -60,5 +60,5 @@
 (provide 'orb-compat)
 ;;; orb-compat.el ends here
 ;; Local Variables:
-;; fill-column: 70
+;; fill-column: 79
 ;; End:
