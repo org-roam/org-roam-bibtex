@@ -87,5 +87,5 @@ Returns the path to the note file, or nil if it doesn’t exist."
 (provide 'orb-core)
 ;;; orb-core.el ends here
 ;; Local Variables:
-;; fill-column: 70
+;; fill-column: 79
 ;; End:

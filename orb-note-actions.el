@@ -255,5 +255,5 @@ user actions can be set in `orb-note-actions-user'."
 (provide 'orb-note-actions)
 ;;; orb-note-actions.el ends here
 ;; Local Variables:
-;; fill-column: 70
+;; fill-column: 79
 ;; End:

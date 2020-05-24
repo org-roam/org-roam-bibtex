@@ -193,5 +193,5 @@ the value of `orb--temp-dir'."
 (provide 'orb-utils)
 ;;; orb-utils.el ends here
 ;; Local Variables:
-;; fill-column: 70
+;; fill-column: 79
 ;; End:
