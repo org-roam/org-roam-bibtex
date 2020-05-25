@@ -167,8 +167,7 @@ Consult bibtex-completion package for additional information
 about BibTeX field names."
   :type '(choice
           (string :tag "BibTeX field name")
-          (group :tag "BibTeX field names"
-                 (repeat :tag "BibTeX field names" string))
+          (repeat :tag "BibTeX field names" string)
           (alist
            :tag "Template wildcard keyword/BibTeX field name pairs"
            :key-type (string :tag "Wildcard")
