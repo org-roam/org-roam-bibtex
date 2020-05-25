@@ -204,7 +204,7 @@ available in the user databases;
                   ;; otherwise
                   (if verb
                       (cons "verb" verb)
-                    (cons "verb" (car journal-cons)))
+                    (cons "verb" "N/A"))
                   (cons "pages" pages))))
     (list :key new-key
           :validp validp
@@ -432,7 +432,7 @@ Use the function specified in `orb-pdf-scrapper-keygen-function'.
 Sort and push the retreived references to
 `orb-pdf-scrapper--sorted-refs'."
   (interactive)
-  ;; if the buffer contets has changed,
+  ;; if the buffer contents has changed,
   ;; we need to write the changes to the temp file
   ;; because bibtex-completion-bibliography
   ;; will be bound to this file during key generation

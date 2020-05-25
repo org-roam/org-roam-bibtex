@@ -5,6 +5,7 @@ ABC-	Analytical and Bioanalytical Chemistry	Anal. Bioanal. Chem.
 AC	Analytical Chemistry	Anal. Chem.
 ACA	Aldrichimica Acta	Aldrichimica Acta
 ACH	Annali di Chimica	Ann. Chim.
+ACHS	Acta Chimica Sinica	Acta Chim. Sinica
 ACQ	Actualite Chimique	Actual. Chim.
 AC-C	Acta Crystallographica Section C: Crystal Structure Communications	Acta Crystallogr., Sect. C: Cryst. Struct. Commun.
 ACIS-	Advances in Colloid and Interface Science	Adv. Colloid Interfac.
@@ -70,7 +71,8 @@ CGD	Crystal Growth & Design	Cryst. Growth Des.
 CH	Chimia	Chimia
 CHC	Chemistry of Heterocyclic Compounds	Chem. Heterocycl. Compd.
 CJC	Canadian Journal of Chemistry	Can. J. Chem.
-CJOC	Chinese Journal of Organic Chemistry	Chinese J. Org. Chem.
+CJOC	Chinese Journal of Organic Chemistry	Chin. J. Org. Chem.
+CJCL	Chinese Journal of Catalysis	Chin. J. Catal.
 CL	Chemistry Letters	Chem. Lett.
 CM	Chemistry of Materials	Chem. Mater.
 CMDC	ChemMedChem	ChemMedChem
@@ -82,9 +84,12 @@ CO	Clinical Oncology	Clin. Oncol.
 COC	Current Organic Chemistry	Curr. Org. Chem.
 COCB	Current Opinion in Chemical Biology	Curr. Opin. Chem. Biol.
 COCIS	Current Opinion in Colloid and Interface Science	Curr. Opin. Colloid Interface Sci.
+COGSC	Current Opinion in Green and Sustainable Chemistry	Curr. Opin. Green Sust. Chem.
 CP	Chemical Physics	Chem. Phys.
 CPE	Chemical and Process Engineering	Chem. Process Eng.
 CPB	Chemical & Pharmaceutical Bulletin	Chem. Pharm. Bull.
+CPC	ChemPlusChem	ChemPlusChem
+CPHTC	ChemPhotoChem	ChemPhotoChem
 CPL-	Chemical Physics Letters	Chem. Phys. Lett
 CR	Carbohydrate Research	Carbohydr. Res.
 CRC	Comptes Rendus Chimie	C. R. Chim.
@@ -122,6 +127,7 @@ EMR	eMagRes	eMagRes
 ENP	Environmental Pollution	Environ. Pollut.
 EP	Environmental Progress	Environ. Prog.
 EPL	EPL	EPL
+FD	Faraday Discussions	Faraday Discuss.
 FE	Ferroelectrics	Ferroelectrics
 FEBS	FEBS Journal	FEBS J.
 FMC	Future Medicinal Chemistry	Future Med. Chem.
@@ -152,6 +158,7 @@ JC	Journal of Chemistry	J. Chem.
 JCE	Journal of Chemical Ecology	J. Chem. Ecol.
 JCED	Journal of Chemical Engineering Data	J. Chem. Eng. Data
 JCG	Journal of Chromatography	J. Chromatogr.
+JCO2U	Journal of CO2 Utilization	J. CO2 Util.
 JCP	Journal of Chemical Physics	J. Chem. Phys.
 JCR-S	Journal of Chemical Research, Synopses	J. Chem. Res., Synop.
 JCSC	Journal of Chemical Science	J. Chem. Sci.
@@ -291,6 +298,7 @@ SST	Separation Science and Technology	Separ. Sci. Technol.
 T	Tetrahedron	Tetrahedron
 TA	Tetrahedron: Asymmetry	Tetrahedron: Asymmetry
 TAL	Talanta	Talanta
+TC	Topics in Catalysis	Top. Catal.
 TI-	Tribology International	Tribol. Int.
 TCC	Topics in Current Chemistry	Top. Curr. Chem.
 TFS	Transactions of the Faraday Society	Trans. Faraday Soc.
