@@ -347,5 +347,5 @@ find, parse, check, train, help or license" input)))
 (provide 'orb-anystyle)
 ;;; orb-anystyle.el ends here
 ;; Local Variables:
-;; fill-column: 70
+;; fill-column: 79
 ;; End:

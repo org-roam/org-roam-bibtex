@@ -50,18 +50,34 @@
 
 ;; * Customize definitions
 
-;; TODO: make it defcustom
-(defvar orb-pdf-scrapper-keygen-function #'orb-pdf-scrapper--YAP-keygen-fn
-  "Function to generate citation key.
-It should take a bibtex entry as returned by
-`bibtex-completion-get-entry' and return a plist of form
-\(:key generated_citekey
- :validp non-nil_if_key_is_valid_according_to_some_internal_logic
- :fields cons_cell_(field_name_._field_value)_to_write_into_entry
- :entry formatted_entry)
-Technically, only :key and :entry are strictly required.")
+;; TODO: make these defcustom
+(defvar orb-pdf-scrapper-keygen-function #'orb-pdf-scrapper--bibkey-default-fn
+  "Function to generate citation keys in Orb PDF Scrapper.
+It should take a bibtex entry as returned by `bibtex-completion-get-entry'\
+and return a plist with the following keys set:
 
-;; * Helper functions
+ :key             |string  | generated key
+ :validp          |boolean | non-nil if the key is deemed to be valid
+ :set-fields      |(cons)  | list of fields to set in the entry
+ :export-fields   |(cons)  | list of fields to export to org
+
+Each element of `:set-fields' and `:export-fields' lists must be
+a cons cell (FIELD . VALUE).")
+
+(defvar orb-pdf-scrapper-bibkey-set-fields
+  '(("pages" . orb-pdf-scrapper--fix-or-invalidate-range)
+    ("author" . orb-pdf-scrapper--invalidate-nil-value)
+    ("title" . orb-pdf-scrapper--invalidate-nil-value)
+    ("journal" . orb-pdf-scrapper--invalidate-nil-value)
+    ("date" . orb-pdf-scrapper--invalidate-nil-value)
+    ("volume" . orb-pdf-scrapper--invalidate-nil-value)))
+
+(defvar orb-pdf-scrapper-bibkey-export-fields
+  '("author" "journal" "date" "volume" "pages"))
+
+(defvar orb-pdf-scrapper-bibkey-invalid-pattern "\\`.*N/A.*\\'")
+
+;; * Helper functions: utilities
 
 (defun orb-pdf-scrapper--tsv-to-list (file)
   "Convert tab-separated values in FILE into a list."
@@ -92,27 +108,64 @@ Example:
 
 (defvar orb-pdf-scrapper--sorted-refs nil)
 
-(defvar orb-pdf-scrapper--buffer "*Orb PDF Scrapper*"
-  "Orb PDF Scrapper special buffer.")
+;; * Helper functions: citekey generation
 
-(defvar orb-pdf-scrapper--plist nil
-  "Communication channel for Orb PDF Scrapper.")
+(defun orb-pdf-scrapper--invalidate-nil-value (field entry)
+  "Return value of FIELD or \"N/A\" if it is nil.
+ENTRY is a BibTeX entry."
+  (bibtex-completion-get-value field entry "N/A"))
 
-(defmacro orb--with-scrapper-buffer! (&rest body)
-  "Execute BODY with `orb-pdf-scrapper--buffer' as current.
-If the buffer does not exist it will be created."
-  (declare (indent 0) (debug t))
-  `(save-current-buffer
-     (set-buffer (get-buffer-create orb-pdf-scrapper--buffer))
-     ,@body))
+(defun orb-pdf-scrapper--fix-or-invalidate-range (field entry)
+  "Replace missing or non-standard delimiter between two strings with \"--\".
+FIELD is the name of a BibTeX field from ENTRY.  Return N/A if
+value of the field is nil.
 
-(defmacro orb--when-current-context! (context &rest body)
-  "Execute BODY if current context is CONTEXT.
-Run `orb-pdf-scrapper-keygen-function' with `error' context otherwise."
-  (declare (indent 1) (debug t))
-  `(if (not (orb-pdf-scrapper--current-context-p ,context))
-       (orb-pdf-scrapper-dispatcher 'error)
-     ,@body))
+This function is primarily intended for fixing anystyle parsing
+artefacts such as those often encountered in \"pages\" field,
+where two numbers have only spaces between them."
+  (replace-regexp-in-string "\\`[[:alnum:]]\\([ –-]+\\)[[:alnum:]]\\'" "--"
+                            (or (bibtex-completion-get-value field entry)
+                                "N/A")
+                            nil nil 1))
+
+(defun orb-pdf-scrapper--bibkey-default-fn (entry)
+  "Generate citation key from ENTRY according to `orb-autokey-format'.
+Returns a plist as described in `orb-pdf-scrapper-bibkey-function'.
+Keys are validated according to `orb-pdf-scrapper-bibkey-valid-pattern'.
+Returns fields for setting as per `orb-pdf-scrapper-bibkey-set-fields'.
+Returns fields for exporting as per `orb-pdf-scrapper-bibkey-export-fields'."
+  (let (key validp set-fields export-fields ;; return values
+            ;; internal variable
+            fields)
+    ;; prepare fields for setting
+    (dolist (field orb-pdf-scrapper-bibkey-set-fields)
+      (let ((name (car field))
+            (fn (cdr field)))
+        (cl-pushnew (cons name
+                          (if fn
+                              (funcall fn name entry)
+                            (bibtex-completion-get-value name entry)))
+                    set-fields)))
+    ;; prioritize fields from set-fields over entry fields
+    ;; for autokey generation
+    (let ((-compare-fn (lambda (x y)
+                         (string= (car x) (car y)))))
+      (setq fields (-union set-fields entry)
+            key (orb-autokey-generate-key fields)))
+    ;; validate the new shiny key
+    ;; not sure if save-match-data is needed here
+    ;; but it seems to be always a good choice
+    (save-match-data
+      (setq validp (and (not (string-match-p
+                              orb-pdf-scrapper-bibkey-invalid-pattern key))
+                        'valid)))
+    ;; list for org export
+    (dolist (field orb-pdf-scrapper-bibkey-export-fields)
+      (cl-pushnew (cons field (cdr (assoc field fields))) export-fields))
+    (list :key key
+          :validp validp
+          :set-fields set-fields
+          :export-fields export-fields)))
 
 (defun orb-pdf-scrapper--sort-refs (refs)
   "Sort references REFS.
@@ -154,66 +207,33 @@ available in the user databases;
               (cdr (assoc 'invalid sorted-refs))))))
     (setq orb-pdf-scrapper--sorted-refs sorted-refs)))
 
-(defun orb-pdf-scrapper--YAP-keygen-fn (entry)
-  "Generate `year-abbreviaton-page' key from ENTRY."
-  (let* ((authors
-          (or (bibtex-completion-get-value "author" entry) "N/A"))
-         (journal
-          (or (bibtex-completion-get-value "journal" entry) "N/A"))
-         (year
-          (or (bibtex-completion-get-value "date" entry) "N/A"))
-         (volume
-          (or (bibtex-completion-get-value "volume" entry) "N/A"))
-         (pages
-          (replace-regexp-in-string
-           "\\([ –-]+\\)" "--"
-           (or (bibtex-completion-get-value "pages" entry) "N/A")
-           nil nil 1))
-         ;; TODO: would be nice to already have this regex in
-         ;; `orb-pdf-scrapper--journal-titles'
-         ;; regexp similar "J[ ,.;–-]Am[ ,.;–-]Chem[ ,.;–-]Soc[ ,.;–-]"
-         (journal-regexp (format "^%s$" (orb-pdf-scrapper--str-to-regexp journal)))
-         ;; (journal . abbrev)
-         ;; instead of comparing strings, try to match the key with
-         ;; the above regexp
-         (journal-cons (or (assoc journal-regexp
-                                  orb-pdf-scrapper--journal-titles
-                                  (lambda (a b) (string-match b a)))
-                           ;; if not, just return (journal . nil)
-                           (list journal)))
-         ;; use verb field to store journal abbreviation
-         (verb (or (bibtex-completion-get-value "verb" entry)
-                   (cdr journal-cons)))
-         ;; Generate new key similar to "2020-JACS-1999"
-         ;; or "2020-JFC-199-1999"
-         (new-key (concat year "-"
-                          verb
-                          (and verb (s-suffix? "-" verb) volume) "-"
-                          (and pages
-                               (string-match "\\([0-9]*\\)" pages)
-                               (match-string 1 pages))))
-         (invalid-key-regexp "N/A\\|--")
-         (validp (unless (string-match invalid-key-regexp new-key)
-                   'valid))
-         (fields (list
-                  ;; Perhaps replace journal with a match from the
-                  ;; database: in most cases, fix punctuation
-                  ;; characters
-                  (cons "journal" (car journal-cons))
-                  ;; Set verb to the retrieved abbreviation or journal
-                  ;; otherwise
-                  (if verb
-                      (cons "verb" verb)
-                    (cons "verb" "N/A"))
-                  (cons "pages" pages))))
-    (list :key new-key
-          :validp validp
-          :fields fields
-          :entry (format "%s %s %s %s %s"
-                         authors journal year volume pages))))
+;; * Helper functions: dispatcher
 
+(defvar orb-pdf-scrapper--plist nil
+  "Communication channel for Orb PDF Scrapper.")
 
-;; * Dispatcher functions
+(defvar orb-pdf-scrapper--buffer "*Orb PDF Scrapper*"
+  "Orb PDF Scrapper special buffer.")
+
+(defmacro orb--with-scrapper-buffer! (&rest body)
+  "Execute BODY with `orb-pdf-scrapper--buffer' as current.
+If the buffer does not exist it will be created."
+  (declare (indent 0) (debug t))
+  `(save-current-buffer
+     (set-buffer (get-buffer-create orb-pdf-scrapper--buffer))
+     ,@body))
+
+(defmacro orb--when-current-context! (context &rest body)
+  "Execute BODY if current context is CONTEXT.
+Run `orb-pdf-scrapper-keygen-function' with `error' context otherwise."
+  (declare (indent 1) (debug t))
+  `(if (not (orb-pdf-scrapper--current-context-p ,context))
+       (orb-pdf-scrapper-dispatcher 'error)
+     ,@body))
+
+(defun orb-pdf-scrapper--current-context-p (context)
+  "Return t if CONTEXT is current context."
+  (eq context (orb-pdf-scrapper--get :context)))
 
 (defun orb-pdf-scrapper--refresh-mode (context)
   "Restart `orb-pdf-scrapper-mode' in new CONTEXT."
@@ -232,10 +252,6 @@ Pressing the RED button, just in case")
   (orb-pdf-scrapper--put :context context)
   (orb-pdf-scrapper-mode +1)
   (goto-char (point-min)))
-
-(defun orb-pdf-scrapper--current-context-p (context)
-  "Return t if CONTEXT is current context."
-  (eq context (orb-pdf-scrapper--get :context)))
 
 (defun orb-pdf-scrapper--edit-txt ()
   "Edit text references in `orb-pdf-scrapper--buffer'."
@@ -456,8 +472,8 @@ Sort and push the retreived references to
                  (key-plist (funcall orb-pdf-scrapper-keygen-function entry))
                  (new-key (plist-get key-plist :key))
                  (validp (plist-get key-plist :validp))
-                 (fields-to-set (plist-get key-plist :fields))
-                 (formatted-entry (plist-get key-plist :entry)))
+                 (fields-to-set (plist-get key-plist :set-fields))
+                 (formatted-entry (plist-get key-plist :export-fields)))
             ;; update citekey
             ;; adjusted from bibtex-clean-entry
             (save-excursion
@@ -473,14 +489,15 @@ Sort and push the retreived references to
                 (bibtex-set-field (car field) (cdr field))))
             ;; push the result ((NEW-KEY . ENTRY) . VALIDP)
             (cl-pushnew
-             (cons (cons new-key formatted-entry) validp) refs))
+             ;; TODO: for testing until implemented
+             (cons (cons new-key (format "%s" formatted-entry)) validp) refs))
           (bibtex-end-of-entry)
           ;; go to next entry
           (bibtex-skip-to-valid-entry)))
       (orb-pdf-scrapper--sort-refs refs))
-    ;; TODO: this is not needed perhaps
     (write-region (orb--buffer-string) nil
-                  (orb-pdf-scrapper--get :bib-file) nil -1)))
+                  (orb-pdf-scrapper--get :bib-file) nil -1)
+    (set-buffer-modified-p nil)))
 
 (defun orb-pdf-scrapper-sanitize-text (&optional contents)
   "Run string processing in current buffer.
@@ -564,8 +581,7 @@ Kill it and start a new one %s? "
      ((equal context 'edit-bib)
       (orb--with-scrapper-buffer!
         (let ((data (orb--buffer-string)))
-          (write-region data nil
-                        (orb-pdf-scrapper--get :txt-file) nil -1)
+          (write-region data nil (orb-pdf-scrapper--get :txt-file) nil -1)
           (orb-pdf-scrapper--put :txt-data data)
           (orb-pdf-scrapper--put :txt-undo-list buffer-undo-list)))
       (if (y-or-n-p "Review the bib file? ")
@@ -627,5 +643,5 @@ KEY is note's citation key."
 (provide 'orb-pdf-scrapper)
 ;;; orb-pdf-scrapper.el ends here
 ;; Local Variables:
-;; fill-column: 70
+;; fill-column: 79
 ;; End:
