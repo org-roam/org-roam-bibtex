@@ -48,6 +48,10 @@
 
 (require 'orb-utils)
 
+(eval-when-compile
+  (require 'rx))
+
+
 ;; * Customize groups (global)
 ;; All modules should put their `defgroup' definitions here
 
@@ -163,6 +167,7 @@ Default value is set from `bibtex-autokey-titleword-ignore'."
   :type '(repeat :tag "Regular expression" regexp)
   :group 'org-roam-bibtex)
 
+;;;###autoload
 (defun orb-autokey-generate-key (entry &optional control-string)
   "Generate citation key from ENTRY according to `orb-autokey-format'.
 Return a string.  If optional CONTROL-STRING is non-nil, use it
