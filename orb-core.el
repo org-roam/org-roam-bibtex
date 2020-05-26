@@ -317,7 +317,7 @@ This function is used internally by `orb-autokey-generate-key'."
                         (bibtex-completion-get-value "editor" entry)))
       (setq value (or value
                       (bibtex-completion-get-value field entry))))
-    (when value
+    (when (and value (> (length value) 0))
       (save-match-data
         ;; split field into words
         (setq result (split-string value separator t "[ ,.;:-]+"))
@@ -355,16 +355,16 @@ This function is used internally by `orb-autokey-generate-key'."
         (when chars
           (setq chars (string-to-number chars)
                 result (--map (substring it 0 (if (< chars (length it))
-                                                        chars
-                                                      (length it)))
-                                    result)))
+                                                  chars
+                                                (length it)))
+                              result)))
         ;; almost there: concatenate words, include DELIMiter
         (setq result (mapconcat #'identity result delim))
         ;; CAPITAL = preserve case
         (unless capital
-          (setq result (downcase result))))
-      ;; return result or an empty string
-      (or result ""))))
+          (setq result (downcase result)))))
+    ;; return result or an empty string
+    (or result "")))
 
 (defun orb--autokey-evaluate-expression (expr &optional entry)
   "Evaluate arbitrary elisp EXPR passed as readable string.
