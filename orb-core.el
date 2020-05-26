@@ -207,7 +207,8 @@ instead of `orb-autokey-format'."
     ;; additional wildcards
     (while (string-match e-rx str)
       (setq str (replace-match
-                 (orb--autokey-evaluate-expression (match-string 2 str) entry)
+                 (save-match-data
+                   (orb--autokey-evaluate-expression (match-string 2 str) entry))
                  t nil str 1)))
     ;; Handle author wildcards
     (let ((author (or (bibtex-completion-get-value "author" entry)
