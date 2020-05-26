@@ -264,7 +264,7 @@ instead of `orb-autokey-format'."
                      :field (if (match-string 2 str) "pagetotal"
                               "pages")
                      :delimiter (match-string 3 str)
-                     :words 1)
+                     :words "1")
                  t nil str 1)))
     str))
 
