@@ -581,7 +581,7 @@ string instead.  Return modified CONTENTS."
   (interactive)
   (let* ((rx1 '(and "(" (** 1 2 (any "0-9")) ")"))
          (rx2 '(and "[" (** 1 2 (any "0-9")) "]"))
-         (rx3 '(and "(" (any "a-z") ")"))
+         (rx3 '(and "(" (any "a-z") (opt (any space)) ")"))
          (rx4 '(and " " (any "a-z") ")"))
          (regexp (rx-to-string
                   `(group-n 1 (or (or (and ,rx1 " " ,rx3)

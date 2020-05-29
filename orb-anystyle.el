@@ -51,6 +51,8 @@
 (defvar orb-anystyle-parser-model nil)
 (defvar orb-anystyle-finder-model nil)
 (defvar orb-anystyle-default-buffer "*Orb Anystyle Output*") ; TODO: make it defcustom
+;; --crop is currently broken
+(defvar orb-anystyle-crop nil)
 
 ;; * Main functions
 
@@ -308,10 +310,13 @@ find, parse, check, train, help or license" input)))
     ;; it can, however, be called with :global-options
     (when (eq command 'find)
       (if command-options
-            (unless (stringp command-options)
-              (user-error ":command-options value type must be string"))
+          (unless (stringp command-options)
+            (user-error ":command-options value type must be string"))
         ;; :crop's value should be a number or string
         ;; nil is equivalent to 0
+        ;; if no value was explicitely supplied, use
+        ;; the default from user option
+        (setq crop (or crop orb-anystyle-crop))
         (when crop
           (unless (consp crop)
             (setq crop (list crop)))

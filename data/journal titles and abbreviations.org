@@ -257,7 +257,9 @@
 | JMS        | Journal of Molecular Structure                                                                    | J. Mol. Struct.                                    |
 | JMSM       | Journal of Mass Spectrometry                                                                      | J. Mass Spectrom.                                  |
 | JMSC-      | Journal o  Membrane Science                                                                       | J. Membrane Sci.                                   |
+|            |                                                                                                   |                                                    |
 | JNM        | Journal of Nuclear Medicine                                                                       | J. Nucl. Med.                                      |
+| JNP        | Journal of Natural Products                                                                       | J. Nat. Prod.                                      |
 |            |                                                                                                   |                                                    |
 | J          | Joule                                                                                             | Joule                                              |
 | JOC        | The Journal of Organic Chemistry                                                                  | J. Org. Chem.                                      |
