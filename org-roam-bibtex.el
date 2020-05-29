@@ -507,7 +507,7 @@ before calling any Org-roam functions."
                       ;; one will be used eventually.  This is a waste
                       ;; of resources and may be slow with many
                       ;; templates.
-                      (dolist (tmpl tmpls result)
+                      (dolist (tmpl tmpls (nreverse result))
                         (cl-pushnew
                          (orb--preformat-template tmpl entry) result))))
                   templates))
