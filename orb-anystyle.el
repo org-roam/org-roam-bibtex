@@ -78,7 +78,7 @@ ARGS is a plist with the following recognized keys:
 Anystyle CLI options
 ==========
 1) :exec      => string (valid executable)
-- default value can be set int `orb-anystyle-executable'
+- default value can be set through `orb-anystyle-executable'
 
 2) :command   => symbol or string
 - valid values: find parse help check license train

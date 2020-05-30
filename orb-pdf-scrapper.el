@@ -79,33 +79,6 @@ a cons cell (FIELD . VALUE).")
 
 ;; * Helper functions: utilities
 
-(defun orb-pdf-scrapper--tsv-to-list (file)
-  "Convert tab-separated values in FILE into a list."
-  (with-temp-buffer
-    (insert-file-contents file)
-    (let ((orig-list (split-string (orb--buffer-string) "\n" t)))
-      (--map (--> it
-                  (split-string it "\t" t)
-                  (cons (nth 2 it) (car it)))
-             orig-list))))
-
-(defun orb-pdf-scrapper--str-to-regexp (str)
-  "Convert STR with punctuation into its regexp exression.
-Usefull for matching short journal names.
-Example:
-========
-\"abc. def-ghi, jkl;\" =>
-\"\\(abc[ ,.;–-]def[ ,.;–-]ghi[ ,.;–-]jkl[ ,.;–-]\\)\"."
-  (format "\\(%s[ ,.;–-]*\\)"
-          (--reduce (format "%s[ ,.;–-]+%s" acc it)
-                    (split-string str "[ ,.;–-]+" t "[ ]+"))))
-
-(defvar orb-pdf-scrapper--journal-titles)
-;; read journal title abbreviations
-(setq orb-pdf-scrapper--journal-titles
-      (orb-pdf-scrapper--tsv-to-list
-       (f-join orb-data-dir "journal_titles.tsv")))
-
 (defvar orb-pdf-scrapper--sorted-refs nil)
 
 ;; * Helper functions: citekey generation
