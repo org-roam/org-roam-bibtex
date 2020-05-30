@@ -269,65 +269,89 @@ Pressing the RED button, just in case")
 (defun orb-pdf-scrapper--edit-txt ()
   "Edit text references in `orb-pdf-scrapper--buffer'."
   (orb--when-current-context! 'start
-    ;; TODO: rewrite with (case :caller
-    (if-let ((temp-txt (orb-pdf-scrapper--get :temp-txt)))
-        (progn
-          (pop-to-buffer orb-pdf-scrapper--buffer)
-          (erase-buffer)
-          (insert-file-contents temp-txt)
-          (setq buffer-file-name nil)
-          (setq mark-active nil)
-          (orb-pdf-scrapper--refresh-mode 'txt))
-      (let ((temp-txt (orb--temp-file "orb-pdf-scrapper-" ".txt"))
-            (pdf-file (orb-pdf-scrapper--get :pdf-file)))
-        (orb-pdf-scrapper--put :temp-txt temp-txt
-                               :caller 'edit-txt)
-        (let ((same-window-buffer-names (list orb-pdf-scrapper--buffer)))
-          (pop-to-buffer orb-pdf-scrapper--buffer))
-        (erase-buffer)
-        (setq buffer-file-name nil)
-        (setq mark-active nil)
-        (orb--with-message! (format "Scrapping %s.pdf" (f-base pdf-file))
-          (orb-anystyle 'find
-            :format 'ref
-            :layout nil
-            :finder-model orb-anystyle-finder-model
-            :input pdf-file
-            :stdout t
-            :buffer orb-pdf-scrapper--buffer))
-        (orb-pdf-scrapper--refresh-mode 'txt)))))
+    (unwind-protect
+        (case (orb-pdf-scrapper--get :caller)
+          ;; parse pdf file and switch to text editing mode
+          ('run
+           (let ((temp-txt (orb--temp-file "orb-pdf-scrapper-" ".txt"))
+                 (pdf-file (orb-pdf-scrapper--get :pdf-file)))
+             (orb-pdf-scrapper--put :temp-txt temp-txt)
+             (let ((same-window-buffer-names (list orb-pdf-scrapper--buffer)))
+               (pop-to-buffer orb-pdf-scrapper--buffer))
+             (erase-buffer)
+             (setq buffer-file-name nil)
+             (setq mark-active nil)
+             (orb--with-message! (format "Scrapping %s.pdf" (f-base pdf-file))
+               (orb-anystyle 'find
+                 :format 'ref
+                 :layout nil
+                 :finder-model orb-anystyle-finder-model
+                 :input pdf-file
+                 :stdout t
+                 :buffer orb-pdf-scrapper--buffer))
+             (setq buffer-undo-list nil)
+             (set-buffer-modified-p nil)
+             (orb-pdf-scrapper--refresh-mode 'txt)))
+          ;; read the previously generated text file
+          ('edit-bib
+           (if-let ((temp-txt (orb-pdf-scrapper--get :temp-txt))
+                    (f-exists? temp-txt))
+               (progn
+                 (pop-to-buffer orb-pdf-scrapper--buffer)
+                 (erase-buffer)
+                 (message "%s" (insert-file-contents temp-txt))
+                 (insert-file-contents temp-txt)
+                 (setq buffer-undo-list (orb-pdf-scrapper--get :txt-undo-list))
+                 (set-buffer-modified-p nil)
+                 (setq mark-active nil)
+                 (orb-pdf-scrapper--refresh-mode 'txt))
+             (orb-pdf-scrapper-dispatcher 'error)))
+          (t
+           (orb-pdf-scrapper-dispatcher 'error)))
+      (orb-pdf-scrapper--put :caller 'edit-txt))))
 
 (defun orb-pdf-scrapper--edit-bib ()
   "Generate and edit BibTeX data in `orb-pdf-scrapper--buffer'."
   (orb--when-current-context! 'txt
-    (cl-case (orb-pdf-scrapper--get :caller)
-      ('edit-txt
-       (message "I'm here")
-       (let* ((temp-bib (or (orb-pdf-scrapper--get :temp-bib)
-                            (orb--temp-file "orb-pdf-scrapper-" ".bib"))))
-         (orb-pdf-scrapper--put :temp-bib temp-bib
-                                :caller 'edit-bib)
-         (pop-to-buffer orb-pdf-scrapper--buffer)
-         (setq buffer-file-name nil)
-         ;; no need to erase the buffer: shell-command invoked by `orb-anystyle'
-         ;; will do that
-         (orb--with-message! "Generating BibTeX data"
-           (orb-anystyle 'parse
-             :format 'bib
-             :parser-model orb-anystyle-parser-model
-             :input (orb-pdf-scrapper--get :temp-txt)
-             :stdout t
-             :buffer orb-pdf-scrapper--buffer)
-           (write-region (orb--buffer-string) nil temp-bib nil -1)))
-       (orb-pdf-scrapper--refresh-mode 'bib))
-      ('edit-org
-       (pop-to-buffer orb-pdf-scrapper--buffer)
-       (erase-buffer)
-       (insert-file-contents (orb-pdf-scrapper--get :temp-bib))
-       (orb-pdf-scrapper--put :caller 'edit-bib)
-       (orb-pdf-scrapper--refresh-mode 'bib))
-      (t
-       (orb-pdf-scrapper-dispatcher 'error)))))
+    (unwind-protect
+        (cl-case (orb-pdf-scrapper--get :caller)
+          ('edit-txt
+           (let* ((temp-bib (or (orb-pdf-scrapper--get :temp-bib)
+                                (orb--temp-file "orb-pdf-scrapper-" ".bib"))))
+             (orb-pdf-scrapper--put :temp-bib temp-bib)
+             (pop-to-buffer orb-pdf-scrapper--buffer)
+             ;; save previous progress in txt buffer
+             (write-region (orb--buffer-string)
+                           nil (orb-pdf-scrapper--get :temp-txt) nil -1)
+             (orb-pdf-scrapper--put :txt-undo-list (copy-tree buffer-undo-list))
+             ;; no need to erase the buffer: shell-command invoked by
+             ;; `orb-anystyle' will do that
+             (orb--with-message! "Generating BibTeX data"
+               (orb-anystyle 'parse
+                 :format 'bib
+                 :parser-model orb-anystyle-parser-model
+                 :input (orb-pdf-scrapper--get :temp-txt)
+                 :stdout t
+                 :buffer orb-pdf-scrapper--buffer)
+               (write-region (orb--buffer-string) nil temp-bib nil -1))
+             (setq buffer-undo-list nil)
+             (set-buffer-modified-p nil))
+           (orb-pdf-scrapper--refresh-mode 'bib))
+          ('edit-org
+           (if-let ((temp-bib (orb-pdf-scrapper--get :temp-bib))
+                    (f-exists? temp-bib))
+               (progn
+                 (pop-to-buffer orb-pdf-scrapper--buffer)
+                 (erase-buffer)
+                 (setq mark-active nil)
+                 (insert-file-contents temp-bib)
+                 (setq buffer-undo-list (orb-pdf-scrapper--get :bib-undo-list))
+                 (set-buffer-modified-p nil)
+                 (orb-pdf-scrapper--refresh-mode 'bib))
+             (orb-pdf-scrapper-dispatcher 'error)))
+          (t
+           (orb-pdf-scrapper-dispatcher 'error)))
+      (orb-pdf-scrapper--put :caller 'edit-bib))))
 
 (defun orb-pdf-scrapper--edit-org ()
   "Insert sorted references as Org-mode tables sorted into subheadings."
@@ -363,6 +387,8 @@ Pressing the RED button, just in case")
           (org-table-align)
           (org-back-to-heading nil))
         (write-region (orb--buffer-string) nil temp-org nil -1)
+        (setq buffer-undo-list nil)
+        (set-buffer-modified-p nil)
         (goto-char (point-min))))))
 
 (defun orb-pdf-scrapper--checkout ()
@@ -609,6 +635,9 @@ string instead.  Return modified CONTENTS."
   "Return to editing text references in Orb PDF Scrpapper."
   (interactive)
   (orb--when-current-context! 'bib
+    ;; all progress in bib is lost because we re-generate the data
+    (orb--with-scrapper-buffer!
+      (orb-pdf-scrapper--put :bib-undo-list nil))
     (orb-pdf-scrapper-dispatcher 'start)))
 
 (defun orb-pdf-scrapper-return-to-bib ()
@@ -656,17 +685,11 @@ Kill it and start a new one %s? "
             (orb-pdf-scrapper-run (orb-pdf-scrapper--get :new-key)))
         ;; Do nothing
         (orb-pdf-scrapper--put :prevent-concurring nil))
+      ;; Finilize the requested context otherwise
       (cl-case context
         ('start
          (orb-pdf-scrapper--edit-txt))
         ('txt
-         ;; save previous progress in txt buffer
-         (when (eq (orb-pdf-scrapper--get :caller) 'edit-txt )
-           (orb--with-scrapper-buffer!
-             (write-region (orb--buffer-string)
-                           nil (orb-pdf-scrapper--get :temp-txt) nil -1)
-               ;; TODO: not implemented yet
-               (orb-pdf-scrapper--put :txt-undo-list buffer-undo-list)))
          ;; ;; TODO: Reimplement non-interactive process
          ;; (if (y-or-n-p "Review the bib file? ")
 
@@ -684,7 +707,7 @@ Kill it and start a new one %s? "
              (orb-pdf-scrapper-generate-keys))
            (write-region (orb--buffer-string)
                          nil (orb-pdf-scrapper--get :temp-bib) nil 1)
-           (orb-pdf-scrapper--put :bib-undo-list buffer-undo-list))
+           (orb-pdf-scrapper--put :bib-undo-list (copy-tree buffer-undo-list)))
          (orb-pdf-scrapper--edit-org))
         ('org
          ;; currently, this is unnecessary but may be useful
