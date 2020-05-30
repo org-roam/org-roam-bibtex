@@ -50,6 +50,7 @@
 (require 'orb-compat)
 
 (eval-when-compile
+  (require 'cl-macs)
   (require 'rx))
 
 
@@ -175,85 +176,85 @@ Return a string.  If optional CONTROL-STRING is non-nil, use it
 instead of `orb-autokey-format'."
   (let* ((case-fold-search nil)
          (str (or control-string orb-autokey-format))
+         ;; star regexp: group 3!
+         (star '(opt (group-n 3 "*")))
+         ;; optional parameters: regexp groups 4-6!
+         (opt1 '(opt (and "[" (opt (group-n 4 digit)) "]")))
+         (opt2 '(opt (and "[" (opt (group-n 5 digit)) "]")))
+         (opt3 '(opt (and "[" (opt (group-n 6 (any alnum "_.:|-"))) "]")))
+         ;; capital letters: regexp group 2!
          ;; author wildcard regexp
-         (a-rx
-          (rx (group-n 1
-                       (or "%a" (group-n 2 "%A"))
-                       (opt (group-n 3 "*"))
-                       (opt (and "[" (opt (group-n 4 digit)) "]"))
-                       (opt (and "[" (opt (group-n 5 digit)) "]"))
-                       (opt (and "[" (opt (group-n 6 (any alnum "_.:|-"))) "]")))))
+         (a-rx (macroexpand
+                `(rx (group-n 1 (or "%a" (group-n 2 "%A"))
+                              ,star ,opt1 ,opt2 ,opt3))))
          ;; title wildcard regexp
-         (t-rx
-          (rx (group-n 1
-                       (or "%t" (group-n 2 "%T"))
-                       (opt (group-n 3 "*"))
-                       (opt (and "[" (opt (group-n 4 digit)) "]"))
-                       (opt (and "[" (opt (group-n 5 digit)) "]"))
-                       (opt (and "[" (opt (group-n 6 (any alnum "_.:|-"))) "]")))))
+         (t-rx (macroexpand
+                `(rx (group-n 1 (or "%t" (group-n 2 "%T"))
+                              ,star ,opt1 ,opt2 ,opt3))))
          ;; any field wildcard regexp
-         (f-rx
-          (rx (group-n 1
-                       (or "%f" (group-n 2 "%F"))
-                       (and "{" (group-n 3 (1+ letter)) "}")
-                       (opt (and "[" (opt (group-n 4 digit)) "]"))
-                       (opt (and "[" (opt (group-n 5 digit)) "]"))
-                       (opt (and "[" (opt (group-n 6 (any alnum "_.:|-"))) "]")))))
+         ;; required parameter: group 7!
+         (f-rx (macroexpand
+                `(rx (group-n 1 (or "%f" (group-n 2 "%F"))
+                              (and "{" (group-n 7 (1+ letter)) "}")
+                              ,opt1 ,opt2 ,opt3))))
          ;; year wildcard regexp
-         (y-rx (rx (group-n 1 "%y" (opt (group-n 2 "*")))))
+         (y-rx (rx (group-n 1 "%y" (opt (group-n 3 "*")))))
          ;; page wildcard regexp
-         (p-rx
-          (rx (group-n 1 "%p"
-                       (opt (group-n 2 "*"))
-                       (opt (and "[" (group-n 3 (any alnum "_.:|-")) "]")))))
+         (p-rx (macroexpand `(rx (group-n 1 "%p" ,star ,opt3))))
          ;; elisp expression wildcard regexp
+         ;; elisp sexp: group 8!
          (e-rx (rx (group-n 1 "%e"
-                            "{" (group-n 2 "(" (1+ ascii) ")") "}"))))
+                            "{" (group-n 8 "(" (1+ ascii) ")") "}"))))
     ;; Evaluating elisp expression should go the first because it can produce
     ;; additional wildcards
     (while (string-match e-rx str)
       (setq str (replace-match
                  (save-match-data
-                   (orb--autokey-evaluate-expression (match-string 2 str) entry))
-                 t nil str 1)))
-    ;; Handle author wildcards
-    (let ((author (or (bibtex-completion-get-value "author" entry)
-                      (bibtex-completion-get-value "editor" entry))))
-      (while (string-match a-rx str)
-        (setq str (replace-match
-                   (orb--autokey-format-field nil
-                       :field "=name="
-                       :value author
-                       :capital (match-string 2 str)
-                       :starred (match-string 3 str)
-                       :words (match-string 4 str)
-                       :characters (match-string 5 str)
-                       :delimiter (match-string 6 str))
-                   t nil str 1))))
-    ;; Handle title wildcards
-    (let ((title (or (bibtex-completion-get-value "title" entry) "")))
-      (while (string-match t-rx str)
-        (setq str (replace-match
-                   (orb--autokey-format-field nil
-                       :field "title"
-                       :value title
-                       :capital (match-string 2 str)
-                       :starred (match-string 3 str)
-                       :words (match-string 4 str)
-                       :characters (match-string 5 str)
-                       :delimiter (match-string 6 str))
-                   t nil str 1))))
-    ;; Handle custom field wildcards
-    (while (string-match f-rx str)
-      (setq str (replace-match
-                 (orb--autokey-format-field entry
-                     :field (match-string 3 str)
-                     :capital (match-string 2 str)
-                     :words (match-string 4 str)
-                     :characters (match-string 5 str)
-                     :delimiter (match-string 6 str))
-                 t nil str 1)))
+                   (orb--autokey-evaluate-expression
+                    (match-string 8 str) entry)) t nil str 1)))
+    ;; Expanding all other wildcards are actually
+    ;; variations of calls to `orb--autokey-format-field' with many
+    ;; commonalities, so we wrap it into a macro
+    (cl-macrolet
+        ((expand
+          (wildcard &key field value entry capital
+                    starred words characters delimiter)
+          (let ((cap (or capital '(match-string 2 str)))
+                (star (or starred '(match-string 3 str)))
+                (opt1 (or words '(match-string 4 str)))
+                (opt2 (or characters '(match-string 5 str)))
+                (opt3 (or delimiter '(match-string 6 str))))
+            `(while (string-match ,wildcard str)
+               (setq str (replace-match
+                          ;; we can safely pass nil values
+                          ;; `orb--autokey-format-field' should
+                          ;; handle them correctly
+                          (orb--autokey-format-field ,field
+                            :entry ,entry :value ,value
+                            :capital ,cap :starred ,star
+                            :words ,opt1 :characters ,opt2 :delimiter ,opt3)
+                          t nil str 1))))))
+      ;; Handle author wildcards
+      (expand a-rx
+              :field "=name="
+              :value (or (bibtex-completion-get-value "author" entry)
+                         (bibtex-completion-get-value "editor" entry)))
+      ;; Handle title wildcards
+      (expand t-rx
+              :field "title"
+              :value (or (bibtex-completion-get-value "title" entry) ""))
+      ;; Handle custom field wildcards
+      (expand f-rx
+              :field (match-string 7 str)
+              :entry entry)
+      ;; Handle pages wildcards %p*[-]
+      (expand p-rx
+              :field (if (match-string 3 str)
+                         "pagetotal" "pages")
+              :entry entry
+              :words "1"))
     ;; Handle year wildcards
+    ;; it's simple, so we do not use `orb--autokey-format-field' here
     ;; year should be well-formed: YYYY
     (let ((year (or (bibtex-completion-get-value "year" entry)
                     (bibtex-completion-get-value "date" entry)
@@ -264,49 +265,42 @@ instead of `orb-autokey-format'."
                                     (substring year 2 4)
                                   (substring year 0 4)))
                    t nil str 1))))
-    ;; Handle pages wildcards
-    (while (string-match p-rx str)
-      (setq str (replace-match
-                 (orb--autokey-format-field entry
-                     :field (if (match-string 2 str) "pagetotal"
-                              "pages")
-                     :delimiter (match-string 3 str)
-                     :words "1")
-                 t nil str 1)))
     str))
 
-(defun orb--autokey-format-field (entry &rest specs)
-  "Format field of a BibTeX ENTRY according to plist SPECS.
+(defun orb--autokey-format-field (field &rest specs)
+  "Return BibTeX FIELD formatted according to plist SPECS.
 
 Recognized keys:
 ==========
-:field       - BibTeX field to use
-:value       - Value of BibTeX field; it will be used
-               instead the value from ENTRY
+:entry       - BibTeX entry to use
+:value       - Value of BibTeX field to use
+               instead retreiving it from :entry
 :capital     - capitalized version
 :starred     - starred version
 :words       - first optional parameter (number of words)
 :characters  - second optional parameter (number of characters)
 :delimiter   - third optional parameter (delimiter)
 
-All values should be strings.
+All values should be strings, including those representing numbers.
 
 This function is used internally by `orb-autokey-generate-key'."
-  (-let* (((&plist :field field
+  (declare (indent 1))
+  (-let* (((&plist :entry entry
                    :value value
                    :capital capital
                    :starred starred
                    :words words
                    :characters chars
                    :delimiter delim) specs)
-          ;; field values will be split into list of words. `separator' is a
-          ;; regexp for word separators: either whitespaces, or at least two
+          ;; field values will be split into a list of words. `separator' is a
+          ;; regexp for word separators: either a whitespace, or at least two
           ;; dashes, or en dash, or em dash
           (separator "\\([ \n\t]\\|-[-]+\\|[—–]\\)")
           (delim (or delim ""))
           result)
-    ;; field "=name=" used internally in `orb-autokey-generate-key'
-    ;; stands for author or editor
+    ;; 0. virtual field "=name=" is used internally here and in
+    ;; `orb-autokey-generate-key'; it stands for author or editor
+    (message "%s" field)
     (if (string= field "=name=")
         ;; in name fields, logical words are full names consisting of several
         ;; words and containing spaces and punctuation, separated by a logical
@@ -315,52 +309,62 @@ This function is used internally by `orb-autokey-generate-key'."
               value (or value
                         (bibtex-completion-get-value "author" entry)
                         (bibtex-completion-get-value "editor" entry)))
+      ;; otherwise proceed with value or get it from entry
       (setq value (or value
                       (bibtex-completion-get-value field entry))))
     (when (and value (> (length value) 0))
       (save-match-data
-        ;; split field into words
+        ;; 1. split field into words
         (setq result (split-string value separator t "[ ,.;:-]+"))
-        ;; only for title;
+        ;; 1a) only for title;
         ;; STARRED = include words from `orb-autokey-titlewords-ignore
-        ;; "default" unstarred version filters the keywords
+        ;; unstarred version filters the keywords, starred ignores this block
         (when (and (string= field "title")
                    (not starred))
           (let ((ignore-rx (concat "\\`\\(:?"
                                    (mapconcat #'identity
                                               orb-autokey-titlewords-ignore
-                                              "\\|") "\\)\\'")))
-            (setq result (-flatten (--map (if (string-match-p ignore-rx it)
-                                              nil it)
-                                          result)))))
-        ;; take number of words equal to WORDS if that is set
+                                              "\\|") "\\)\\'"))
+                (words ()))
+            (setq result (dolist (word result (nreverse words))
+                           (unless (string-match-p ignore-rx words)
+                             (push word words))))))
+        ;; 2. take number of words equal to WORDS if that is set
         ;; or just the first word; also 0 = 1.
         (if words
             (setq words (string-to-number words)
-                  result (if (> words (length result))
-                             (-take (length result) result)
-                           (-take words result) ))
+                  result (-take (if (> words (length result))
+                                    (length result)
+                                  words)
+                                result))
           (setq result (list (car result))))
-        ;; only for "=name=" field, i.e. author or editor
+        ;; 2a) only for "=name=" field, i.e. author or editor
         ;; STARRED = include initials
         (when (string= field "=name=")
-          (if starred
-              ;; NOTE: here we expect name field 'Doe, J. B.'
-              ;; should ideally be able to handle 'Doe, John M. Longname, Jr'
-              (setq result (--map (s-replace-regexp "[ ,.\t\n]" "" it)
-                                  result))
-            (setq result (--map (s-replace-regexp "\\(.*?\\),.*" "\\1" it)
-                                result))))
-        ;; take at most CHARS number of characters from every word
+          ;; NOTE: here we expect name field 'Doe, J. B.'
+          ;; should ideally be able to handle 'Doe, John M. Longname, Jr'
+          (let ((r-x (if starred
+                         "[ ,.\t\n]"
+                       "\\`\\(.*?\\),.*\\'"))
+                (rep (if starred "" "\\1"))
+                (words ()))
+            (setq result
+                  (dolist (name result (nreverse words))
+                    (push (s-replace-regexp r-x rep name) words)))))
+        ;; 3. take at most CHARS number of characters from every word
         (when chars
-          (setq chars (string-to-number chars)
-                result (--map (substring it 0 (if (< chars (length it))
-                                                  chars
-                                                (length it)))
-                              result)))
-        ;; almost there: concatenate words, include DELIMiter
+          (let ((words ()))
+            (setq chars (string-to-number chars)
+                  result (dolist (word result (nreverse words))
+                           (push
+                            (substring word 0
+                                       (if (< chars (length word))
+                                           chars
+                                         (length word)))
+                            words)))))
+        ;; 4. almost there: concatenate words, include DELIMiter
         (setq result (mapconcat #'identity result delim))
-        ;; CAPITAL = preserve case
+        ;; 5. CAPITAL = preserve case
         (unless capital
           (setq result (downcase result)))))
     ;; return result or an empty string
