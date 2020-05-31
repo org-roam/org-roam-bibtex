@@ -127,12 +127,6 @@ Finally, if the control string is nil, the object will be formatted as \"%s\":
                               (or (car obj) (cdr obj) ""))))))
     res))
 
-(defvar orb-data-dir
-  (concat (file-name-directory (file-truename (or load-file-name
-                                                  buffer-file-name)))
-          "data/")
-  "Path to orb data directory.")
-
 ;;; Code in this section was adopted from ob-core.el
 ;;
 ;; Copyright (C) 2009-2020 Free Software Foundation, Inc.
