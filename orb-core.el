@@ -169,6 +169,8 @@ Default value is set from `bibtex-autokey-titleword-ignore'."
   :type '(repeat :tag "Regular expression" regexp)
   :group 'org-roam-bibtex)
 
+(defvar orb-autokey-invalid-field-marker "N/A")
+
 ;;;###autoload
 (defun orb-autokey-generate-key (entry &optional control-string)
   "Generate citation key from ENTRY according to `orb-autokey-format'.
@@ -258,13 +260,16 @@ instead of `orb-autokey-format'."
     ;; year should be well-formed: YYYY
     (let ((year (or (bibtex-completion-get-value "year" entry)
                     (bibtex-completion-get-value "date" entry)
-                    "YYYY")))
-      (while (string-match y-rx str)
-        (setq str (replace-match
-                   (format "%s" (if (match-string 2 str)
-                                    (substring year 2 4)
-                                  (substring year 0 4)))
-                   t nil str 1))))
+                    orb-autokey-invalid-field-marker)))
+      (if (equal year orb-autokey-invalid-field-marker)
+          (while (string-match y-rx str)
+            (setq str (replace-match year t nil str 1)))
+        (while (string-match y-rx str)
+          (setq str (replace-match
+                     (format "%s" (if (match-string 3 str)
+                                      (substring year 2 4)
+                                    (substring year 0 4)))
+                     t nil str 1)))))
     str))
 
 (defun orb--autokey-format-field (field &rest specs)
@@ -300,7 +305,6 @@ This function is used internally by `orb-autokey-generate-key'."
           result)
     ;; 0. virtual field "=name=" is used internally here and in
     ;; `orb-autokey-generate-key'; it stands for author or editor
-    (message "%s" field)
     (if (string= field "=name=")
         ;; in name fields, logical words are full names consisting of several
         ;; words and containing spaces and punctuation, separated by a logical
@@ -308,67 +312,71 @@ This function is used internally by `orb-autokey-generate-key'."
         (setq separator "and"
               value (or value
                         (bibtex-completion-get-value "author" entry)
-                        (bibtex-completion-get-value "editor" entry)))
+                        (bibtex-completion-get-value "editor" entry)
+                        orb-autokey-invalid-field-marker))
       ;; otherwise proceed with value or get it from entry
       (setq value (or value
-                      (bibtex-completion-get-value field entry))))
-    (when (and value (> (length value) 0))
-      (save-match-data
-        ;; 1. split field into words
-        (setq result (split-string value separator t "[ ,.;:-]+"))
-        ;; 1a) only for title;
-        ;; STARRED = include words from `orb-autokey-titlewords-ignore
-        ;; unstarred version filters the keywords, starred ignores this block
-        (when (and (string= field "title")
-                   (not starred))
-          (let ((ignore-rx (concat "\\`\\(:?"
-                                   (mapconcat #'identity
-                                              orb-autokey-titlewords-ignore
-                                              "\\|") "\\)\\'"))
-                (words ()))
-            (setq result (dolist (word result (nreverse words))
-                           (unless (string-match-p ignore-rx words)
-                             (push word words))))))
-        ;; 2. take number of words equal to WORDS if that is set
-        ;; or just the first word; also 0 = 1.
-        (if words
-            (setq words (string-to-number words)
-                  result (-take (if (> words (length result))
-                                    (length result)
-                                  words)
-                                result))
-          (setq result (list (car result))))
-        ;; 2a) only for "=name=" field, i.e. author or editor
-        ;; STARRED = include initials
-        (when (string= field "=name=")
-          ;; NOTE: here we expect name field 'Doe, J. B.'
-          ;; should ideally be able to handle 'Doe, John M. Longname, Jr'
-          (let ((r-x (if starred
-                         "[ ,.\t\n]"
-                       "\\`\\(.*?\\),.*\\'"))
-                (rep (if starred "" "\\1"))
-                (words ()))
-            (setq result
-                  (dolist (name result (nreverse words))
-                    (push (s-replace-regexp r-x rep name) words)))))
-        ;; 3. take at most CHARS number of characters from every word
-        (when chars
-          (let ((words ()))
-            (setq chars (string-to-number chars)
-                  result (dolist (word result (nreverse words))
-                           (push
-                            (substring word 0
-                                       (if (< chars (length word))
-                                           chars
-                                         (length word)))
-                            words)))))
-        ;; 4. almost there: concatenate words, include DELIMiter
-        (setq result (mapconcat #'identity result delim))
-        ;; 5. CAPITAL = preserve case
-        (unless capital
-          (setq result (downcase result)))))
-    ;; return result or an empty string
-    (or result "")))
+                      (bibtex-completion-get-value field entry)
+                      orb-autokey-invalid-field-marker)))
+    (if (equal value orb-autokey-invalid-field-marker)
+        (setq result value)
+      (when (> (length value) 0)
+        (save-match-data
+          ;; 1. split field into words
+          (setq result (split-string value separator t "[ ,.;:-]+"))
+          ;; 1a) only for title;
+          ;; STARRED = include words from `orb-autokey-titlewords-ignore
+          ;; unstarred version filters the keywords, starred ignores this block
+          (when (and (string= field "title")
+                     (not starred))
+            (let ((ignore-rx (concat "\\`\\(:?"
+                                     (mapconcat #'identity
+                                                orb-autokey-titlewords-ignore
+                                                "\\|") "\\)\\'"))
+                  (words ()))
+              (setq result (dolist (word result (nreverse words))
+                             (unless (string-match-p ignore-rx words)
+                               (push word words))))))
+          ;; 2. take number of words equal to WORDS if that is set
+          ;; or just the first word; also 0 = 1.
+          (if words
+              (setq words (string-to-number words)
+                    result (-take (if (> words (length result))
+                                      (length result)
+                                    words)
+                                  result))
+            (setq result (list (car result))))
+          ;; 2a) only for "=name=" field, i.e. author or editor
+          ;; STARRED = include initials
+          (when (string= field "=name=")
+            ;; NOTE: here we expect name field 'Doe, J. B.'
+            ;; should ideally be able to handle 'Doe, John M. Longname, Jr'
+            (let ((r-x (if starred
+                           "[ ,.\t\n]"
+                         "\\`\\(.*?\\),.*\\'"))
+                  (rep (if starred "" "\\1"))
+                  (words ()))
+              (setq result
+                    (dolist (name result (nreverse words))
+                      (push (s-replace-regexp r-x rep name) words)))))
+          ;; 3. take at most CHARS number of characters from every word
+          (when chars
+            (let ((words ()))
+              (setq chars (string-to-number chars)
+                    result (dolist (word result (nreverse words))
+                             (push
+                              (substring word 0
+                                         (if (< chars (length word))
+                                             chars
+                                           (length word)))
+                              words)))))
+          ;; 4. almost there: concatenate words, include DELIMiter
+          (setq result (mapconcat #'identity result delim))
+          ;; 5. CAPITAL = preserve case
+          (unless capital
+            (setq result (downcase result))))))
+    ;; return result
+    result))
 
 (defun orb--autokey-evaluate-expression (expr &optional entry)
   "Evaluate arbitrary elisp EXPR passed as readable string.
