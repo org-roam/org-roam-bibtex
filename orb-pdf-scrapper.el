@@ -80,6 +80,7 @@ a cons cell (FIELD . VALUE).")
 ;; * Helper functions: utilities
 
 (defvar orb-pdf-scrapper--sorted-refs nil)
+(defvar orb-pdf-scrapper--refs nil)
 
 ;; * Helper functions: citekey generation
 
@@ -144,7 +145,7 @@ Returns fields for exporting as per `orb-pdf-scrapper-bibkey-export-fields'."
                           (append (-take 3 value) '("et.al."))
                         value)
                 value (concat (mapconcat #'identity value "; "))))
-        (cl-pushnew (cons field value) export-fields)))
+        (push (cons field value) export-fields)))
     (list :key key
           :validp validp
           :set-fields set-fields
@@ -169,27 +170,27 @@ available in the user databases;
          (sorted-refs (list (list 'in-roam) (list 'in-bib)
                             (list 'valid) (list 'invalid)))
          (spaces (-repeat (length orb-pdf-scrapper-bibkey-export-fields) (cons nil " "))))
-    (dolist (citation refs)
+    (dolist (ref refs)
       (cond ((org-roam-db-query [:select [ref]
                                  :from refs
                                  :where (= ref $s1)]
-                                (format "%s" (caar citation)))
-             (cl-pushnew
-              (cons (format "cite:%s" (caar citation)) spaces)
+                                (format "%s" (car ref)))
+             (push
+              (cons (format "cite:%s" (car ref)) spaces)
               (cdr (assoc 'in-roam sorted-refs))))
-            ((bibtex-completion-get-entry (caar citation))
-             (cl-pushnew
-              (cons (format "cite:%s" (caar citation)) spaces)
+            ((bibtex-completion-get-entry (car ref))
+             (push
+              (cons (format "cite:%s" (car ref)) spaces)
               (cdr (assoc 'in-bib sorted-refs))))
-            ((cdr citation)
-             (cl-pushnew
-              (cons (format "cite:%s" (caar citation)) (cdar citation))
+            ((cddr ref)
+             (push
+              (cons (format "cite:%s" (car ref)) (cadr ref))
               (cdr (assoc 'valid sorted-refs))))
             (t
-             (cl-pushnew
-              (cons " " (cdar citation))
+             (push
+              (cons " " (cadr ref))
               (cdr (assoc 'invalid sorted-refs))))))
-    (setq orb-pdf-scrapper--sorted-refs sorted-refs)))
+    sorted-refs))
 
 ;; * Helper functions: dispatcher
 
@@ -340,12 +341,13 @@ Pressing the RED button, just in case")
         (org-insert-heading nil nil t)
         (insert "References (retrieved by Orb PDF Scrapper from "
                 (f-filename (orb-pdf-scrapper--get :pdf-file)) ")")
-        (dolist (ref-group orb-pdf-scrapper--sorted-refs)
+        (dolist (ref-group (orb-pdf-scrapper--sort-refs orb-pdf-scrapper--refs))
           (org-insert-heading '(16) nil t)
           (org-demote)
           (insert (format "%s\n" (car ref-group)))
           (insert (concat "\n|citekey|"
-                          (mapconcat #'identity orb-pdf-scrapper-bibkey-export-fields "|")
+                          (mapconcat #'identity
+                                     orb-pdf-scrapper-bibkey-export-fields "|")
                           "|\n"))
           (forward-line -1)
           (org-table-insert-hline)
@@ -376,35 +378,6 @@ process."
         (goto-char (point-max))
         (insert-file-contents (orb-pdf-scrapper--get :temp-org))))
     (orb-pdf-scrapper--cleanup)))
-
-;; (defun orb-pdf-scrapper--checkout2 ()
-;;   "Parse bib buffer and populate `orb-pdf-scrapper--sorted-refs'."
-;;   (let ((context (orb-pdf-scrapper--get :context)))
-;;     (cond ((equal context 'checkout-non-interactive)
-;;            (orb--with-message! "Generating citation keys"
-;;              (orb--with-scrapper-buffer!
-;;                (orb-anystyle 'parse
-;;                  :format 'bib
-;;                  :parser-model orb-anystyle-parser-model
-;;                  :input (orb-pdf-scrapper--get :temp-txt)
-;;                  :stdout t
-;;                  :buffer orb-pdf-scrapper--buffer)
-;;                (bibtex-mode)
-;;                (bibtex-set-dialect 'BibTeX t)
-;;                (condition-case nil
-;;                    (orb-pdf-scrapper-generate-keys)
-;;                  (t
-;;                   (orb-pdf-scrapper--put :context 'checkout-interactive)
-;;                   (orb-pdf-scrapper--checkout)))))
-;;            (orb-pdf-scrapper--insert-org))
-;;           ((equal context 'checkout-interactive)
-;;            (when (> (cl-random 100) 98)
-;;              (orb--with-message! "Pressing the RED button"))
-;;            (when (buffer-modified-p (get-buffer orb-pdf-scrapper--buffer))
-;;              (orb-pdf-scrapper-generate-keys))
-;;            (orb-pdf-scrapper--insert-org))
-;;           (t
-;;            (orb-pdf-scrapper-dispatcher 'error)))))
 
 (defun orb-pdf-scrapper--cleanup ()
   "Clean up after Orb Pdf Scrapper process."
@@ -513,6 +486,60 @@ Context is read from `orb-pdf-scrapper--plist' property `:context'."
 
 ;; * Interactive functions
 
+(defun orb-pdf-scrapper--generate-key-at-point-1 ()
+  "Generate citation key for a BibTeX record at point.
+Use the function specified in `orb-pdf-scrapper-keygen-function'.
+The point must be at a BibTeX record.
+
+This is the auxiliary function for commands
+`orb-pdf-scrapper-generate-key-at-point' and
+`orb-pdf-scrapper-generate-keys' that actually parses the BibTeX
+entry."
+  (let* ((entry (parsebib-read-entry (parsebib-find-next-item)))
+         (key-plist (funcall orb-pdf-scrapper-keygen-function entry))
+         (new-key (plist-get key-plist :key))
+         (validp (plist-get key-plist :validp))
+         (fields-to-set (plist-get key-plist :set-fields))
+         (formatted-entry (plist-get key-plist :export-fields)))
+    (save-excursion
+      ;; update citekey
+      ;; adjusted from bibtex-clean-entry
+        (bibtex-beginning-of-entry)
+        (re-search-forward bibtex-entry-maybe-empty-head)
+        (if (match-beginning bibtex-key-in-head)
+            (delete-region (match-beginning bibtex-key-in-head)
+                           (match-end bibtex-key-in-head)))
+        (insert new-key)
+      ;; set the bibtex fields
+      (when fields-to-set
+        (dolist (field fields-to-set)
+          (bibtex-set-field (car field) (cdr field)))))
+    ;; return the result ((NEW-KEY . ENTRY) . VALIDP)
+    ;; TODO: for testing until implemented
+    (cons new-key (cons formatted-entry validp))))
+
+(defun orb-pdf-scrapper-generate-key-at-point ()
+  "Generate citation key for a BibTeX record at point.
+Use the function specified in `orb-pdf-scrapper-keygen-function'.
+
+This is an interactive wrapper around
+`orb-pdf-scrapper--generate-key-at-point-1'."
+  (interactive)
+  (let ((bibtex-help-message nil)
+        (bibtex-contline-indentation 2)
+        (bibtex-text-indentation 2))
+    (save-excursion
+      (bibtex-beginning-of-entry)
+      (let* ((old-key (save-excursion
+                        (re-search-forward bibtex-entry-maybe-empty-head)
+                        (bibtex-key-in-head)))
+             (old-ref (assoc old-key orb-pdf-scrapper--refs))
+             (new-ref (orb-pdf-scrapper--generate-key-at-point-1)))
+        (if old-ref
+            (setf (car old-ref) (car new-ref)
+                  (cdr old-ref) (cdr new-ref))
+          (cl-pushnew new-ref orb-pdf-scrapper--refs :test 'equal))))))
+
 (defun orb-pdf-scrapper-generate-keys ()
   "Generate citation keys in the current buffer.
 Use the function specified in `orb-pdf-scrapper-keygen-function'.
@@ -526,46 +553,19 @@ Sort and push the retreived references to
   (write-region (orb--buffer-string) nil
                 (orb-pdf-scrapper--get :temp-bib) nil -1)
   (orb--with-message! "Generating citation keys"
-    (let ((bibtex-completion-bibliography
-           (or (orb-pdf-scrapper--get :temp-bib)
-               (buffer-file-name)))
-          (bibtex-help-message nil)
+    (let ((bibtex-help-message nil)
           (bibtex-contline-indentation 2)
           (bibtex-text-indentation 2)
-          (refs nil))
+          (refs ()))
       (save-excursion
         (goto-char (point-min))
         (bibtex-skip-to-valid-entry)
         (while (not (eobp))
-          (let* ((key (bibtex-key-in-head))
-                 ;; TODO: consider using more more low-level parsebib
-                 (entry (bibtex-completion-get-entry key))
-                 (key-plist (funcall orb-pdf-scrapper-keygen-function entry))
-                 (new-key (plist-get key-plist :key))
-                 (validp (plist-get key-plist :validp))
-                 (fields-to-set (plist-get key-plist :set-fields))
-                 (formatted-entry (plist-get key-plist :export-fields)))
-            ;; update citekey
-            ;; adjusted from bibtex-clean-entry
-            (save-excursion
-              (bibtex-beginning-of-entry)
-              (re-search-forward bibtex-entry-maybe-empty-head)
-              (if (match-beginning bibtex-key-in-head)
-                  (delete-region (match-beginning bibtex-key-in-head)
-                                 (match-end bibtex-key-in-head)))
-              (insert new-key))
-            ;; set the bibtex fields
-            (when fields-to-set
-              (dolist (field fields-to-set)
-                (bibtex-set-field (car field) (cdr field))))
-            ;; push the result ((NEW-KEY . ENTRY) . VALIDP)
-            (cl-pushnew
-             ;; TODO: for testing until implemented
-             (cons (cons new-key formatted-entry) validp) refs))
-          (bibtex-end-of-entry)
+          (cl-pushnew (orb-pdf-scrapper--generate-key-at-point-1) refs)
+          ;; (bibtex-end-of-entry)
           ;; go to next entry
           (bibtex-skip-to-valid-entry)))
-      (orb-pdf-scrapper--sort-refs refs))
+      (setq orb-pdf-scrapper--refs refs))
     (write-region (orb--buffer-string) nil
                   (orb-pdf-scrapper--get :temp-bib) nil -1)
     (set-buffer-modified-p nil)))
