@@ -51,6 +51,7 @@
 
 (eval-when-compile
   (require 'cl-macs)
+  (require 'subr-x)
   (require 'rx))
 
 
@@ -169,7 +170,7 @@ Default value is set from `bibtex-autokey-titleword-ignore'."
   :type '(repeat :tag "Regular expression" regexp)
   :group 'org-roam-bibtex)
 
-(defvar orb-autokey-invalid-field-marker "N/A")
+(defvar orb-autokey-invalid-field-token "N/A")
 
 ;;;###autoload
 (defun orb-autokey-generate-key (entry &optional control-string)
@@ -258,12 +259,15 @@ instead of `orb-autokey-format'."
     ;; Handle year wildcards
     ;; it's simple, so we do not use `orb--autokey-format-field' here
     ;; year should be well-formed: YYYY
+    ;; TODO: put year into cl-macrolet
     (let ((year (or (bibtex-completion-get-value "year" entry)
                     (bibtex-completion-get-value "date" entry)
-                    orb-autokey-invalid-field-marker)))
-      (if (equal year orb-autokey-invalid-field-marker)
+                    orb-autokey-invalid-field-token)))
+      (if (or (string-empty-p year)
+              (equal year orb-autokey-invalid-field-token))
           (while (string-match y-rx str)
-            (setq str (replace-match year t nil str 1)))
+            (setq str (replace-match orb-autokey-invalid-field-token
+                                     t nil str 1)))
         (while (string-match y-rx str)
           (setq str (replace-match
                      (format "%s" (if (match-string 3 str)
@@ -279,7 +283,7 @@ Recognized keys:
 ==========
 :entry       - BibTeX entry to use
 :value       - Value of BibTeX field to use
-               instead retreiving it from :entry
+               instead retrieving it from :entry
 :capital     - capitalized version
 :starred     - starred version
 :words       - first optional parameter (number of words)
@@ -313,13 +317,14 @@ This function is used internally by `orb-autokey-generate-key'."
               value (or value
                         (bibtex-completion-get-value "author" entry)
                         (bibtex-completion-get-value "editor" entry)
-                        orb-autokey-invalid-field-marker))
+                        orb-autokey-invalid-field-token))
       ;; otherwise proceed with value or get it from entry
       (setq value (or value
                       (bibtex-completion-get-value field entry)
-                      orb-autokey-invalid-field-marker)))
-    (if (equal value orb-autokey-invalid-field-marker)
-        (setq result value)
+                      orb-autokey-invalid-field-token)))
+    (if (or (string-empty-p value)
+            (equal value orb-autokey-invalid-field-token))
+        (setq result orb-autokey-invalid-field-token)
       (when (> (length value) 0)
         (save-match-data
           ;; 1. split field into words
