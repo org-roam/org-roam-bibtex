@@ -51,18 +51,6 @@
 ;; * Customize definitions
 
 ;; TODO: make these defcustom
-(defvar orb-pdf-scrapper-keygen-function #'orb-pdf-scrapper--bibkey-default-fn
-  "Function to generate citation keys in Orb PDF Scrapper.
-It should take a bibtex entry as returned by `bibtex-completion-get-entry'\
-and return a plist with the following keys set:
-
- :key             |string  | generated key
- :validp          |boolean | non-nil if the key is deemed to be valid
- :set-fields      |(cons)  | list of fields to set in the entry
- :export-fields   |(cons)  | list of fields to export to org
-
-Each element of `:set-fields' and `:export-fields' lists must be
-a cons cell (FIELD . VALUE).")
 
 (defvar orb-pdf-scrapper-bibkey-set-fields
   '(("pages" . orb-pdf-scrapper--fix-or-invalidate-range)
@@ -77,11 +65,9 @@ a cons cell (FIELD . VALUE).")
 
 (defvar orb-pdf-scrapper-invalid-key-pattern "\\`.*N/A.*\\'")
 
-;; * Helper functions: utilities
+;; * Helper functions: citekey generation
 
 (defvar orb-pdf-scrapper--refs nil)
-
-;; * Helper functions: citekey generation
 
 (defun orb-pdf-scrapper--invalidate-nil-value (field entry)
   "Return value of FIELD or `orb-autokey-invalid-field-token' if it is nil.
@@ -102,15 +88,29 @@ where two numbers have only spaces between them."
                              field entry orb-autokey-invalid-field-token)
                             nil nil 1))
 
-(defun orb-pdf-scrapper--bibkey-default-fn (entry)
-  "Generate citation key from ENTRY according to `orb-autokey-format'.
-Returns a plist as described in `orb-pdf-scrapper-bibkey-function'.
-Keys are validated according to `orb-pdf-scrapper-bibkey-valid-pattern'.
-Returns fields for setting as per `orb-pdf-scrapper-bibkey-set-fields'.
-Returns fields for exporting as per `orb-pdf-scrapper-bibkey-export-fields'."
+(defun orb-pdf-scrapper--compose-entry (entry &optional collect-only)
+  "Compile information from and about the BibTeX ENTRY for further use.
+Take a bibtex entry as returned by `bibtex-completion-get-entry'\
+and return a plist with the following keys set:
+
+:key            |string | citekey generated with `orb-autokey-generate-key'
+:validp         |boolean| according to `orb-pdf-scrapper-invalid-key-pattern'
+:set-fields     |(cons) | as per `orb-pdf-scrapper-bibkey-set-fields'
+:export-fields  |(cons) | as per `orb-pdf-scrapper-bibkey-export-fields'
+
+Each element of `:set-fields' and `:export-fields' lists is a
+a cons cell (FIELD . VALUE).
+
+If optional COLLECT-ONLY is non-nil, do not generate the key,
+`:set-fields' is set to nil."
   (let (key validp set-fields export-fields ;; return values
             ;; internal variable
             fields)
+    ;; when requested to collect keys, just do that
+    (if collect-only
+        (setq key (bibtex-completion-get-value "=key=" entry)
+              fields entry)
+    ;; otherwise
     ;; prepare fields for setting
     (dolist (field orb-pdf-scrapper-bibkey-set-fields)
       (let ((name (car field))
@@ -122,21 +122,24 @@ Returns fields for exporting as per `orb-pdf-scrapper-bibkey-export-fields'."
                     set-fields)))
     ;; prioritize fields from set-fields over entry fields
     ;; for autokey generation
-    (let ((-compare-fn (lambda (x y)
-                         (string= (car x) (car y)))))
-      (setq fields (-union set-fields entry)
-            key (orb-autokey-generate-key fields)))
-    ;; validate the new shiny key
+      (let ((-compare-fn (lambda (x y)
+                           (string= (car x) (car y)))))
+        (setq fields (-union set-fields entry)
+              key (orb-autokey-generate-key fields))))
+    ;; validate the new shiny key (or the old existing one)
     ;; not sure if save-match-data is needed here
     ;; but it seems to be always a good choice
     (save-match-data
       (setq validp (and (not (string-match-p
                               orb-pdf-scrapper-invalid-key-pattern key))
-                        'valid)))
-    ;; list for org export
+                        t)))
+    ;; list fields for org export
     (dolist (field orb-pdf-scrapper-bibkey-export-fields)
       ;; truncate author list to first three names, append et.al instead
       ;; of the remaining names
+      ;; This is a hard-coded "reasonable default"
+      ;; and it may be replaced with something more
+      ;; flexible in the future
       (let ((value (cdr (assoc field fields))))
         (when (or (string= field "author")
                   (string= field "editor"))
@@ -146,39 +149,41 @@ Returns fields for exporting as per `orb-pdf-scrapper-bibkey-export-fields'."
                         value)
                 value (concat (mapconcat #'identity value "; "))))
         (push (cons field value) export-fields)))
+    ;; return the entry
     (list :key key
           :validp validp
           :set-fields set-fields
           :export-fields (nreverse export-fields))))
 
-(defun orb-pdf-scrapper--generate-key-at-point ()
-  "Generate citation key for a BibTeX record at point.
-Use the function specified in `orb-pdf-scrapper-keygen-function'.
-The point must be at a BibTeX record.
+(defun orb-pdf-scrapper--update-record-at-point (&optional collect-only)
+  "Generate citation key and update the BibTeX record at point.
+Calls `orb-pdf-scrapper--compose-entry' to get information about
+BibTeX record at point and updates it accordingly.  If optionaly
+COLLECT-ONLY is non-nil, do not generate the key and do not set
+fields.
 
-This is the auxiliary function for commands
-`orb-pdf-scrapper-generate-key-at-point' and
-`orb-pdf-scrapper-generate-keys' that actually parses the BibTeX
-entry."
+This is an auxiliary function for commands
+`orb-pdf-scrapper-generate-keys'."
   (let* ((entry (parsebib-read-entry (parsebib-find-next-item)))
-         (key-plist (funcall orb-pdf-scrapper-keygen-function entry))
+         (key-plist (orb-pdf-scrapper--compose-entry entry collect-only))
          (new-key (plist-get key-plist :key))
          (validp (plist-get key-plist :validp))
          (fields-to-set (plist-get key-plist :set-fields))
          (formatted-entry (plist-get key-plist :export-fields)))
-    (save-excursion
-      ;; update citekey
-      ;; adjusted from bibtex-clean-entry
+    (unless collect-only
+      (save-excursion
+        ;; update citekey
+        ;; adjusted from bibtex-clean-entry
         (bibtex-beginning-of-entry)
         (re-search-forward bibtex-entry-maybe-empty-head)
         (if (match-beginning bibtex-key-in-head)
             (delete-region (match-beginning bibtex-key-in-head)
                            (match-end bibtex-key-in-head)))
         (insert new-key)
-      ;; set the bibtex fields
-      (when fields-to-set
-        (dolist (field fields-to-set)
-          (bibtex-set-field (car field) (cdr field)))))
+        ;; set the bibtex fields
+        (when fields-to-set
+          (dolist (field fields-to-set)
+            (bibtex-set-field (car field) (cdr field))))))
     ;; return the result ((NEW-KEY . ENTRY) . VALIDP)
     ;; TODO: for testing until implemented
     (cons new-key (cons formatted-entry validp))))
@@ -340,8 +345,7 @@ Pressing the RED button, just in case")
                  :stdout t
                  :buffer orb-pdf-scrapper--buffer)
                (write-region (orb--buffer-string) nil temp-bib nil -1))
-             (setq buffer-undo-list nil)
-             (set-buffer-modified-p nil))
+             (setq buffer-undo-list nil))
            (orb-pdf-scrapper--refresh-mode 'bib))
           ('edit-org
            (if-let ((temp-bib (orb-pdf-scrapper--get :temp-bib))
@@ -516,7 +520,7 @@ Context is read from `orb-pdf-scrapper--plist' property `:context'."
 
 ;; * Interactive functions
 
-(defun orb-pdf-scrapper-generate-keys (&optional at-point)
+(defun orb-pdf-scrapper-generate-keys (&optional at-point collect-only)
   "Generate BibTeX citation keys in the current buffer.
 \\<orb-pdf-scrapper-mode-map>
 While the Orb PDF Scrapper interactive process, when editing
@@ -524,7 +528,11 @@ BibTeX data, press \\[orb-pdf-scrapper-generate-keys] to generate
 citation keys using the function specified in
 `orb-pdf-scrapper-keygen-function'.  When called interactively
 with a \\[universal-argument] prefix argument AT-POINT, generate
-key only for the record at point."
+key only for the record at point.
+
+When called from Lisp, if optional COLLECT-ONLY is non-nil, do
+not generate the key and update the records, just collect records
+for future use."
   (interactive "P")
   (orb--with-message! "Generating citation keys"
     (let ((bibtex-help-message nil)
@@ -540,17 +548,20 @@ key only for the record at point."
                                  bibtex-entry-maybe-empty-head)
                                 (bibtex-key-in-head)))
                      (old-ref (assoc old-key orb-pdf-scrapper--refs))
-                     (new-ref (orb-pdf-scrapper--generate-key-at-point)))
+                     (new-ref (orb-pdf-scrapper--update-record-at-point
+                               collect-only)))
                 (if old-ref
                     (setf (car old-ref) (car new-ref)
                           (cdr old-ref) (cdr new-ref))
                   (cl-pushnew new-ref orb-pdf-scrapper--refs :test 'equal))))
-          ;; generate keys in buffer
+          ;; generate keys in buffer otherwise
           (let ((refs ()))
             (goto-char (point-min))
             (bibtex-skip-to-valid-entry)
             (while (not (eobp))
-              (cl-pushnew (orb-pdf-scrapper--generate-key-at-point) refs)
+              (cl-pushnew (orb-pdf-scrapper--update-record-at-point
+                           collect-only)
+                          refs)
               (bibtex-skip-to-valid-entry))
             (setq orb-pdf-scrapper--refs refs)))))
     (write-region (orb--buffer-string) nil
@@ -661,10 +672,12 @@ Kill it and start a new one %s? "
         ('bib
          ;; if the buffer was modified, save the buffer and generate keys
          (orb--with-scrapper-buffer!
+           (when (buffer-modified-p)
+             ;; TODO y-or-n ask whether to generate keys
+             (orb-pdf-scrapper-generate-keys
+              nil (not (y-or-n-p "Generate BibTeX keys? "))))
            (when (> (cl-random 100) 98)
              (orb--with-message! "Pressing the RED button"))
-           (when (buffer-modified-p)
-             (orb-pdf-scrapper-generate-keys))
            (write-region (orb--buffer-string)
                          nil (orb-pdf-scrapper--get :temp-bib) nil 1)
            (orb-pdf-scrapper--put :bib-undo-list (copy-tree buffer-undo-list)))
