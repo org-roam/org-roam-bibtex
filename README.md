@@ -90,12 +90,14 @@ You can get `org-roam-bibtex` up and running by pasting the following sexps in y
 ```el
 ;; If you installed via MELPA
 (use-package org-roam-bibtex
+  :after org-roam
   :hook (org-roam-mode . org-roam-bibtex-mode)
   :bind (:map org-mode-map
          (("C-c n a" . orb-note-actions))))
 
 ;; If you cloned the repository
 (use-package org-roam-bibtex
+  :after org-roam
   :load-path "~/projects/org-roam-bibtex/" ;Modify with your own path
   :hook (org-roam-mode . org-roam-bibtex-mode)
   :bind (:map org-mode-map
