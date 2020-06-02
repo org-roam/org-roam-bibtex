@@ -140,7 +140,8 @@ If optional COLLECT-ONLY is non-nil, do not generate the key,
       ;; This is a hard-coded "reasonable default"
       ;; and it may be replaced with something more
       ;; flexible in the future
-      (let ((value (cdr (assoc field fields))))
+      (let ((value (or (cdr (assoc field fields))
+                       "")))
         (when (or (string= field "author")
                   (string= field "editor"))
           (setq value (split-string value "and" t "[ ,.;:-]+")
@@ -170,6 +171,7 @@ This is an auxiliary function for commands
          (validp (plist-get key-plist :validp))
          (fields-to-set (plist-get key-plist :set-fields))
          (formatted-entry (plist-get key-plist :export-fields)))
+    (message "%s" (bibtex-completion-get-value "author" entry))
     (unless collect-only
       (save-excursion
         ;; update citekey
@@ -413,7 +415,7 @@ process."
         (widen)
         (goto-char (point-max))
         (insert-file-contents (orb-pdf-scrapper--get :temp-org))))
-    (orb-pdf-scrapper--cleanup)))
+    (orb-pdf-scrapper-dispatcher 'kill)))
 
 (defun orb-pdf-scrapper--cleanup ()
   "Clean up before and after Orb Pdf Scrapper process."
@@ -672,10 +674,13 @@ Kill it and start a new one %s? "
         ('bib
          ;; if the buffer was modified, save the buffer and generate keys
          (orb--with-scrapper-buffer!
-           (when (buffer-modified-p)
-             ;; TODO y-or-n ask whether to generate keys
-             (orb-pdf-scrapper-generate-keys
-              nil (not (y-or-n-p "Generate BibTeX keys? "))))
+           (orb-pdf-scrapper-generate-keys
+            nil
+            (if (buffer-modified-p)
+                ;; not yes means generate
+                ;; not no means collect only
+                (not (y-or-n-p "Generate BibTeX keys? "))
+              t))
            (when (> (cl-random 100) 98)
              (orb--with-message! "Pressing the RED button"))
            (write-region (orb--buffer-string)
@@ -695,21 +700,20 @@ Kill it and start a new one %s? "
            (message "Oops...")
            (sleep-for 1)
            (message "Oops...Did you just ACCIDENTALLY press the RED button?")
-           (sleep-for 2)
+           (sleep-for 1)
            (message "Activating self-destruction subroutine...")
-           (sleep-for 2)
+           (sleep-for 1)
            (message "Activating self-destruction subroutine...Bye-bye")
-           (sleep-for 2))
+           (sleep-for 1))
+         (and (get-buffer orb-pdf-scrapper--buffer)
+              (kill-buffer orb-pdf-scrapper--buffer))
+         (set-window-configuration (orb-pdf-scrapper--get :window-conf))
          (orb-pdf-scrapper--cleanup))))))
 
 (defun orb-pdf-scrapper-kill ()
   "Kill the interactive Orb PDF Scrapper process."
   (interactive)
-  (and (get-buffer orb-pdf-scrapper--buffer)
-       (kill-buffer orb-pdf-scrapper--buffer))
-  (set-window-configuration (orb-pdf-scrapper--get :window-conf))
-  (orb-pdf-scrapper--put :context 'kill)
-  (orb-pdf-scrapper-dispatcher))
+  (orb-pdf-scrapper-dispatcher 'kill))
 
 
 ;; * Main functions
