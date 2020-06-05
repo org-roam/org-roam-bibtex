@@ -46,11 +46,19 @@
 
 (eval-when-compile
   (require 'cl-lib)
+  (require 'cl-macs)
   (require 'subr-x))
 
 ;; * Customize definitions
 
 ;; TODO: make these defcustom
+
+(defvar orb-pdf-scrapper-refsection-headings
+  '((parent . ("References"))
+    (in-roam . ("In Org Roam database" list))
+    (in-bib . ("In BibTeX file" list))
+    (valid . ("Valid citation keys" table))
+    (invalid . ("Invalid citation keys" table))))
 
 (defvar orb-pdf-scrapper-bibkey-set-fields
   '(("pages" . orb-pdf-scrapper--fix-or-invalidate-range)
@@ -142,6 +150,7 @@ If optional COLLECT-ONLY is non-nil, do not generate the key,
       ;; flexible in the future
       (let ((value (or (cdr (assoc field fields))
                        "")))
+        (setq value (s-replace-regexp "{\\(.*?\\)}" "\\1" value))
         (when (or (string= field "author")
                   (string= field "editor"))
           (setq value (split-string value "and" t "[ ,.;:-]+")
@@ -171,7 +180,6 @@ This is an auxiliary function for commands
          (validp (plist-get key-plist :validp))
          (fields-to-set (plist-get key-plist :set-fields))
          (formatted-entry (plist-get key-plist :export-fields)))
-    (message "%s" (bibtex-completion-get-value "author" entry))
     (unless collect-only
       (save-excursion
         ;; update citekey
@@ -365,6 +373,31 @@ Pressing the RED button, just in case")
            (orb-pdf-scrapper-dispatcher 'error)))
       (orb-pdf-scrapper--put :caller 'edit-bib))))
 
+(defun orb-pdf-scrapper--insert-org-as-list (ref-alist)
+  "Insert REF-ALIST as Org-mode list."
+  (dolist (ref ref-alist)
+    (insert "- " (car ref) "\n" )))
+
+(defun orb-pdf-scrapper--insert-org-as-table (ref-alist)
+  "Insert REF-ALIST as Org-mode table."
+  (insert
+   (concat "|citekey|"
+           (mapconcat #'identity
+                      orb-pdf-scrapper-bibkey-export-fields "|")
+           "|\n"))
+  (forward-line -1)
+  (org-table-insert-hline)
+  (forward-line 2)
+  (dolist (ref ref-alist)
+    (insert (concat "|" (car ref) "|"
+                    (mapconcat (lambda (value)
+                                 (format "%s" (cdr value)))
+                               (cdr ref) "|")
+                    "|\n")))
+  (forward-line -1)
+  (org-table-align)
+  (org-back-to-heading nil))
+
 (defun orb-pdf-scrapper--edit-org ()
   "Insert sorted references as Org-mode tables sorted into subheadings."
   (orb--when-current-context! 'bib
@@ -376,29 +409,32 @@ Pressing the RED button, just in case")
       (orb-pdf-scrapper--refresh-mode 'org)
       (orb--with-message! "Generating Org data"
         (erase-buffer)
+        ;; insert parent heading
         (org-insert-heading nil nil t)
-        (insert "References (retrieved by Orb PDF Scrapper from "
-                (f-filename (orb-pdf-scrapper--get :pdf-file)) ")")
+        (insert
+         (concat
+          (cadr (assoc 'parent orb-pdf-scrapper-refsection-headings))
+          " (retrieved by Orb PDF Scrapper from "
+          (f-filename (orb-pdf-scrapper--get :pdf-file)) ")"))
+        (org-end-of-subtree)
+        ;; insert child headings: in-roam, in-bib, valid, invalid
         (dolist (ref-group (orb-pdf-scrapper--sort-refs orb-pdf-scrapper--refs))
-          (org-insert-heading '(16) nil t)
-          (org-demote)
-          (insert (format "%s\n" (car ref-group)))
-          (insert (concat "\n|citekey|"
-                          (mapconcat #'identity
-                                     orb-pdf-scrapper-bibkey-export-fields "|")
-                          "|\n"))
-          (forward-line -1)
-          (org-table-insert-hline)
-          (forward-line 2)
-          (dolist (ref (cdr ref-group))
-            (insert (concat "|" (car ref) "|"
-                            (mapconcat (lambda (value)
-                                         (format "%s" (cdr value)))
-                                       (cdr ref) "|")
-                            "|\n")))
-          (forward-line -1)
-          (org-table-align)
-          (org-back-to-heading nil))
+          (when-let* ((group (car ref-group))
+                      (refs (cdr ref-group))
+                      (title (cadr (assoc group orb-pdf-scrapper-refsection-headings)))
+                      (type (caddr (assoc group orb-pdf-scrapper-refsection-headings))))
+            (org-insert-heading '(16) nil t)
+            ;; insert heading
+            (insert (format "%s\n" title))
+            (org-demote)
+            (org-end-of-subtree)
+            ;; insert references
+            (insert (format "\n#+name: %s\n" group))
+            (cl-case type
+              ('list
+               (orb-pdf-scrapper--insert-org-as-list refs))
+              ('table
+               (orb-pdf-scrapper--insert-org-as-table refs)))))
         (write-region (orb--buffer-string) nil temp-org nil -1)
         (setq buffer-undo-list nil)
         (set-buffer-modified-p nil)
