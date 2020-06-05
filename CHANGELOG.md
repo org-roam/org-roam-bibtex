@@ -10,7 +10,7 @@ Well, at least we try!
 
 ## [0.2.3] - 2020-05-10
 ### Added
-- `orb--replace-virtual-field` and `orb--virtual-fields-alist` for
+- `orb--replace-virtual-fields` and `orb--virtual-fields-alist` for
   mapping `bibtex-completion` virtual field names to more conventional
   words, namely these: 
   ``` elisp

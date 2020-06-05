@@ -1,4 +1,4 @@
-;;; org-roam-bibtex.el ---  Org Roam meets BibTeX -*- coding: utf-8; lexical-binding: t -*-
+;;; org-roam-bibtex.el --- Org Roam meets BibTeX -*- coding: utf-8; lexical-binding: t -*-
 
 ;; Copyright © 2020 Jethro Kuan <jethrokuan95@gmail.com>
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
@@ -508,7 +508,7 @@ before calling any Org-roam functions."
                       ;; one will be used eventually.  This is a waste
                       ;; of resources and may be slow with many
                       ;; templates.
-                      (dolist (tmpl tmpls result)
+                      (dolist (tmpl tmpls (nreverse result))
                         (cl-pushnew
                          (orb--preformat-template tmpl entry) result))))
                   templates))

@@ -44,6 +44,7 @@
 ;; * Library requires
 
 (require 'orb-core)
+(require 'orb-pdf-scrapper)
 
 (require 'warnings)
 (require 'cl-lib)
@@ -78,7 +79,8 @@ is executed upon selecting it."
 
 (defcustom orb-note-actions-extra
   '(("Save citekey to kill-ring and clipboard" . orb-note-actions-copy-citekey)
-    ("Show record in the bibtex file" . bibtex-completion-show-entry))
+    ("Show record in the bibtex file" . bibtex-completion-show-entry)
+    ("Run Orb PDF Scrapper" . orb-note-actions-scrap-pdf))
   "Extra actions for `orb-note-actions'.
 Each action is a cons cell DESCRIPTION . FUNCTION."
   :type '(alist
@@ -116,7 +118,7 @@ CANDIDATES.  NAME is a string formatted with
 constructed from `orb-note-actions-default',
 `orb-note-actions-extra', and `orb-note-actions-user."
   (declare (indent 1) (debug (symbolp &rest form)))
-  (let* ((frontend-name (symbol-name (eval frontend)))
+  (let* ((frontend-name (symbol-name frontend))
          (fun-name (intern (concat "orb-note-actions--" frontend-name))))
     `(defun ,fun-name (citekey)
        ,(format "Provide note actions using %s interface.
@@ -129,18 +131,18 @@ CITEKEY is the citekey." (capitalize frontend-name))
                            orb-note-actions-user))))
          ,@body))))
 
-(orb-note-actions--frontend! 'default
+(orb-note-actions--frontend! default
   (let ((f (cdr (assoc (completing-read name candidates) candidates))))
     (funcall f (list citekey))))
 
-(orb-note-actions--frontend! 'ido
+(orb-note-actions--frontend! ido
   (let* ((c (cl-map 'list 'car candidates))
          (f (cdr (assoc (ido-completing-read name c) candidates))))
     (funcall f (list citekey))))
 
 (declare-function orb-note-actions-hydra/body "orb-note-actions" nil t)
 
-(orb-note-actions--frontend! 'hydra
+(orb-note-actions--frontend! hydra
 ;; we don't use candidates here because for a nice hydra we need each
 ;; group of completions separately (default, extra, user), so just
 ;; silence the compiler
@@ -176,7 +178,7 @@ CITEKEY is the citekey." (capitalize frontend-name))
 Falling back to default.")
     (orb-note-actions--default citekey)))
 
-(orb-note-actions--frontend! 'ivy
+(orb-note-actions--frontend! ivy
   (if (fboundp 'ivy-read)
       (ivy-read name
                 candidates
@@ -188,7 +190,7 @@ Falling back to default.")
 Falling back to default.")
     (orb-note-actions--default citekey)))
 
-(orb-note-actions--frontend! 'helm
+(orb-note-actions--frontend! helm
   (if (fboundp 'helm)
       (helm :sources
             `(((name . ,name)
@@ -207,12 +209,17 @@ Falling back to default.")
 ;; * Note actions
 
 (defun orb-note-actions-copy-citekey (citekey)
-  "Save note's citekey to `kill-ring' and copy it to clipboard.
-Since CITEKEY is actually a list of one element, the car of the
-list is used."
+  "Save note's citation key to `kill-ring' and copy it to clipboard.
+CITEKEY is a list whose car is a citation key."
   (with-temp-buffer
     (insert (car citekey))
     (copy-region-as-kill (point-min) (point-max))))
+
+(defun orb-note-actions-scrap-pdf (citekey)
+  "Wrapper around `orb-pdf-scrapper-insert'.
+CITEKEY is a list whose car is a citation key."
+  (orb-pdf-scrapper-run (car citekey)))
+
 
 ;; * Main functions
 
