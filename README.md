@@ -265,7 +265,7 @@ Below shows how this can be used to integrate with [org-noter](https://github.co
 (setq orb-templates
       '(("r" "ref" plain (function org-roam-capture--get-point)
          ""
-         :file-name "${slug}"
+         :file-name "${citekey}"
          :head "#+TITLE: ${citekey}: ${title}\n#+ROAM_KEY: ${ref}
 
 - tags ::
