@@ -313,7 +313,7 @@ This function is used internally by `orb-autokey-generate-key'."
         ;; in name fields, logical words are full names consisting of several
         ;; words and containing spaces and punctuation, separated by a logical
         ;; separator, the word "and"
-        (setq separator "and"
+        (setq separator " and "
               value (or value
                         (bibtex-completion-get-value "author" entry)
                         (bibtex-completion-get-value "editor" entry)
