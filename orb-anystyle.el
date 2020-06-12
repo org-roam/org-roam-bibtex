@@ -54,6 +54,11 @@
 (defvar orb-anystyle-find-solo nil)
 (defvar orb-anystyle-find-layout nil)
 (defvar orb-anystyle-default-buffer "*Orb Anystyle Output*") ; TODO: make it defcustom
+(defvar orb-anystyle-user-directory
+  (concat (file-name-as-directory user-emacs-directory) "anystyle"))
+(defvar orb-anystyle-parser-training-set
+  (concat (file-name-as-directory orb-anystyle-user-directory) "core+.xml"))
+
 ;; --crop is currently broken
 
 ;; * Main functions
@@ -77,27 +82,27 @@ ARGS is a plist with the following recognized keys:
 
 Anystyle CLI options
 ==========
-1) :exec      => string (valid executable)
+1) EXEC :exec      => string (valid executable)
 - default value can be set through `orb-anystyle-executable'
 
-2) :command   => symbol or string
+2) COMMAND :command   => symbol or string
 - valid values: find parse help check license train
 
 3) Global options can be passed with the following keys.
 
-:finder-model => string (valid file path)
-:parser-model => string (valid file path)
-:pdfinfo      => string (valid executable)
-:pdftotext    => string (valid executable)
-:adapter      => anything
-:stdout       => boolean
-:help         => boolean
-:verbose      => boolean
-:version      => boolean
-:overwrite    => boolean
-:format       => string, symbol or list of unquoted symbols
+FMODEL    :finder-model => string (valid file path)
+PMODEL    :parser-model => string (valid file path)
+PDFINFO   :pdfinfo      => string (valid executable)
+PDFTOTEXT :pdftotext    => string (valid executable)
+ADAPTER   :adapter      => anything
+STDOUT    :stdout       => boolean
+HELP      :help         => boolean
+VERBOSE   :verbose      => boolean
+VERSION   :version      => boolean
+OVERWRITE :overwrite    => boolean
+FORMAT    :format       => string, symbol or list of unquoted symbols
 
-- must be one or more output formats accepted by anystyle commands:
+- FORMAT must be one or more output formats accepted by anystyle commands:
   parse => bib csl json ref txt xml
   find  => bib csl json ref txt ttx xml
 - string must be space- or comma-separated, additional spaces are
@@ -110,25 +115,25 @@ the following variables: `orb-anystyle-finder-model',
 
 4) Command options can be passed with the following keys:
 
-:crop         => integer or cons cell of integers
-:layout       => boolean
-:solo         => boolean
+CROP   :crop         => integer or cons cell of integers
+LAYOUT :layout       => boolean
+SOLO   :solo         => boolean
 
-- ignored for commands other than find or parse
-- help -c flag is not supported
+- Command options are ignored for commands other than find
+- anystyle help -c flag is not supported
 
 Default values for these options can be set globally via the
 following variables: `orb-anystyle-find-crop',
 `orb-anystyle-find-layout', `orb-anystyle-find-solo'.
 
-5) :input string (file path)
+5) INPUT  :input   => string (file path)
 
-6) :output string (file path)
+6) OUTPUT :output  => string (file path)
 
 `shell-command'-related options
 ==========
 
-7) :buffer buffer-or-name
+7) BUFFER :buffer  => buffer-or-name
 
 - `shell-command''s OUTPUT-BUFFER
 - can be a cons cell (OUTPUT-BUFFER . ERROR-BUFFER)
@@ -150,10 +155,15 @@ Courtesy of its authors."
                        (format "%s,%s" acc it)
                        (car str) (cdr str))))
          ;; debug
-         ;; (shell-run (lambda (str)
+         ;; (anystyle-run (lambda (str)
          ;;              (message "command: %s \nbuffers: %s and %s" str (car buf) (cdr buf))))
-         (shell-run (lambda (str)
-                      (shell-command str (car buf) (cdr buf))))
+         (anystyle-run (lambda (str)
+                         (if (eq command 'train)
+                             ;; train can take minutes, so run it in a sub-process
+                             (start-process-shell-command
+                              "anystyle" (car buf) str)
+                           (shell-command str
+                                          (car buf) (cdr buf)))))
          global-options command-options anystyle)
     ;; executable is a must
     (unless exec
@@ -205,19 +215,25 @@ find, parse, check, train, help or license" input)))
       ('check
        (setq output nil))
       ('find
-       ;; find command options
-       ;;
+       ;; pdfinfo and pdftotext must be present in the system
+       (when (and pdfinfo (not (executable-find pdfinfo)))
+         (user-error "Executable not found: pdfinfo, %s" pdfinfo))
+       (when (and pdftotext (not (executable-find pdftotext)))
+         (user-error "Executable not found: pdftotext, %s" pdftotext))
+       (setq global-options
+             (orb--format "%s" global-options
+                          " --pdfinfo=\"%s\"" pdfinfo
+                          " --pdftotext=\"%s\"" pdftotext))
+       ;; Command options
        ;; N.B. Help command accepts a command option -c but it's totally
        ;; irrelevant for us:
        ;;
        ;; [COMMAND OPTIONS]
        ;; -c - List commands one per line, to assist with shell completion
-       ;;
        ;; so we do not implement it
-       ;; :crop's value should be a number or string
-       ;; nil is equivalent to 0
-       ;; if no value was explicitely supplied, use
-       ;; the default from user option
+       ;;
+       ;; :crop's value should be a number or string nil is equivalent to 0 if
+       ;; no value was explicitely supplied, use the default from user option
        (when crop
          (unless (consp crop)
            (setq crop (list crop)))
@@ -264,24 +280,19 @@ find, parse, check, train, help or license" input)))
         (setq global-options
               (orb--format "%s" global-options
                            " -f %s" (funcall to-string format)))))
-    ;; find and train:
-    ;; 1) pdfinfo and pdftotext must be present in the system
-    (when (memq command '(find train))
-      (when (and pdfinfo (not (executable-find pdfinfo)))
-        (user-error "Could not find pdfinfo executable: %s" pdfinfo))
-      (when (and pdftotext (not (executable-find pdftotext)))
-        (user-error "Could not find pdftotext executable: %s" pdftotext))
-      (setq global-options
-            (orb--format "%s" global-options
-                         " --pdfinfo=\"%s\"" pdfinfo
-                         " --pdftotext=\"%s\"" pdftotext)))
     ;; find, parse, check accept
     ;; finder and parser models
     (when (memq command '(find parse check))
       (when (and fmodel (not (f-exists? fmodel)))
-        (user-error "Finder model file not found: %s" fmodel))
+        (display-warning 'org-roam-bibtex
+                         "Finder model file not found: %s, \
+using anystyle default" fmodel)
+        (setq fmodel nil))
       (when (and pmodel (not (f-exists? pmodel)))
-        (user-error "Parser model file not found: %s" pmodel))
+        (display-warning 'org-roam-bibtex
+                         "Finder model file not found: %s, \
+using anystyle default" pmodel)
+        (setq pmodel nil))
       (setq global-options (orb--format "%s" global-options
                                         " -F \"%s\"" fmodel
                                         " -P \"%s\"" pmodel)))
@@ -310,7 +321,7 @@ find, parse, check, train, help or license" input)))
                                 "%s" command-options
                                 " \"%s\"" input
                                 " \"%s\"" output))
-    (funcall shell-run anystyle)))
+    (funcall anystyle-run anystyle)))
 
 (provide 'orb-anystyle)
 ;;; orb-anystyle.el ends here
