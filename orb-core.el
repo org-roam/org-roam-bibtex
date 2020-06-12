@@ -1,4 +1,4 @@
-;;; orb-core.el --- Org Roam Bibtex: Core library -*- coding: utf-8; lexical-binding: t -*-
+;;; orb-core.el --- Org Roam BibTeX: Core library -*- coding: utf-8; lexical-binding: t -*-
 
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; Copyright © 2020 Leo Vivier <leo.vivier+dev@gmail.com>
@@ -37,16 +37,17 @@
 ;;; Code:
 ;; * Library requires
 ;;
-;; 1. org-roam requires org, org-ref (with many dependencies),
-;; org-element, dash, f, s, emacsql, emacsql-sqlite;
-;; 2. bibtex-completion additionally requires parsebib and biblio;
-;;
-;; So all these libraries are always at our disposal
+;; org-roam requires org,org-element, dash, f, s, emacsql, emacsql-sqlite,
+;; so all these libraries are always at our disposal
 ;;
 (require 'org-roam)
-(require 'bibtex-completion)
 
 (require 'orb-utils)
+
+(declare-function
+ bibtex-completion-get-entry "bibtex-completion" (entry-key))
+(declare-function
+ bibtex-completion-find-pdf (key-or-entry &optional find-additional))
 
 ;; Customize groups
 (defgroup org-roam-bibtex nil
