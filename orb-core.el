@@ -160,13 +160,14 @@ Key generation is performed by  `orb-autokey-generate-key'."
   :type 'string
   :group 'org-roam-bibtex)
 
-(defcustom orb-autokey-titlewords-ignore (copy-tree bibtex-autokey-titleword-ignore)
+(defcustom orb-autokey-titlewords-ignore
+  '("A" "An" "On" "The" "Eine?" "Der" "Die" "Das"
+    "[^[:upper:]].*" ".*[^[:upper:][:lower:]0-9].*")
   "Patterns from title that will be ignored during key generation.
 Every element is a regular expression to match parts of the title
 that should be ignored during automatic key generation.  Case
-sensitive.
-
-Default value is set from `bibtex-autokey-titleword-ignore'."
+sensitive."
+  ;; Default value was take from `bibtex-autokey-titleword-ignore'.
   :type '(repeat :tag "Regular expression" regexp)
   :group 'org-roam-bibtex)
 
