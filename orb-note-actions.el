@@ -52,6 +52,8 @@
 (declare-function ivy-read "ivy")
 (declare-function defhydra "hydra")
 
+(declare-function org-ref-format-entry "org-ref-bibtex" (key))
+
 ;; * Customize definitions
 
 (defcustom orb-note-actions-frontend 'default
