@@ -53,6 +53,8 @@
 (declare-function
  bibtex-completion-get-entry "bibtex-completion" (entry-key))
 (declare-function
+ bibtex-completion-get-value "bibtex-completion" (field entry &optional default))
+(declare-function
  bibtex-completion-find-pdf (key-or-entry &optional find-additional))
 
 ;; * Customize groups (global)

@@ -40,6 +40,9 @@
 (require 'orb-core)
 (require 'orb-anystyle)
 
+;; it's fine here since `orb-pdf-scrapper' is autoloaded
+(require 'bibtex-completion)
+
 (require 'bibtex)
 (require 'rx)
 (require 'cl-extra)
@@ -50,6 +53,7 @@
   (require 'subr-x))
 
 (declare-function bibtex-set-field "org-ref" (field value &optional nodelim))
+
 ;; * Customize definitions
 
 ;; TODO: make these defcustom
