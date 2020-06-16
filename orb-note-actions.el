@@ -44,7 +44,6 @@
 ;; * Library requires
 
 (require 'orb-core)
-(require 'orb-pdf-scrapper)
 
 (require 'warnings)
 (require 'cl-lib)
@@ -52,6 +51,10 @@
 (declare-function helm "helm")
 (declare-function ivy-read "ivy")
 (declare-function defhydra "hydra")
+
+(declare-function org-ref-format-entry "org-ref-bibtex" (key))
+
+(declare-function orb-pdf-scrapper-run "orb-pdf-scrapper" (key))
 
 ;; * Customize definitions
 
