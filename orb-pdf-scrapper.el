@@ -83,14 +83,14 @@
 (defvar orb-pdf-scrapper--refs nil)
 
 (defun orb-pdf-scrapper--invalidate-nil-value (field entry)
-  "Return value of FIELD or `orb-autokey-invalid-field-token' if it is nil.
+  "Return value of FIELD or `orb-autokey-empty-field-token' if it is nil.
 ENTRY is a BibTeX entry."
-  (bibtex-completion-get-value field entry orb-autokey-invalid-field-token))
+  (bibtex-completion-get-value field entry orb-autokey-empty-field-token))
 
 (defun orb-pdf-scrapper--fix-or-invalidate-range (field entry)
   "Replace missing or non-standard delimiter between two strings with \"--\".
 FIELD is the name of a BibTeX field from ENTRY.  Return
-`orb-autokey-invalid-field-token' if the value is nil.
+`orb-autokey-empty-field-token' if the value is nil.
 
 This function is primarily intended for fixing anystyle parsing
 artefacts such as those often encountered in \"pages\" field,
@@ -98,11 +98,11 @@ where two numbers have only spaces between them."
   (replace-regexp-in-string "\\`[[:alnum:]]\\([ –-]+\\)[[:alnum:]]\\'"
                             "--"
                             (bibtex-completion-get-value
-                             field entry orb-autokey-invalid-field-token)
+                             field entry orb-autokey-empty-field-token)
                             nil nil 1))
 
-(defun orb-pdf-scrapper--compose-entry (entry &optional collect-only)
-  "Compile information from and about the BibTeX ENTRY for further use.
+(defun orb-pdf-scrapper--get-entry-info (entry &optional collect-only)
+  "Collect some information from and about the BibTeX ENTRY for further use.
 Take a bibtex entry as returned by `bibtex-completion-get-entry'\
 and return a plist with the following keys set:
 
@@ -172,15 +172,15 @@ If optional COLLECT-ONLY is non-nil, do not generate the key,
 
 (defun orb-pdf-scrapper--update-record-at-point (&optional collect-only)
   "Generate citation key and update the BibTeX record at point.
-Calls `orb-pdf-scrapper--compose-entry' to get information about
-BibTeX record at point and updates it accordingly.  If optionaly
+Calls `orb-pdf-scrapper--get-entry-info' to get information about
+BibTeX record at point and updates it accordingly.  If optional
 COLLECT-ONLY is non-nil, do not generate the key and do not set
-fields.
+the fields.
 
-This is an auxiliary function for commands
+This is an auxiliary function for command
 `orb-pdf-scrapper-generate-keys'."
   (let* ((entry (parsebib-read-entry (parsebib-find-next-item)))
-         (key-plist (orb-pdf-scrapper--compose-entry entry collect-only))
+         (key-plist (orb-pdf-scrapper--get-entry-info entry collect-only))
          (new-key (plist-get key-plist :key))
          (validp (plist-get key-plist :validp))
          (fields-to-set (plist-get key-plist :set-fields))
