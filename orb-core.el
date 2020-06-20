@@ -160,18 +160,30 @@ Key generation is performed by  `orb-autokey-generate-key'."
   :type 'string
   :group 'org-roam-bibtex)
 
-(defcustom orb-autokey-titlewords-ignore (copy-tree bibtex-autokey-titleword-ignore)
+(defcustom orb-autokey-titlewords-ignore
+  '("A" "An" "On" "The" "Eine?" "Der" "Die" "Das"
+    "[^[:upper:]].*" ".*[^[:upper:][:lower:]0-9].*")
   "Patterns from title that will be ignored during key generation.
 Every element is a regular expression to match parts of the title
 that should be ignored during automatic key generation.  Case
-sensitive.
-
-Default value is set from `bibtex-autokey-titleword-ignore'."
+sensitive."
+  ;; Default value was take from `bibtex-autokey-titleword-ignore'.
   :type '(repeat :tag "Regular expression" regexp)
   :group 'org-roam-bibtex)
 
-(defvar orb-autokey-invalid-field-token "N/A")
+(defcustom orb-autokey-empty-field-token "N/A"
+  "String to use when BibTeX field is nil or empty."
+  :type 'string
+  :group 'org-roam-bibtex)
 
+(defcustom orb-autokey-invalid-symbols
+  " \"'()={},~#%\\"
+  "Characters not allowed in a BibTeX key.
+The key will be stripped of these characters."
+  :type 'string
+  :group 'org-roam-bibtex)
+
+;;;
 ;;;###autoload
 (defun orb-autokey-generate-key (entry &optional control-string)
   "Generate citation key from ENTRY according to `orb-autokey-format'.
@@ -261,12 +273,11 @@ instead of `orb-autokey-format'."
     ;; year should be well-formed: YYYY
     ;; TODO: put year into cl-macrolet
     (let ((year (or (bibtex-completion-get-value "year" entry)
-                    (bibtex-completion-get-value "date" entry)
-                    orb-autokey-invalid-field-token)))
-      (if (or (string-empty-p year)
-              (equal year orb-autokey-invalid-field-token))
+                    (bibtex-completion-get-value "date" entry))))
+      (if (or (not year)
+              (string-empty-p year))
           (while (string-match y-rx str)
-            (setq str (replace-match orb-autokey-invalid-field-token
+            (setq str (replace-match orb-autokey-empty-field-token
                                      t nil str 1)))
         (while (string-match y-rx str)
           (setq str (replace-match
@@ -302,9 +313,11 @@ This function is used internally by `orb-autokey-generate-key'."
                    :characters chars
                    :delimiter delim) specs)
           ;; field values will be split into a list of words. `separator' is a
-          ;; regexp for word separators: either a whitespace, or at least two
+          ;; regexp for word separators: either a whitespace, one or more
           ;; dashes, or en dash, or em dash
-          (separator "\\([ \n\t]\\|-[-]+\\|[—–]\\)")
+          (separator "\\([ \n\t]\\|[-]+\\|[—–]\\)")
+          (invalid-chars-rx
+           (rx-to-string `(any ,orb-autokey-invalid-symbols) t))
           (delim (or delim ""))
           result)
     ;; 0. virtual field "=name=" is used internally here and in
@@ -313,18 +326,16 @@ This function is used internally by `orb-autokey-generate-key'."
         ;; in name fields, logical words are full names consisting of several
         ;; words and containing spaces and punctuation, separated by a logical
         ;; separator, the word "and"
-        (setq separator "and"
+        (setq separator " and "
               value (or value
                         (bibtex-completion-get-value "author" entry)
-                        (bibtex-completion-get-value "editor" entry)
-                        orb-autokey-invalid-field-token))
+                        (bibtex-completion-get-value "editor" entry)))
       ;; otherwise proceed with value or get it from entry
       (setq value (or value
-                      (bibtex-completion-get-value field entry)
-                      orb-autokey-invalid-field-token)))
-    (if (or (string-empty-p value)
-            (equal value orb-autokey-invalid-field-token))
-        (setq result orb-autokey-invalid-field-token)
+                      (bibtex-completion-get-value field entry))))
+    (if (or (not value)
+            (string-empty-p value))
+        (setq result orb-autokey-empty-field-token)
       (when (> (length value) 0)
         (save-match-data
           ;; 1. split field into words
@@ -380,8 +391,8 @@ This function is used internally by `orb-autokey-generate-key'."
           ;; 5. CAPITAL = preserve case
           (unless capital
             (setq result (downcase result))))))
-    ;; return result
-    result))
+    ;; return result stripped of the invalid characters
+    (s-replace-regexp invalid-chars-rx "" result t)))
 
 (defun orb--autokey-evaluate-expression (expr &optional entry)
   "Evaluate arbitrary elisp EXPR passed as readable string.
