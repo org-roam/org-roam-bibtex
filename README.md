@@ -80,6 +80,44 @@ You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick
 
 (You can also copy [`org-roam-bibtex.el`](https://github.com/org-roam/org-roam-bibtex/blob/improve-readme/org-roam-bibtex.el) somewhere where `load-path` can access it, but you’d have to update the file manually.)
 
+### Spacemacs
+
+Assuming `org-roam` is installed via a private layer as described in [here](https://org-roam.readthedocs.io/en/master/installation/#spacemacs),
+add `org-roam-bibtex` to `org-roam-packages:
+
+``` el
+(defconst org-roam-packages
+  '(org-roam **org-roam-bibtex**))
+
+```
+
+and this after `org-roam/init-org-roam`:
+
+``` el
+(defun org-roam/init-org-roam-bibtex ()
+  (use-package org-roam-bibtex
+    :after org-roam
+    :hook (org-roam-mode . org-roam-bibtex-mode)
+    :bind (:map org-mode-map
+          (("C-c n a" . orb-note-actions)))))
+```
+
+### Doom Emacs
+
+Put this in `$DOOMDIR/packages.el`:
+
+```el
+(package! org-roam-bibtex
+  :recipe (:host github :repo "org-roam/org-roam-bibtex"))
+
+;; When using org-roam via the `+roam` flag
+(unpin! org-roam company-org-roam)
+
+;; When using bibtex-completion via the `biblio` module
+(unpin! bibtex-completion helm-bibtex ivy-bibtex)
+```
+Then run `bin/doom sync`. The package can be configured with `use-package` (or alternatively `Doom`'s `use-package!`) as described below.
+
 Quick-start 🚀
 ---------------
 
