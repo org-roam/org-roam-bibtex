@@ -82,12 +82,12 @@ You now have the repository cloned in `~/projects/org-roam-bibtex/`.  See [Quick
 
 ### Spacemacs
 
-Assuming `org-roam` is installed via a private layer as described in [here](https://org-roam.readthedocs.io/en/master/installation/#spacemacs),
+Assuming `org-roam` is installed via a private layer as described [here](https://org-roam.readthedocs.io/en/master/installation/#spacemacs),
 add `org-roam-bibtex` to `org-roam-packages:
 
 ``` el
 (defconst org-roam-packages
-  '(org-roam **org-roam-bibtex**))
+  '(org-roam org-roam-bibtex))
 
 ```
 
