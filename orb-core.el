@@ -275,12 +275,14 @@ instead of `orb-autokey-format'."
     (let ((year (or (bibtex-completion-get-value "year" entry)
                     (bibtex-completion-get-value "date" entry))))
       (if (or (not year)
-              (string-empty-p year))
+              (string-empty-p year)
+              (string= year orb-autokey-empty-field-token))
           (while (string-match y-rx str)
             (setq str (replace-match orb-autokey-empty-field-token
                                      t nil str 1)))
         (while (string-match y-rx str)
-          (setq str (replace-match
+          (setq year (format "%04d" (string-to-number year))
+                str (replace-match
                      (format "%s" (if (match-string 3 str)
                                       (substring year 2 4)
                                     (substring year 0 4)))
