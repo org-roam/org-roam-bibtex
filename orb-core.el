@@ -70,9 +70,14 @@
   :prefix "orb-")
 
 (defgroup orb-note-actions nil
-  "Orb Note Actions - run actions useful in note's context."
+  "Orb Note Actions - run actions in note's context."
   :group 'org-roam-bibtex
   :prefix "orb-note-actions-")
+
+(defgroup orb-pdf-scrapper nil
+  "Orb PDF Scrapper - retrieve references from PDF."
+  :group 'org-roam-bibtex
+  :prefix "orb-pdf-scrapper-")
 
 ;; Various utility functions
 
