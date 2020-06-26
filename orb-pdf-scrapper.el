@@ -380,10 +380,7 @@ current context is its memeber."
        ;; were called from if the training session is to be cancelled
        ('start
         (orb-pdf-scrapper--put :callee (orb-pdf-scrapper--get :caller)
-                               :context 'start
-                               :caller 'edit-xml))
-       ('edit-master
-        (orb-pdf-scrapper--put :context 'edit-master
+                               :context 'edit
                                :caller 'edit-xml))))
     ('train
      (fundamental-mode)
@@ -613,6 +610,7 @@ Pressing the RED button, just in case")
      (progn
        (erase-buffer)
        (insert-file-contents orb-anystyle-parser-training-set)
+       ;; we allow the user to see which file they are editing
        (setq buffer-file-name orb-anystyle-parser-training-set)
        (setq buffer-undo-list nil)
        (orb-pdf-scrapper--refresh-mode 'xml)))
@@ -643,9 +641,14 @@ Pressing the RED button, just in case")
         ;; append our data to the master file
         (with-temp-buffer
           (insert-file-contents orb-anystyle-parser-training-set)
+          ;; backup the master file
+          (let ((master-backup (concat orb-anystyle-parser-training-set ".back")))
+            (orb-pdf-scrapper--put :master-backup master-backup)
+            (rename-file orb-anystyle-parser-training-set master-backup t))
           (goto-char (point-max))
           (forward-line -1)
           (insert new-data)
+          (f-touch orb-anystyle-parser-training-set)
           (write-region (orb--buffer-string) nil
                         orb-anystyle-parser-training-set nil -1))))))
 
@@ -694,16 +697,17 @@ anystyle output:
       (set-process-sentinel
        training-process
        (lambda (_p result)
-         (if (string= result "finished\n")
-             (progn
-               (goto-char (point-max))
-               (insert "=====================\n\nDone!")
-               (message "Training anystyle parser model...done")
-               (orb-pdf-scrapper--put :context 'finished
-                                      :training-process nil)
-               (orb-pdf-scrapper--refresh-mode 'train))
-           (orb-pdf-scrapper--put :context 'error
-                                  :training-process nil)))))))
+         (orb--with-scrapper-buffer!
+           (if (string= result "finished\n")
+               (progn
+                 (goto-char (point-max))
+                 (insert "=====================\n\nDone!")
+                 (message "Training anystyle parser model...done")
+                 (orb-pdf-scrapper--put :context 'finished
+                                        :training-process nil)
+                 (orb-pdf-scrapper--refresh-mode 'train))
+             (orb-pdf-scrapper--put :context 'error
+                                    :training-process nil))))))))
 
 (defun orb-pdf-scrapper--checkout ()
   "Finalize Orb PDF Scrapper process.
@@ -727,7 +731,7 @@ process."
   (dolist (prop (list :running :callee :context :caller
                       :current-key :prevent-concurring
                       :temp-txt :temp-bib :temp-org :temp-xml
-                      :pdf-file :global-bib
+                      :pdf-file :global-bib :master-backup
                       :txt-undo-list :bib-undo-list :org-undo-list
                       :training-process :window-conf :original-buffer))
     (orb-pdf-scrapper--put prop nil)))
@@ -807,7 +811,7 @@ return to BibTeX `\\[orb-pdf-scrapper-cancel]', \
 abort `\\[orb-pdf-scrapper-kill]'.")
              ('edit-xml
               (cl-case (orb-pdf-scrapper--get :context)
-                ('start
+                ('edit
                  (format "\
 Train `\\[orb-pdf-scrapper-training-session]', \
 review %s `\\[orb-pdf-scrapper-review-master-file]', \
@@ -858,7 +862,7 @@ Context is read from `orb-pdf-scrapper--plist' property `:context'."
        (define-key map "\C-c\C-r" #'orb-pdf-scrapper-cancel))
       ('edit-xml
        (cl-case (orb-pdf-scrapper--get :context)
-         ('start
+         ('edit
           (define-key map "\C-c\C-c" #'orb-pdf-scrapper-training-session)
           (define-key map "\C-c\C-u" nil)
           (define-key map "\C-C\C-t" #'orb-pdf-scrapper-review-master-file)
@@ -976,8 +980,8 @@ If context is not provided, it will be read from
       ('start
        ;; generate xml
        (orb-pdf-scrapper--edit-xml))
-      ('edit-master
-       (orb-pdf-scrapper--train))
+      ((edit edit-master)
+       (orb-pdf-scrapper--train nil))
       ('finished
        (orb-pdf-scrapper-dispatcher 'edit-txt 'continue))
       (t (orb-pdf-scrapper-dispatcher 'error)))))
@@ -1038,8 +1042,6 @@ Kill it and start a new one %s? "
         ;; edit org
         ('edit-org
          (orb-pdf-scrapper--edit-org))
-        ('train
-         (orb-pdf-scrapper-training-session))
         ('checkout
          ;; currently, this is unnecessary but may be useful
          ;; if some recovery options are implemented
@@ -1075,6 +1077,8 @@ Kill it and start a new one %s? "
     ('edit-org
      (orb-pdf-scrapper-dispatcher 'edit-bib 'continue))
     ('edit-xml
+     (when-let ((master-backup (orb-pdf-scrapper--get :master-backup)))
+       (rename-file master-backup orb-anystyle-parser-training-set t))
      (orb-pdf-scrapper-dispatcher (orb-pdf-scrapper--get :callee) 'continue))
     (t
      (orb-pdf-scrapper-dispatcher 'error))))
