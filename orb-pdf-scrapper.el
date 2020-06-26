@@ -498,16 +498,17 @@ Pressing the RED button, just in case")
   (forward-line -1)
   (org-table-insert-hline)
   (forward-line 2)
-  (dolist (ref ref-alist)
-    (insert (concat "|" (car ref) "|"))
-    (dolist (field orb-pdf-scrapper-export-fields)
-      (insert (or (cdr (assoc-string field (cdr ref)))
-                  " ")
-              "|"))
-    (insert "\n"))
-  (forward-line -2)
-  (org-table-align)
-  (org-back-to-heading nil))
+  (let ((table ""))
+    (dolist (ref ref-alist)
+      (setq table
+            (format "%s|%s|%s|\n" table (car ref)
+                    (mapconcat
+                     (lambda (field)
+                       (bibtex-completion-get-value field (cdr ref) ""))
+                     orb-pdf-scrapper-export-fields "|"))))
+    (insert table))
+  (forward-line -1)
+  (org-table-align))
 
 (defun orb-pdf-scrapper--edit-org ()
   "Edit generated Org-mode data."
@@ -742,11 +743,15 @@ process."
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-k" #'orb-pdf-scrapper-kill)
     map)
-  "Keymap for `orb-pdf-scrapper-mode' minor mode."
-  )
+  "Keymap for `orb-pdf-scrapper-mode' minor mode.
+The keymap is updated automatically according to the Orb PDF
+Scrapper process context.  It is not supposed to be modified
+directly by user." )
 
-(defvar orb-pdf-scrapper-mode-hook nil
-  "Hook for the `orb-pdf-scrapper-mode' minor mode.")
+(defcustom orb-pdf-scrapper-mode-hook nil
+  "Hook for the `orb-pdf-scrapper-mode' minor mode."
+  :type 'hook
+  :group 'orb-pdf-scrapper)
 
 (define-minor-mode orb-pdf-scrapper-mode
   "Minor mode for special key bindings in a orb-pdf-scrapper buffer.
