@@ -79,6 +79,16 @@
   :group 'org-roam-bibtex
   :prefix "orb-pdf-scrapper-")
 
+(defgroup orb-anystyle nil
+  "Elisp interface to `anystyle-cli`."
+  :group 'org-roam-bibtex
+  :prefix "orb-anystyle-")
+
+(defgroup orb-autokey nil
+  "Automatic generation of BibTeX citation keys."
+  :group 'org-roam-bibtex
+  :prefix "orb-autokey-")
+
 ;; Various utility functions
 
 ;;;###autoload
@@ -180,19 +190,19 @@ that should be ignored during automatic key generation.  Case
 sensitive."
   ;; Default value was take from `bibtex-autokey-titleword-ignore'.
   :type '(repeat :tag "Regular expression" regexp)
-  :group 'org-roam-bibtex)
+  :group 'orb-autokey)
 
 (defcustom orb-autokey-empty-field-token "N/A"
   "String to use when BibTeX field is nil or empty."
   :type 'string
-  :group 'org-roam-bibtex)
+  :group 'orb-autokey)
 
 (defcustom orb-autokey-invalid-symbols
   " \"'()={},~#%\\"
   "Characters not allowed in a BibTeX key.
 The key will be stripped of these characters."
   :type 'string
-  :group 'org-roam-bibtex)
+  :group 'orb-autokey)
 
 ;;;
 ;;;###autoload

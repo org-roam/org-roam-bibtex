@@ -45,21 +45,88 @@
 
 ;; * Customize definitions
 
-(defvar orb-anystyle-executable "anystyle") ; TODO: make it defcustom
-(defvar orb-anystyle-pdfinfo-executable nil) ; TODO: make it defcustom
-(defvar orb-anystyle-pdftotext-executable nil) ; TODO: make it defcustom
-(defvar orb-anystyle-parser-model nil)
-(defvar orb-anystyle-finder-model nil)
-(defvar orb-anystyle-find-crop nil)
-(defvar orb-anystyle-find-solo nil)
-(defvar orb-anystyle-find-layout nil)
-(defvar orb-anystyle-default-buffer "*Orb Anystyle Output*") ; TODO: make it defcustom
-(defvar orb-anystyle-user-directory
-  (concat (file-name-as-directory user-emacs-directory) "anystyle"))
-(defvar orb-anystyle-parser-training-set
-  (concat (file-name-as-directory orb-anystyle-user-directory) "core+.xml"))
+(defcustom orb-anystyle-executable "anystyle"
+  "Anystyle executable path or program name."
+  :type '(choice (const "anystyle")
+                 (file :tag "Path to executable" :must-match t))
+  :group 'orb-anystyle)
 
-;; --crop is currently broken
+(defcustom orb-anystyle-pdfinfo-executable nil
+  "Path to pdfinfo executable to be passed to anystyle.
+When this is nil, anystyle will look for it in the system path."
+  :type '(choice
+          (file :tag "Path to executable")
+          (const nil))
+  :group 'orb-anystyle)
+
+(defcustom orb-anystyle-pdftotext-executable nil
+  "Path to pdftotext executable to be passed to anystyle.
+When this is nil, anystyle will look for it in the system path."
+  :type '(choice
+          (file :tag "Path to executable")
+          (const nil))
+  :group 'orb-anystyle)
+
+(defcustom orb-anystyle-parser-model nil
+  "Path to anystyle custom parser model."
+  :type '(choice
+          (file :tag "Path to file" :must-match t)
+          (const :tag "Built-in" nil))
+  :group 'orb-anystyle)
+
+(defcustom orb-anystyle-finder-model nil
+  "Path to anystyle custom finder model."
+  :type '(choice
+          (file :tag "Path to file" :must-match t)
+          (const :tag "Built-in" nil))
+  :group 'orb-anystyle)
+
+;; --crop is currently broken upstream
+
+(defcustom orb-anystyle-find-crop nil
+  "Crop value in pt to be passed to `anystyle find'.
+An integer or a conc cell of integers."
+  :type '(choice (integer :tag "Top and bottom")
+                 (cons :tag "Top, bottom, left and right"
+                       (integer :tag "Top and bottom")
+                       (integer :tag "Left and right"))
+                 (const :tag "Do not crop" nil))
+  :group 'orb-anystyle)
+
+(defcustom orb-anystyle-find-solo nil
+  "Non-nil to pass the `--solo' flag."
+  :type '(choice (const :tag "Yes" t)
+                 (const :tag "No" nil))
+  :group 'orb-anystyle)
+
+(defcustom orb-anystyle-find-layout nil
+  "Non-nil to pass the `--layout' flag."
+  :type '(choice (const :tag "Yes" t)
+                 (const :tag "No" nil))
+  :group 'orb-anystyle)
+
+(defcustom orb-anystyle-default-buffer "*Orb Anystyle Output*"
+  "Default buffer name for anystyle output."
+  :type 'string
+  :group 'orb-anystyle)
+
+(defcustom orb-anystyle-user-directory
+  (concat (file-name-as-directory user-emacs-directory) "anystyle")
+  "Directory to keep anystyle user files."
+  :type 'directory
+  :group 'orb-anystyle)
+
+(defcustom orb-anystyle-parser-training-set
+  (concat (file-name-as-directory orb-anystyle-user-directory) "core+.xml")
+  "XML file containing parser training data."
+  :type '(file :must-match t)
+  :group 'anystyle)
+
+(defcustom orb-anystyle-finder-training-set
+  (f-join (file-name-as-directory orb-anystyle-user-directory) "ttx/")
+  "Directory containing finder training data (.ttx files)."
+  :type 'directory
+  :group 'anystyle)
 
 ;; * Main functions
 
@@ -232,19 +299,16 @@ find, parse, check, train, help or license" input)))
        ;; -c - List commands one per line, to assist with shell completion
        ;; so we do not implement it
        ;;
-       ;; :crop's value should be a number or string nil is equivalent to 0 if
-       ;; no value was explicitely supplied, use the default from user option
+       ;; :crop value should be integer; if no value was explicitly supplied,
+       ;; use the default from `orb-anystyle-find-crop'
        (when crop
          (unless (consp crop)
            (setq crop (list crop)))
-         (let ((x (or (car crop) 0))
+         (let ((x (car crop))
                (y (or (cdr crop) 0)))
-           (unless (and (or (numberp x)
-                            (stringp x))
-                        (or (numberp y)
-                            (stringp y)))
-             (user-error "Invalid value %s,%y.  Number or string expected"
-                         x y))
+           (unless (and (integerp x)
+                        (integerp y))
+             (user-error "Invalid value %s,%y.  Number expected" x y))
            (setq crop (format "%s,%s" x y))))
        ;; parse only accepts --[no]-layout, so we ignore the rest
        ;; append command options to command
