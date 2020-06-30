@@ -69,6 +69,7 @@ of `orb-note-actions-default', `orb-note-actions-extra' and
 through which the combined set of note actions is presented as a
 list of candidates and the function associated with the candidate
 is executed upon selecting it."
+  :risky t
   :type '(radio
           (const :tag "Default" default)
           (const :tag "Ido" ido)
@@ -78,35 +79,43 @@ is executed upon selecting it."
           (function :tag "Custom function"))
   :group 'orb-note-actions)
 
-(defcustom orb-note-actions-extra
-  '(("Save citekey to kill-ring and clipboard" . orb-note-actions-copy-citekey)
+(defcustom orb-note-actions-default
+  '(("Open PDF file(s)" . bibtex-completion-open-pdf)
+    ("Add PDF to library" . bibtex-completion-add-pdf-to-library)
+    ("Open URL or DOI in browser" . bibtex-completion-open-url-or-doi)
     ("Show record in the bibtex file" . bibtex-completion-show-entry))
+  "Default actions for `orb-note-actions'.
+Each action is a cons cell DESCRIPTION . FUNCTION."
+  :risky t
+  :type '(alist
+          :tag "Default actions for `orb-note-actions'"
+          :key-type (string :tag "Description")
+          :value-type (function :tag "Function"))
+  :group 'orb-note-actions)
+
+(defcustom orb-note-actions-extra
+  '(("Save citekey to kill-ring and clipboard" . orb-note-actions-copy-citekey))
   "Extra actions for `orb-note-actions'.
 Each action is a cons cell DESCRIPTION . FUNCTION."
+  :risky t
   :type '(alist
           :tag "Extra actions for `orb-note-actions'"
-          :key-type (string :tag "Prompt")
-          :value-type (symbol :tag "Function name (unquoted)"))
+          :key-type (string :tag "Description")
+          :value-type (function :tag "Function"))
   :group 'orb-note-actions)
 
 (defcustom orb-note-actions-user nil
   "User actions for `orb-note-actions'.
 Each action is a cons cell DESCRIPTION . FUNCTION."
+  :risky t
   :type '(alist
           :tag "User actions for `orb-note-actions'"
-          :key-type (string :tag "Prompt")
-          :value-type (symbol :tag "Function name (unquoted)"))
+          :key-type (string :tag "Description")
+          :value-type (function :tag "Function"))
   :group 'orb-note-actions)
 
 
 ;; * Helper functions
-
-(defvar orb-note-actions-default
-  '(("Open PDF file(s)" . bibtex-completion-open-pdf)
-    ("Add PDF to library" . bibtex-completion-add-pdf-to-library)
-    ("Open URL or DOI in browser" . bibtex-completion-open-url-or-doi))
-  "Default actions for `orb-note-actions'.
-Each action is a cons cell DESCRIPTION . FUNCTION.")
 
 (defmacro orb-note-actions--frontend! (frontend &rest body)
   "Return a function definition for FRONTEND.
@@ -230,21 +239,12 @@ user actions can be set in `orb-note-actions-user'."
   (let ((non-default-frontends (list 'hydra 'ido 'ivy 'helm))
         (citekey (cdr (org-roam--extract-ref))))
     (if citekey
-        (cond ((member
-                orb-note-actions-frontend
-                non-default-frontends)
-               (orb-note-actions--run
-                orb-note-actions-frontend
-                citekey))
-              ((functionp
-                orb-note-actions-frontend)
-               (funcall
-                orb-note-actions-frontend
-                citekey))
+        (cond ((member orb-note-actions-frontend non-default-frontends)
+               (orb-note-actions--run orb-note-actions-frontend citekey))
+              ((functionp orb-note-actions-frontend)
+               (funcall orb-note-actions-frontend citekey))
               (t
-               (orb-note-actions--run
-                'default
-                citekey)))
+               (orb-note-actions--run 'default citekey)))
       (user-error "No #+ROAM_KEY found in current buffer"))))
 
 (provide 'orb-note-actions)
