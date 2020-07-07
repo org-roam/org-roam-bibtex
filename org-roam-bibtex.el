@@ -73,10 +73,19 @@
   (require 'subr-x)
   (require 'cl-lib))
 
+(defvar bibtex-completion-bibliography)
+(defvar bibtex-completion-find-note-functions)
+(declare-function bibtex-completion-apa-get-value
+                  "bibtex-completion" (field entry &optional default))
+(declare-function bibtex-completion-get-entry
+                  "bibtex-completion" (entry-key))
+
 (declare-function projectile-relevant-open-projects "projectile")
 (declare-function persp-switch "persp-mode")
 (declare-function persp-names "persp-mode")
 
+(defvar org-ref-notes-function)
+(declare-function org-ref-find-bibliography "org-ref-core")
 
 ;; * Customize definitions
 
@@ -167,8 +176,7 @@ Consult bibtex-completion package for additional information
 about BibTeX field names."
   :type '(choice
           (string :tag "BibTeX field name")
-          (group :tag "BibTeX field names"
-                 (repeat :tag "BibTeX field names" string))
+          (repeat :tag "BibTeX field names" string)
           (alist
            :tag "Template wildcard keyword/BibTeX field name pairs"
            :key-type (string :tag "Wildcard")
@@ -222,7 +230,6 @@ extra integration between the two packages.
 
 This is a wrapper function around `orb-edit-notes'
 intended for use with Org-ref."
-  ;; org-roam softly requires org-ref, so do we
   (when (require 'org-ref nil t)
     (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
       (orb-edit-notes citekey))))
@@ -413,17 +420,19 @@ Otherwise, behave as if called interactively."
   :global t
   (cond (org-roam-bibtex-mode
          (setq org-ref-notes-function 'orb-notes-fn)
-         (add-to-list 'bibtex-completion-find-note-functions
-                      #'orb-find-note-file)
-         (advice-add 'bibtex-completion-edit-notes
-                     :override #'orb-edit-notes-ad))
+         (with-eval-after-load 'bibtex-completion
+           (add-to-list 'bibtex-completion-find-note-functions
+                        #'orb-find-note-file)
+           (advice-add 'bibtex-completion-edit-notes
+                       :override #'orb-edit-notes-ad)))
         (t
          (setq org-ref-notes-function 'org-ref-notes-function-one-file)
-         (setq bibtex-completion-find-note-functions
-               (delq #'orb-find-note-file
-                     bibtex-completion-find-note-functions))
-         (advice-remove 'bibtex-completion-edit-notes
-                        #'orb-edit-notes-ad))))
+         (with-eval-after-load 'bibtex-completion
+           (setq bibtex-completion-find-note-functions
+                 (delq #'orb-find-note-file
+                       bibtex-completion-find-note-functions))
+           (advice-remove 'bibtex-completion-edit-notes
+                          #'orb-edit-notes-ad)))))
 
 ;;;###autoload
 (defun orb-edit-notes (citekey)
