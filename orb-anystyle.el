@@ -117,7 +117,7 @@ An integer or a conc cell of integers."
   :group 'orb-anystyle)
 
 (defcustom orb-anystyle-parser-training-set
-  (concat (file-name-as-directory orb-anystyle-user-directory) "core+.xml")
+  (concat (file-name-as-directory orb-anystyle-user-directory) "core.xml")
   "XML file containing parser training data."
   :type '(file :must-match t)
   :group 'anystyle)
@@ -350,12 +350,12 @@ find, parse, check, train, help or license" input)))
       (when (and fmodel (not (f-exists? fmodel)))
         (display-warning 'org-roam-bibtex
                          "Finder model file not found: %s, \
-using anystyle default" fmodel)
+using the default one" fmodel)
         (setq fmodel nil))
       (when (and pmodel (not (f-exists? pmodel)))
         (display-warning 'org-roam-bibtex
                          "Finder model file not found: %s, \
-using anystyle default" pmodel)
+using the default one" pmodel)
         (setq pmodel nil))
       (setq global-options (orb--format "%s" global-options
                                         " -F \"%s\"" fmodel

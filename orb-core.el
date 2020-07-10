@@ -135,7 +135,7 @@ Extended
 
  %A        |author| >
  %T        |title | >  Same as %a,%t,%f{field} but
- %F{field} |field | >  preserve orignial capitalization
+ %F{field} |field | >  preserve original capitalization
 
 2. Starred versions
 
@@ -169,7 +169,7 @@ can insert other wildcards
 is being generated for, as returned by `bibtex-completion-get-entry'.
 The variable may be safely manipulated in a destructive manner.
 
-%e{(or (bibtex-completion-get-value \\\"volume\\\" entry) \\\"N/A\\\")}
+%e{(or (bibtex-completion-get-value \"volume\" entry) \"N/A\")}
 %e{(my-function entry)}
 
 Key generation is performed by  `orb-autokey-generate-key'."
