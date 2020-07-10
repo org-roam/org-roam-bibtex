@@ -375,7 +375,7 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
 CANDIDATES is a an alist of candidates to consider.  Defaults to
 `org-roam--get-title-path-completions' otherwise."
   (let* ((rows (org-roam-db-query
-                [:select [titles:file titles:titles tags:tags]
+                [:select [titles:file titles:title tags:tags]
                  :from titles
                  :left :join tags
                  :on (= titles:file tags:file)
@@ -383,16 +383,15 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
                  :where refs:file :is :null]))
          completions)
     (dolist (row rows completions)
-      (pcase-let ((`(,file-path ,titles ,tags) row))
-        (let ((titles (or titles
-                          (list (org-roam--path-to-slug file-path)))))
-          (dolist (title titles)
-            (let ((k (concat
-                      (when tags
-                        (format "(%s) " (s-join org-roam-tag-separator tags)))
-                      title))
-                  (v (list :path file-path :title title)))
-              (push (cons k v) completions))))))))
+      (pcase-let ((`(,file-path ,title ,tags) row))
+        (let ((title (or title
+                         (list (org-roam--path-to-slug file-path)))))
+          (let ((k (concat
+                    (when tags
+                      (format "(%s) " (s-join org-roam-tag-separator tags)))
+                    title))
+                (v (list :path file-path :title title)))
+            (push (cons k v) completions)))))))
 
 
 ;; * Main functions
