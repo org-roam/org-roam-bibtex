@@ -230,6 +230,7 @@ CITEKEY is a list whose car is a citation key."
 (defun orb-note-actions-scrap-pdf (citekey)
   "Wrapper around `orb-pdf-scrapper-insert'.
 CITEKEY is a list whose car is a citation key."
+  (require 'orb-pdf-scrapper)
   (orb-pdf-scrapper-run (car citekey)))
 
 
