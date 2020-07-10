@@ -799,7 +799,7 @@ Returns the new plist."
               "\
 Generate BibTeX `\\[orb-pdf-scrapper-dispatcher]', \
 sanitize text `\\[orb-pdf-scrapper-sanitize-text]', \
-train parser `\\[orb-pdf-scrapper-training-session], \
+train parser `\\[orb-pdf-scrapper-training-session]', \
 abort `\\[orb-pdf-scrapper-kill]'.")
              ('edit-bib
               "\
