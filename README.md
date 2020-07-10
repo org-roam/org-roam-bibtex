@@ -225,14 +225,19 @@ notes from the completion-list.
 Type `M-x orb-note-actions` to easily access additional commands useful
 in note's context.  These commands are run with the note's BibTeX key
 as an argument. The key is taken from the `#+ROAM_KEY:` file property.
-See section [`Orb Note Actions`](#orb-note-actions-section) for
+See section [Orb Note Actions](#orb-note-actions-section) for
 details.
 
 Configuration
 ---------------
 
-### Org Roam BibTeX - BibTeX aware capture template expansion
+The following sections use Emacs Lisp examples to configure Org Roam
+BibTeX.  If you are not comfortable with Lisp yet, remember you can
+always use Customize interface to achieve the same, run `M-x
+customize` or from menu click `Options -> Customize Emacs -> Top Level
+Customization Group` and search for `org-roam-bibtex`.
 
+### Org Roam BibTeX - BibTeX aware capture template expansion
 #### `orb-templates`
 
 This variable specifies the templates to use when creating a new
@@ -450,9 +455,8 @@ is the current note's citation key:
 
 #### Adding new note actions
 
-To install a note action, add a cons
-cell of format `(DESCRIPTION . FUNCTION)` to one of the note actions
-variables:
+To install a note action, add a cons cell of format `(DESCRIPTION
+. FUNCTION)` to one of the note actions variables:
 
 ``` el
 (with-eval-after-load 'orb-note-actions
@@ -465,13 +469,326 @@ whose car is the current note's citation key:
 ``` el
 (defun my-note-action (citekey)
   (let ((key (car citekey)))
-    ... 
-    ))
+    ...))
 ```
+### <a name="orb-pdf-scrapper-section"></a>Orb PDF Scrapper - Retrieve references from PDFs
+#### <a name="orb-pdf-scrapper-overview"></a>Overview
+
+Orb PDF Scrapper is an Emacs interface to
+[Anystyle](https://github.com/inukshuk/anystyle)---"a fast and smart
+citation reference parser"---an open source software based on powerful
+machine-learning algorithms.  Orb PDF Scrapper requires
+`anystyle-cli`, which can be installed with `[sudo] gem install
+anystyle-cli`.  Note that `ruby` and `gem` must already be present in
+the system.  Ruby is shipped with MacOS, for other operating systems
+please consult the official ruby and your operating system
+documentation.  Please, also consult the Anystyle documentation to
+understand its working better, or when you feel pieces of information
+about it are missing in this manual.
+
+Once `anystyle-cli` is installed, Orb PDF Scrapper can be launched
+through `orb-note-actions` while in an Org-roam buffer containing a
+`#+ROAM_KEY:` BibTeX key.  References are retrieved from a PDF file
+associated with the note (respectively, the corresponding BibTeX
+record).
+
+The reference retrieval process consists of three interactive steps
+described below.
+
+#### <a name="orb-pdf-scrapper-text-mode"></a>Text mode
+In the first step, the PDF file is searched for references, which are
+eventually output in the Orb PDF Scrapper buffer as plain text. The
+buffer is in the `text-mode` major mode for editing general text
+files.
+
+Review the retrieved references and prepare them for the next step in
+such a way that there is only one reference per line.  You may also
+need to remove any extra text captured together with the references.
+Some PDF files will produce a nicely formed list of references that
+will require little to no manual editing, while others will need a
+different degree of manual intervention.
+    
+Generally, it is possible to train a custom Anystyle Finder model
+responsible for PDF parsing to improve the output quality, but this is
+not currently supported in Orb PDF Scrapper.  As a small and somewhat
+naïve aid, the `sanitize text` command bound to `C-c C-u` may assist
+in putting each reference onto a separate line.
+
+After you are finished with editing the text data, press `C-c C-c` to
+proceed to the second step.
+
+Press `C-c C-k` anytime to abort the Orb PDF Scrapper process.
+
+#### <a name="orb-pdf-scrapper-bibtex-mode"></a>BibTeX mode
+In the second step, the obtained list of plain text references, one
+reference per line, is parsed and converted into BibTeX format.  The
+resulting BibTeX records are presented to the user in the Orb PDF
+Scrapper buffer replacing the text references.  The buffer's major
+mode switches to `bibtex-mode`, which is helpful for reviewing and
+editing the BibTeX data and correcting possible parsing errors.
+
+Again, depending on the citation style used in the particular book or
+article, the parsing quality can vary greatly and might require more
+or less manual post-editing.  It is possible to train a custom
+Anystyle Parser model to improve the parsing quality.  See section
+[Training a Parser model](#training-a-parser-model) for more details.
+
+Press `C-c C-u` to generate BibTeX keys for the records in the buffer
+or `C-u C-c C-u` to generate a key for the record at point.  See
+section [Orb Autokey configuration](#orb-autokey-configuration) on how
+to configure the BibTeX key generation.  During key generation it is
+also possible to automatically set the values of BibTeX fields, see
+`orb-pdf-scrapper-set-fields` docstring for more information.
+
+Press `C-c C-r` to return to text editing mode in its last state.
+Note that all the progress in BibTeX mode will be lost.
+
+Press `C-c C-c` to proceed to the third step.
+
+#### <a name="orb-pdf-scrapper-org-mode"></a>Org mode
+In the third step, the BibTeX records are processed internally by Orb
+PDF Scrapper and the result replaces the BibTeX data in the Orb PDF
+Scrapper, which switches to `org-mode`.
+
+The processing involves sorting the references into four groups under
+the respective Org-mode headlines: `in-roam`, `in-bib`, `validz`, and
+`invalid`, and inserting the grouped references as either an Org-mode
+plain list of `org-ref`-style citations or an Org-mode table with
+columns corresponding to different BibTeX fields.
+
+* `in-roam` --- these references have notes with the respective
+  `#+ROAM_KEY:` citation keys in the `org-roam` database
+* `in-bib` --- these references are not yet in the `org-roam` database
+  but they are present in user BibTeX file(s) (see
+  `bibtex-completion-bibliography`)
+* `invalid` --- these references matched against
+  `orb-pdf-scrapper-invalid-key-pattern` and are considered invalid.
+  Adjust this variable to your criteria of validity
+* `valid` --- all other references fall into this group.  They look
+  fine but are not yet in user Org-roam and BibTeX databases.
+
+Review and edit the generated Org-mode data or press `C-c C-c` to
+insert the references into the note's buffer and finish the Orb PDF
+Scrapper.
+
+Press `C-c C-r` to return to BibTeX editing mode in its last state.
+Note that all the progress in current mode will be lost.
+
+The following user variables control the appearance of the generated
+Org-mode data: `orb-pdf-scrapper-refsection-headings`,
+`orb-pdf-scrapper-export-fields`. These variables can be set through
+the Customize interface or with `setq`.  Refer to their respective
+docstrings in Emacs for more information.
+
+#### Training a Parser model
+##### <a name="parser-model-prerequisites"></a>Prerequisites
+Currently, the core data set (explained below) must be installed manually by the user as follows:
+
+1. Use `find`, `locate` or similar tools to find the file `core.xml`
+   buried in `res/parser/` subdirectory of `anystyle` gem,
+   e.g. `locate core.xml | grep anystyle`.  On MacOS with `anystyle`
+   installed as a system gem, the file path would look similar to:
+
+   `"/Library/Ruby/Gems/2.6.0/gems/anystyle-1.3.11/res/parser/core.xml"`
+
+   The actual path will vary slightly depending on the currently
+   installed versions of `ruby` and `anystyle`.
+
+   On Linux and Windows this path will be different.
+2. Copy this file into the location specified in
+   `orb-anystyle-parser-training-set` or somewhere else where you have
+   a disk write access and adjust the aforementioned variable
+   accordingly.
+
+##### <a name="parser-model-running"></a>Running a training session
+Training a custom Parser model on custom user data will greatly
+improve the parsing of plain text references. A training session can
+be initiated by pressing `C-c C-t` in the Orb PDF Scrapper buffer in
+either text mode or BibTeX mode.  In each case, the plain text
+references obtained in the `text mode` step described above will used
+to generate source XML data for a training set.
+
+The generated XML data replace the text or BibTeX references in the
+Orb PDF Scrapper buffer and the major mode switches to `xml-mode`.
+
+The XML data must be edited manually---this is the whole point of
+creating a custom training model---which usually consists in simply
+correcting the placement of bibliographic data within the XML elements
+(data fields).  It is extremely important to review the source data
+carefully since any mistakes made or overseen here will get into the
+model and will ultimately lead to poorer future parsing.
+
+It would be quite tedious to create the whole data set by hand,
+hundreds or thousands of individual bibliographic records, so the best
+workflow for making a good custom data set is to use the core set
+shipped with Anystyle and append to it several data sets generated in
+Orb PDF Scrapper training sessions from individual PDF files,
+incrementally re-training the model in between.  This approach is
+implemented in Orb PDF Scrapper.  From a personal experience, adding
+incrementally references data from four--five PDF files raises the
+Parser success rate to virtually 100%.  Follow the instructions
+described in [Prerequisites](#parser-model-prerequisites) to install
+the core data set.
+
+Once the editing is done, press `C-c C-c` to train the model.  The XML
+data in the Orb PDF Scrapper buffer will be automatically appended to
+the custom `core.xml` file and this will be used for training.
+Alternatively, press `C-c C-t` to review the updated `core.xml` file
+and press `C-c C-c` when finished.
+
+The major mode will now switch to `fundamental-mode`, the anystyle
+`stdout` output will appear in the buffer.  Training the model can
+take _several minutes_ depending on the size of the training set and the
+computing resources available to your device.  The process is run in a
+shell subprocess, so you will be able to continue your other work and
+return to Orb PDF Scrapper buffer later.
+
+Once training is finished, press `C-c C-c` to return to where the
+previous editing mode.  You can now re-generate the BibTeX data and
+see the improvements achieved with the re-trained model.
+
+#### Orb Autokey configuration
+#### `orb-autokey-format`
+You can specify the format of autogenerated BibTeX keys by setting
+`orb-autokey-format` variable through the Customize interface or a
+`setq` form in your Emacs configuration file.
+
+Orb Autokey format currently supports the following wildcards:
+
+###### Basic
+
+| Wildcard   | Field  | Description                            |
+|:-----------|:-------|:---------------------------------------|
+| %a         | author | first author's (or editor's) last name |
+| %t         | title  | first word of title                    |
+| %f{field}  | field  | first word of arbitrary field          |
+| %y         | year   | year YYYY (date or year field)         |
+| %p         | page   | first page                             |
+| %e{(expr)} | elisp  | elisp expression                       |
+
+``` el
+(setq orb-autokey-format "%a%y") => "doe2020"
+```
+
+###### Extended
+
+1. Capitalized versions:
+
+| Wildcard  | Field  | Description                          |
+|:----------|:-------|:-------------------------------------|
+| %A        | author |                                      |
+| %T        | title  | Same as %a,%t,%f{field} but          |
+| %F{field} | field  | preserve the original capitalization |
+
+``` el
+(setq orb-autokey-format "%A%y") => "Doe2020"
+```
+
+2. Starred versions
+
+| Wildcard | Field  | Description                                            |
+|:---------|:-------|:-------------------------------------------------------|
+| %a, %A   | author | - include author's (editor's) initials                 |
+| %t, %T   | title  | - do not ignore words in orb-autokey-titlewords-ignore |
+| %y       | year   | - year's last two digits __YY                          |
+| %p       | page   | - use "pagetotal" field instead of default "pages"     |
+
+``` el
+(setq orb-autokey-format "%A*%y") => "DoeJohn2020"
+```
+
+3. Optional parameters
+
+| Wildcard           | Field  | Description                                       |
+|:-------------------|:-------|:--------------------------------------------------|
+| %a[N][M][D]        | author |                                                   |
+| %t[N][M][D]        | title  | > include first N words/names                     |
+| %f{field}[N][M][D] | field  | > include at most M first characters of word/name |
+| %p[D]              | page   | > put delimiter D between words                   |
+
+`N` and `M` should be a single digit `1-9`. Putting more digits or any
+other symbols will lead to ignoring the optional parameter and those
+following it altogether.  `D` should be a single alphanumeric symbol or
+one of `-_.:|`.
+
+Optional parameters work both with capitalized and starred versions
+where applicable.
+
+``` el
+(setq orb-autokey-format "%A*[1][4][-]%y") => "DoeJ2020"
+(setq orb-autokey-format "%A*[2][7][-]:%y") => "DoeJohn-DoeJane:2020"
+```
+
+4. Elisp expression
+
+* can be anything
+* should return a string or nil
+* will be evaluated before expanding other wildcards and therefore can
+  be used to insert other wildcards
+* will have entry variable bound to the value of BibTeX entry the key
+  is being generated for, as returned by
+  bibtex-completion-get-entry. The variable may be safely manipulated
+  in a destructive manner.
+
+``` el
+%e{(or (bibtex-completion-get-value "volume" entry) "N/A")} 
+%e{(my-function entry)}
+```
+
+##### Other variables
+
+Check variables `orb-autokey-invalid-symbols`,
+`orb-autokey-empty-field-token`, `orb-autokey-titlewords-ignore` for
+additional settings.
+
+#### Orb Anystyle
+
+The function `orb-anystyle` provides a convenient Elisp key--value
+interface to `anystyle-cli` and can be used anywhere else in Emacs
+infrastructure. Check its docstring for more information.  You may
+also want to consult `anystyle-cli` documentation.
+
+###### Example
+This Elisp expression
+``` el
+(orb-anystyle 'parse
+              :format 'bib
+              :stdout nil
+              :overwrite t
+              :input "Doe2020.txt "
+              :output "bib"
+              :parser-model "/my/custom/model.mod")
+```
+
+executes the following anystyle call:
+
+``` sh
+anystyle --no-stdout --overwrite -F "/my/custom/model.mod" -f bib parse "Doe2020.txt" "bib"
+```
+
+The following variables can be used to configure `orb-anystyle` and
+the default command line options that will be passed to `anystyle`:
+
+###### `orb-anystyle`
+* `orb-anystyle-executable`
+* `orb-anystyle-user-directory`
+* `orb-anystyle-default-buffer`
+
+###### default command line options
+* `orb-anystyle-find-crop`
+* `orb-anystyle-find-layout`
+* `orb-anystyle-find-solo`
+* `orb-anystyle-finder-training-set`
+* `orb-anystyle-finder-model`
+* `orb-anystyle-parser-model`
+* `orb-anystyle-parser-training-set`
+* `orb-anystyle-pdfinfo-executable`
+* `orb-anystyle-pdftotext-executable`
 
 Community
 ---------------
-For help, support, or if you just want to hang out with us, you can find us here:
+For help, support, or if you just want to
+hang out with us, you can find us here:
 
 * **IRC**: channel **#org-roam** on [freenode](https://freenode.net/kb/answer/chat)
 * **Slack**: channel **#org-roam-bibtex** on [Org Roam](https://join.slack.com/t/orgroam/shared_invite/zt-deoqamys-043YQ~s5Tay3iJ5QRI~Lxg)
