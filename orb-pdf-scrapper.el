@@ -367,7 +367,8 @@ current context is its memeber."
                             :caller 'edit-txt))
     ('bib
      (bibtex-mode)
-     (bibtex-set-dialect 'BibTeX t)
+     ;; anystyle uses biblatex dialect
+     (bibtex-set-dialect 'biblatex t)
      (orb-pdf-scrapper--put :callee 'edit-org
                             :context 'start
                             :caller 'edit-bib))
