@@ -100,14 +100,61 @@ See `orb-edit-notes' for details."
 (defcustom orb-templates
   '(("r" "ref" plain
      (function org-roam-capture--get-point)
-     ""
+     "%?"
      :file-name "${citekey}"
-     :head "#+TITLE: ${title}\n#+ROAM_KEY: ${ref}\n"
+     :head "#+title: ${title}\n#+roam_key: ${ref}\n"
      :unnarrowed t))
   "Template to use when creating a new note.
 See `orb-edit-notes' for details."
-  :type '(list)
-  :group 'org-roam-bibtex)
+  :group 'org-roam-bibtex
+  :type
+  '(repeat
+    (choice :value ("r" "ref" plain (function org-roam-capture--get-point)
+                    "%?"
+                    :file-name "${citekey}"
+                    :head "#+title: ${title}\n#+roam_key: ${ref}\n"
+                    :unnarrowed t)
+            (list :tag "Multikey description"
+                  (string :tag "Keys       ")
+                  (string :tag "Description"))
+            (list :tag "Template entry"
+                  (string :tag "Keys              ")
+                  (string :tag "Description       ")
+                  (const :format "" plain)
+                  (const :format "" (function org-roam-capture--get-point))
+                  (choice :tag "Template          "
+                          (string :tag "String"
+                                  :format "String:\n            \
+Template string   :\n%v")
+                          (list :tag "File"
+                                (const :format "" file)
+                                (file :tag "Template file     "))
+                          (list :tag "Function"
+                                (const :format "" function)
+                                (function :tag "Template function ")))
+                  (const :format "File name format  :" :file-name)
+                  (string :format " %v" :value "#+title: ${title}\n")
+                  (const :format "Header format     :" :head)
+                  (string :format "\n%v" :value "%<%Y%m%d%H%M%S>-${slug}")
+                  (const :format "" :unnarrowed)
+                  (const :format "" t)
+                  (plist :inline t
+                         :tag "Options"
+                         ;; Give the most common options as checkboxes
+                         :options
+                         (((const :format "%v " :prepend) (const t))
+                          ((const :format "%v " :immediate-finish) (const t))
+                          ((const :format "%v " :jump-to-captured) (const t))
+                          ((const :format "%v " :empty-lines) (const 1))
+                          ((const :format "%v " :empty-lines-before) (const 1))
+                          ((const :format "%v " :empty-lines-after) (const 1))
+                          ((const :format "%v " :clock-in) (const t))
+                          ((const :format "%v " :clock-keep) (const t))
+                          ((const :format "%v " :clock-resume) (const t))
+                          ((const :format "%v " :time-prompt) (const t))
+                          ((const :format "%v " :tree-type) (const week))
+                          ((const :format "%v " :table-line-pos) (string))
+                          ((const :format "%v " :kill-buffer) (const t))))))))
 
 (defcustom orb-include-citekey-in-titles nil
   "Non-nil to include the citekey in titles.
@@ -134,24 +181,28 @@ BibTeX field-name, such as =key=.  In the following example all
 the prompts with the '=key=' keyword will be preformatted, as
 well as the corresponding match group %\\1.
 
+==========
 \(setq orb-preformat-keywords \"=key=\")
 \(setq org-roam-capture-templates
       '((\"r\" \"reference\" plain (function org-roam-capture--get-point)
-         \"#+ROAM_KEY: %^{=key=}%? fullcite: %\\1\"
+         \"#+roam_key: %^{=key=}%? fullcite: %\\1\"
          :file-name \"references/${=key=}\"
-         :head \"#+TITLE: ${title}\"
+         :head \"#+title: ${title}\"
          :unnarrowed t)))
+==========
 
 2. If the value is a list of strings they are also treated as
 BibTeX field-names.  The respective prompts will be preformatted.
 
+==========
 \(setq orb-preformat-keywords '(\"=key=\" \"title\"))
 \(setq org-roam-capture-templates
       '((\"r\" \"reference\" plain (function org-roam-capture--get-point)
-         \"#+ROAM_KEY: %^{=key=}%? fullcite: %\\1\"
+         \"#+roam_key: %^{=key=}%? fullcite: %\\1\"
          :file-name \"references/${=key=}\"
-         :head \"#+TITLE: ${title}\"
+         :head \"#+title: ${title}\"
          :unnarrowed t)))
+==========
 
 3. If the value is a list of cons cells, then the car of the cons
 cell is treated as a prompt keyword and the cdr as a BibTeX field
@@ -159,21 +210,37 @@ name, and the latter will be used to retrieve the relevant value
 from the BibTeX entry.  If cdr is omitted, then the car is
 treated as the field name.
 
+==========
 \(setq orb-preformat-keywords
-      '((\"citekey\" . \"=key=\")
-       (\"type\" . \"=type=\")
+      '((\"mycitekey\" . \"=key=\")
+       (\"worktype\" . \"=type=\")
        \"title\"))
 \(setq org-roam-capture-templates
       '((\"r\" \"reference\" plain (function org-roam-capture--get-point)
-         \"#+ROAM_KEY: %^{citekey}%? fullcite: %\\1
-          #+TAGS: %^{type}
+         \"#+roam_key: %^{mycitekey}%? fullcite: %\\1
+          #+roam_tags: %^{worktype}
           This %\\2 deals with ...\"
          :file-name \"references/%<%Y-%m-%d-%H%M%S>_${title}\"
-         :head \"#+TITLE: ${title}\"
+         :head \"#+title: ${title}\"
          :unnarrowed t)))
+==========
 
-Consult bibtex-completion package for additional information
-about BibTeX field names."
+4. For the purpose of expanding the wildcards, Org Roam BibTeX
+recognizes `citekey', `type', `pdf?' and `note?' as synonyms of
+Bibtex-completion virtual fields `=key=', `=type=', `=has-pdf='
+and `=has-note=', respectively:
+
+==========
+\(setq orb-preformat-keywords '(\"citekey\ \"type\" \"title\")
+\(setq org-roam-capture-templates
+      '((\"r\" \"reference\" plain (function org-roam-capture--get-point)
+         \"#+roam_key: %^{citekey}%? fullcite: %\\1
+          #+roam_tags: %^{type}
+          This %\\2 deals with ...\"
+         :file-name \"references/%<%Y-%m-%d-%H%M%S>_${title}\"
+         :head \"#+title: ${title}\"
+         :unnarrowed t)))
+==========."
   :type '(choice
           (string :tag "BibTeX field name")
           (repeat :tag "BibTeX field names" string)
@@ -445,7 +512,7 @@ Implementation details and features:
 
 1. This function first calls `org-roam-find-ref' trying to find
 the note file associated with the CITEKEY.  The Org-roam key can
-be set with '#+ROAM_KEY:' in-buffer keyword.
+be set with '#+roam_key:' in-buffer keyword.
 
 2. If the Org-roam reference has not been found, the function
 calls `org-roam-find-file' passing to it the title associated
