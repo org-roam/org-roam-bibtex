@@ -107,6 +107,7 @@ See `orb-edit-notes' for details."
   "Template to use when creating a new note.
 See `orb-edit-notes' for details."
   :group 'org-roam-bibtex
+  ;; adopted from `org-capture-templates'
   :type
   '(repeat
     (choice :value ("r" "ref" plain (function org-roam-capture--get-point)
