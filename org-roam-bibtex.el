@@ -331,9 +331,10 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
              (field-name (or (cdr-safe kwd) kwd))
              ;; get the bibtex field value
              (field-value
-              (or (bibtex-completion-apa-get-value field-name entry)
-                  ;; nil will be used to set back the proper wildcard
-                  nil))
+              ;; condition-case to temporary workaround an upstream bug
+              (condition-case nil
+                  (bibtex-completion-apa-get-value field-name entry)
+                (error "")))
              ;; org-capture prompt wildcard
              (rplc-s (concat "%^{" (or keyword "citekey") "}"))
              ;; org-roam-capture prompt wildcard
@@ -354,9 +355,9 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
               (setq pos (match-end 1)
                     i (1+ i)))))
         ;; Replace org-roam-capture prompt wildcards
-        (when (and field-value head)
+        (when head
           (plist-put plst :head (s-replace rplc-s2 field-value head)))
-        (when (and field-value fl-nm)
+        (when fl-nm
           (plist-put plst :file-name (s-replace rplc-s2 field-value fl-nm)))))
     ;; Second run: replace prompts and prompt matches in org-capture
     ;; template string
