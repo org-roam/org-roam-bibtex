@@ -92,13 +92,12 @@ help:
 1. Read carefully this README file.
 2. Read it once again, please.
 3. Check our [community resources](#community) and describe your problem there.
-4. "Help me!!1!11!!!" is wrong. "Help me, please" is correct. Anywhere. Anytime.
-5. Open an issue on the bug tracker.
-6. Take your time to describe your problem and we'll take ours to help you solve it.
-7. Describe your problem clearly, in a procedural way: "I run `this command`,
+4. Open an issue on the bug tracker.
+5. Take your time to describe your problem and we'll take ours to help you solve it.
+6. Describe your problem clearly, in a procedural way: "I run `this command`,
 then I run `that command`, and finally `this one`.  I expect `this` to happen but
 instead happens `that`.  Here is my `configuration`."
-8. Thank you!
+7. Thank you!
 
 Installation
 ---------------
