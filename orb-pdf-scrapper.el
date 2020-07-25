@@ -168,7 +168,7 @@ FIELD is the name of a BibTeX field from ENTRY.  Return
 This function is primarily intended for fixing anystyle parsing
 artefacts such as those often encountered in \"pages\" field,
 where two numbers have only spaces between them."
-  (replace-regexp-in-string "\\`[[:alnum:]]\\([ –-]+\\)[[:alnum:]]\\'"
+  (replace-regexp-in-string "\\`[[:alnum:]]*?\\([- –]+\\)[[:alnum:]]*\\'"
                             "--"
                             (bibtex-completion-get-value
                              field entry orb-autokey-empty-field-token)
