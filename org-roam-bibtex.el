@@ -532,6 +532,7 @@ before calling any Org-roam functions."
                      (list (cons 'title title)
                            (cons 'ref citekey-formatted)
                            (cons 'slug (org-roam--title-to-slug citekey)))))
+                (setq org-roam-capture-additional-template-props (list :finalize 'find-file))
                 (org-roam-capture--capture))
             (org-roam-find-file title))
         (message "Something went wrong. Check the *Warnings* buffer.")))))
