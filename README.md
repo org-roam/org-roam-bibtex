@@ -55,6 +55,7 @@ This means that a lot of things may change in the future
 package will be unstable for a while.  This will change when we
 release v1.0, but for now, you will have to be on the lookout for a
 few things:
+
 1. If you encounter a problem with the package, start by making sure
    that you have the latest
    version. (cf. [Installation](#installation))
@@ -62,8 +63,8 @@ few things:
    variables which do not exist anymore or functions which are not
    called with the right number of arguments, you will need to check
    this page to see what has changed.
-3. If neither 1. nor 2. resolved your problem, please open an
-   **issue**.  (This is what an Alpha version is for!)
+3. If neither 1. nor 2. resolved your problem, read the following section on
+   [how to get help](#orb-help-me).
 
 ##### WARNING! 
 
@@ -74,6 +75,29 @@ few things:
   will be dropped eventually. All new functions and variables will
   have the new prefix except those matching the `*-mode*` pattern,
   which will retain the `org-roam-bibtex` namespace.**
+
+<a name="orb-help-me"></a>HELP ME!!!
+---------------
+
+Please read carefully this section before installing Org Roam BibTeX.  There
+are good chances you'll experience different problems and issues when running
+or even installing Org Roam BibTeX.  These chances primarily correlate with
+your level of comfort with Emacs, Lisp, Org mode, Org Roam, BibTeX and other
+such things.  There may also be bugs that obviously do not depend on your
+skills.  We hunt them, eliminate them, then introduce new ones, and so on.  In
+any case, it's very probable that you'll need some help.  We are glad to help
+you, sure, and kindly ask you to follow these simple rules when asking for
+help:
+
+1. Read carefully this README file.
+2. Read it once again, please.
+3. Check our [community resources](#community) and describe your problem there.
+4. Open an issue on the bug tracker.
+5. Take your time to describe your problem and we'll take ours to help you solve it.
+6. Describe your problem clearly, in a procedural way: "I run `this command`,
+then I run `that command`, and finally `this one`.  I expect `this` to happen but
+instead happens `that`.  Here is my `configuration`."
+7. Thank you!
 
 Installation
 ---------------
