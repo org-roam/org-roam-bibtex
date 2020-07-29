@@ -1,4 +1,4 @@
-;;; org-roam-bibtex-compat.el --- Connector between Org-roam, BibTeX-completion, and Org-ref -*- coding: utf-8; lexical-binding: t -*-
+;;; org-roam-bibtex-compat.el --- Org Roam BibTeX: Obsolete definitions -*- coding: utf-8; lexical-binding: t -*-
 
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; Copyright © 2020 Leo Vivier <leo.vivier+dev@gmail.com>
