@@ -8,6 +8,41 @@ Well, at least we try!
 
 ## [Unreleased]
 
+## [0.3.0] - 2020-29-07
+### Added
+- Feature: ORB PDF Scrapper
+
+  ORB PDF Scrapper is an Emacs interface to
+  [`anystyle`](https://github.com/inukshuk/anystyle) reference parser
+  integrated into ORB.  ORB PDF Scrapper interactive process can be
+  conveniently accessed via ORB Note Actions.
+
+- Feature: ORB Anystyle
+
+  ORB Anystyle is an Emacs Lisp wrapper for `anystyle` command line program
+  that allows to conveniently supply arguments and call `anystyle` from Emacs
+  Lisp programs.  Its primary use is within ORB PDF Scrapper but it can be used
+  freely elsewhere.
+
+- Feature: ORB Autokey
+
+  ORB Autokey allows to generate citation keys from BibTeX data.  Currently,
+  its primary use is within ORB PDF Scrapper but the functionality is
+  independent of it and can be used elsewhere.
+
+- Improved documentation (README)
+  - Installation instructions for Spacemacs and Doom
+  - Documentation for Note Actions 
+  - Help me section
+  
+### Changed
+- Internal organization of `org-roam-bibtex` files and file inter-dependencies
+  towards a more modular approach
+- Changes following `org-roam` upstream developments
+
+### Fixed
+- A couple of minor bugs
+
 ## [0.2.3] - 2020-05-10
 ### Added
 - `orb--replace-virtual-fields` and `orb--virtual-fields-alist` for
@@ -93,7 +128,8 @@ Well, at least we try!
 [org-roam]: https://github.com/jethrokuan/org-roam
 [helm-bibtex/bibtex-completion]: https://github.com/tmalsburg/helm-bibtex
 
-[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.0...v0.2.1
