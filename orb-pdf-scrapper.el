@@ -685,8 +685,8 @@ Training set => %s
 Parser model => %s\n
 anystyle output:
 =====================\n"
-                    orb-anystyle-parser-model
-                    orb-anystyle-parser-training-set))
+                    orb-anystyle-parser-training-set
+                    (or orb-anystyle-parser-model "none")))
     (goto-char (point-min))
     ;; normally, anystyle runs with `shell-command', anystyle train, however,
     ;; can take minutes on large files, so it runs in a shell sub-process
@@ -706,7 +706,20 @@ anystyle output:
            (if (string= result "finished\n")
                (orb--with-scrapper-buffer!
                  (goto-char (point-max))
-                 (insert "=====================\n\nDone!")
+                 (insert "=====================\n\nDone!\n\n")
+                 (if orb-anystyle-parser-model
+                     (insert (format "Parser model update: %s"
+                                          orb-anystyle-parser-model))
+                   (insert
+                    (format "Parser model created: %s\n"
+                            (concat
+                             (or (file-name-directory
+                                  orb-anystyle-parser-training-set)
+                                 (file-name-as-directory
+                                  orb-anystyle-user-directory))
+                             "parser.mod"))
+                    "To use the model, \
+set `orb-anystyle-parser-model' variable to the above path."))
                  (message "Training anystyle parser model...done")
                  (orb-pdf-scrapper--put :context 'finished
                                         :training-process nil)
