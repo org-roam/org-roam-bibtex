@@ -315,7 +315,13 @@ find, parse, check, train, help or license" input)))
        (setq command-options
              (orb--format " --crop=%s" crop
                           " --layout" (cons layout " --no-layout")
-                          " --solo" (cons solo " --no-solo")))))
+                          " --solo" (cons solo " --no-solo"))))
+      ('train
+       (unless output
+         (setq output
+               (concat (or (file-name-directory orb-anystyle-parser-training-set)
+                           (file-name-as-directory orb-anystyle-user-directory))
+                       "parser.mod")))))
     ;; Arguments relevant for more than one command
     ;;
     ;; find, parse:
@@ -383,8 +389,8 @@ using the default one" pmodel)
                                 "%s" global-options
                                 " %s" command
                                 "%s" command-options
-                                " \"%s\"" input
-                                " \"%s\"" output))
+                                " \"%s\"" (when input (file-truename input))
+                                " \"%s\"" (when output (file-truename output))))
     (funcall anystyle-run anystyle)))
 
 (provide 'orb-anystyle)
