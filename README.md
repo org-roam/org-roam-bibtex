@@ -138,9 +138,11 @@ the file manually.
 
 ### Spacemacs
 
-Assuming `org-roam` is installed via a private layer as described
-[here](https://org-roam.readthedocs.io/en/master/installation/#spacemacs),
-add `org-roam-bibtex` to `org-roam-packages:
+Most probably you already have a private `org-roam` layer, if not, see examples
+[here](https://org-roam.discourse.group/t/orb-helm-bibtex-open-notes-wont-create-new-note/690)
+and
+[here](https://www.reddit.com/r/emacs/comments/f6erh0/total_noob_how_do_i_install_orgroam_in_spacemacs/).
+Add `org-roam-bibtex` to `org-roam-packages`:
 
 ``` el
 (defconst org-roam-packages
@@ -148,7 +150,7 @@ add `org-roam-bibtex` to `org-roam-packages:
 
 ```
 
-and this after `org-roam/init-org-roam`:
+add this after `org-roam/init-org-roam`:
 
 ``` el
 (defun org-roam/init-org-roam-bibtex ()
