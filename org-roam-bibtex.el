@@ -283,9 +283,8 @@ The special keywords and their replacements are defined in
                      (cons kwd1 (car (rassoc kwd2 alist)))
                    kwd))
                 (wrong-type
-                 (org-roam--with-template-error 'orb-preformat-keywords
-                   (signal 'wrong-type-argument
-                           `((stringp consp) ,wrong-type))))))
+                 (signal 'wrong-type-argument
+                         `((stringp consp) ,wrong-type)))))
             kwds)))
 
 (defun orb--preformat-template (template entry)
