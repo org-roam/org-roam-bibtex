@@ -530,7 +530,7 @@ before calling any Org-roam functions."
                     (org-roam-capture--info
                      (list (cons 'title title)
                            (cons 'ref citekey-formatted)
-                           (cons 'slug (org-roam--title-to-slug citekey)))))
+                           (cons 'slug (funcall org-roam-title-to-slug-function citekey)))))
                 (setq org-roam-capture-additional-template-props (list :finalize 'find-file))
                 (org-roam-capture--capture))
             (org-roam-find-file title))
