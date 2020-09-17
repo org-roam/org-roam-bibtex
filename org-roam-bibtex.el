@@ -183,6 +183,30 @@ about BibTeX field names."
            :value-type (string :tag "Field")))
   :group 'org-roam-bibtex)
 
+(defcustom orb-process-file-keyword t
+  "Whether to treat the file wildcards specially during template preformatting.
+When this variable is non-nil, \"%^{file}\" and \"${file}\"
+wildcards will be expanded by `org-process-file-field' rather
+than simply replaced with the field value.  This may be useful in
+situations when the file field contans several file names and
+only one file name is desirable for retrieval.  Do this even when
+\"file\" keyword is set for preformatting in `orb-preformat-keywords'.
+
+If this variable is `string', for example \"my-file\", use its
+value as the wildcard keyword instead of the default \"file\"
+keyword.  Thus, it will be possible to get both the raw file
+field value by expanding %^{file} and ${file} wildcards and a
+single file name by expanding %^{my-file} and ${my-file}
+wildcards.
+
+See also `orb-file-field-extensions' for filtering file names
+based on their extension."
+  :group 'org-roam-bibtex
+  :type '(choice
+          (const :tag "Yes" t)
+          (const :tag "No" nil)
+          (string :tag "Custom wildcard keyword")))
+
 (defcustom orb-citekey-format "cite:%s"
   "Format string for the citekey.
 The citekey obtained from Helm-bibtex/Ivy-bibtex/Org-ref
@@ -292,7 +316,7 @@ The special keywords and their replacements are defined in
 TEMPLATE is an element of `org-roam-capture-templates' and ENTRY
 is a BibTeX entry as returned by `bibtex-completion-get-entry'."
   ;; Handle org-roam-capture part
-  (let* ((kwds (->>;; normalize orb-preformat-keywords
+  (let* ((kwds (->> ;; normalize orb-preformat-keywords
                 (if (listp orb-preformat-keywords)
                     orb-preformat-keywords
                   (list orb-preformat-keywords))
@@ -318,7 +342,15 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
          (plst (cdr template))
          ;; regexp for org-capture prompt wildcard
          (rx "\\(%\\^{[[:alnum:]-_]*}\\)")
+         process-file-keyword
          lst)
+    ;; Maybe treat "file" keyword specially
+    (when orb-process-file-keyword
+      (let ((file-keyword (or (and (stringp orb-process-file-keyword)
+                                   orb-process-file-keyword)
+                              "file")))
+        (setq kwds (append (list file-keyword) kwds)
+              process-file-keyword t)))
     ;; First run:
     ;; 1) Make a list of (rplc-s field-value match-position) for the
     ;; second run
@@ -330,10 +362,16 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
              (field-name (or (cdr-safe kwd) kwd))
              ;; get the bibtex field value
              (field-value
-              ;; condition-case to temporary workaround an upstream bug
-              (condition-case nil
-                  (bibtex-completion-apa-get-value field-name entry)
-                (error "")))
+              ;; maybe process file keyword
+              (if process-file-keyword
+                  (prog1
+                      (orb-process-file-field
+                       (bibtex-completion-apa-get-value "=key=" entry))
+                    (setq process-file-keyword nil))
+                ;; condition-case to temporary workaround an upstream bug
+                (condition-case nil
+                    (bibtex-completion-apa-get-value field-name entry)
+                  (error ""))))
              ;; org-capture prompt wildcard
              (rplc-s (concat "%^{" (or keyword "citekey") "}"))
              ;; org-roam-capture prompt wildcard
@@ -342,7 +380,7 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
              (head (plist-get plst :head))
              ;; org-roam-capture :file-name template
              (fl-nm (plist-get plst :file-name))
-             (i 1)                               ; match counter
+             (i 1)                        ; match counter
              pos)
         ;; Search for rplc-s, set flag m if found
         (when tp

@@ -87,6 +87,20 @@
 
 ;; Various utility functions
 
+(defcustom orb-file-field-extensions '("pdf")
+  "Extensions of file names to keep when retrieving values from the file field.
+This may be a string or a list of strings corresponding to file
+extensions without a dot.
+
+Set it to nil to keep all file names.  You will be prompted to choose one.
+
+The name of the file field is determined by
+  `bibtex-completion-pdf-field' (default \"file\")."
+  :group 'org-roam-bibtex
+  :type '(choice
+          (string)
+          (repeat :tag "List of extensions" (string))))
+
 ;;;###autoload
 (defun orb-process-file-field (citekey)
   "Process the 'file' BibTeX field and resolve if there are multiples.
@@ -95,14 +109,25 @@ entry.  The disk matching is based on looking in the
 `bibtex-completion-library-path' for a file with the
 CITEKEY.
 
+If variable `orb-file-field-extensions' is non-nil, return only
+the file paths with the respective extensions.
+
 \(Mendeley, Zotero, normal paths) are all supported.  If there
 are multiple files found the user is prompted to select which one
-to enter"
-  (let* ((entry (bibtex-completion-get-entry citekey))
-         (paths (bibtex-completion-find-pdf entry)))
-    (if (= (length paths) 1)
-        (car paths)
-      (completing-read "File to use: " paths))))
+to enter."
+  (when-let* ((entry (bibtex-completion-get-entry citekey))
+              (paths (bibtex-completion-find-pdf entry)))
+    (when-let ((extensions orb-file-field-extensions))
+      (unless (listp extensions)
+        (setq extensions (list extensions)))
+      (setq paths (--filter
+                   (member-ignore-case
+                    (file-name-extension it) extensions)
+                   paths)))
+    (when paths
+      (if (= (length paths) 1)
+          (car paths)
+        (completing-read "File to use: " paths)))))
 
 ;;;###autoload
 (defun orb-find-note-file (citekey)
