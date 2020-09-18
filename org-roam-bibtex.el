@@ -119,7 +119,7 @@ See `orb-edit-notes' for details."
 
 (defcustom orb-preformat-keywords
   '("citekey" "date" "type" "pdf?" "note?"
-    "author" "editor"
+    "author" "editor" "file"
     "author-abbrev" "editor-abbrev" "author-or-editor-abbrev")
   "The template prompt wildcards for preformatting.
 Only relevant when `orb-preformat-templates' is set to
@@ -172,6 +172,10 @@ treated as the field name.
          :head \"#+TITLE: ${title}\"
          :unnarrowed t)))
 
+The \"file\" keyword will be treated specially if the value of
+`orb-process-file-field' is non-nil.  See its docstring for
+explanation.
+
 Consult bibtex-completion package for additional information
 about BibTeX field names."
   :type '(choice
@@ -182,6 +186,35 @@ about BibTeX field names."
            :key-type (string :tag "Wildcard")
            :value-type (string :tag "Field")))
   :group 'org-roam-bibtex)
+
+(defcustom orb-process-file-keyword t
+  "Whether to treat the file wildcards specially during template preformatting.
+When this variable is non-nil, the \"%^{file}\" and \"${file}\"
+wildcards will be expanded by `org-process-file-field' rather
+than simply replaced with the field value.  This may be useful in
+situations when the file field contains several file names and
+only one file name is desirable for retrieval.  The \"file\"
+keyword must be set for preformatting in `orb-preformat-keywords'
+as usual.
+
+If this variable is `string', for example \"my-file\", use its
+value as the wildcard keyword instead of the default \"file\"
+keyword.  Thus, it will be possible to get both the raw file
+field value by expanding the %^{file} and ${file} wildcards and a
+single file name by expanding the %^{my-file} and ${my-file}
+wildcards.  The keyword, e.g. \"my-file\", must be set for
+preformatting in `orb-preformat-keywords' as usual.
+
+The variable `orb-file-field-extensions' controls which filtering
+of the file names based on file extensions.
+
+See also `orb-file-field-extensions' for filtering file names
+based on their extension."
+  :group 'org-roam-bibtex
+  :type '(choice
+          (const :tag "Yes" t)
+          (const :tag "No" nil)
+          (string :tag "Custom wildcard keyword")))
 
 (defcustom orb-citekey-format "cite:%s"
   "Format string for the citekey.
@@ -292,7 +325,7 @@ The special keywords and their replacements are defined in
 TEMPLATE is an element of `org-roam-capture-templates' and ENTRY
 is a BibTeX entry as returned by `bibtex-completion-get-entry'."
   ;; Handle org-roam-capture part
-  (let* ((kwds (->>;; normalize orb-preformat-keywords
+  (let* ((kwds (->> ;; normalize orb-preformat-keywords
                 (if (listp orb-preformat-keywords)
                     orb-preformat-keywords
                   (list orb-preformat-keywords))
@@ -318,6 +351,10 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
          (plst (cdr template))
          ;; regexp for org-capture prompt wildcard
          (rx "\\(%\\^{[[:alnum:]-_]*}\\)")
+         (file-keyword (when orb-process-file-keyword
+                         (or (and (stringp orb-process-file-keyword)
+                                   orb-process-file-keyword)
+                              "file")))
          lst)
     ;; First run:
     ;; 1) Make a list of (rplc-s field-value match-position) for the
@@ -330,10 +367,19 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
              (field-name (or (cdr-safe kwd) kwd))
              ;; get the bibtex field value
              (field-value
-              ;; condition-case to temporary workaround an upstream bug
-              (condition-case nil
-                  (bibtex-completion-apa-get-value field-name entry)
-                (error "")))
+              ;; maybe process file keyword
+              (if (and file-keyword (string= field-name file-keyword))
+                  (prog1
+                      (orb-process-file-field
+                       (bibtex-completion-apa-get-value "=key=" entry))
+                    ;; we're done so don't even compare file-name with
+                    ;; file-keyword in the successive cycles
+                    (setq file-keyword nil))
+                ;; do the usual processing otherwise
+                ;; condition-case to temporary workaround an upstream bug
+                (condition-case nil
+                    (bibtex-completion-apa-get-value field-name entry)
+                  (error ""))))
              ;; org-capture prompt wildcard
              (rplc-s (concat "%^{" (or keyword "citekey") "}"))
              ;; org-roam-capture prompt wildcard
@@ -342,7 +388,7 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
              (head (plist-get plst :head))
              ;; org-roam-capture :file-name template
              (fl-nm (plist-get plst :file-name))
-             (i 1)                               ; match counter
+             (i 1)                        ; match counter
              pos)
         ;; Search for rplc-s, set flag m if found
         (when tp
