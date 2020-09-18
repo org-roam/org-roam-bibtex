@@ -119,7 +119,7 @@ See `orb-edit-notes' for details."
 
 (defcustom orb-preformat-keywords
   '("citekey" "date" "type" "pdf?" "note?"
-    "author" "editor"
+    "author" "editor" "file"
     "author-abbrev" "editor-abbrev" "author-or-editor-abbrev")
   "The template prompt wildcards for preformatting.
 Only relevant when `orb-preformat-templates' is set to
@@ -172,6 +172,10 @@ treated as the field name.
          :head \"#+TITLE: ${title}\"
          :unnarrowed t)))
 
+The \"file\" keyword will be treated specially if the value of
+`orb-process-file-field' is non-nil.  See its docstring for
+explanation.
+
 Consult bibtex-completion package for additional information
 about BibTeX field names."
   :type '(choice
@@ -185,19 +189,24 @@ about BibTeX field names."
 
 (defcustom orb-process-file-keyword t
   "Whether to treat the file wildcards specially during template preformatting.
-When this variable is non-nil, \"%^{file}\" and \"${file}\"
+When this variable is non-nil, the \"%^{file}\" and \"${file}\"
 wildcards will be expanded by `org-process-file-field' rather
 than simply replaced with the field value.  This may be useful in
-situations when the file field contans several file names and
-only one file name is desirable for retrieval.  Do this even when
-\"file\" keyword is set for preformatting in `orb-preformat-keywords'.
+situations when the file field contains several file names and
+only one file name is desirable for retrieval.  The \"file\"
+keyword must be set for preformatting in `orb-preformat-keywords'
+as usual.
 
 If this variable is `string', for example \"my-file\", use its
 value as the wildcard keyword instead of the default \"file\"
 keyword.  Thus, it will be possible to get both the raw file
-field value by expanding %^{file} and ${file} wildcards and a
-single file name by expanding %^{my-file} and ${my-file}
-wildcards.
+field value by expanding the %^{file} and ${file} wildcards and a
+single file name by expanding the %^{my-file} and ${my-file}
+wildcards.  The keyword, e.g. \"my-file\", must be set for
+preformatting in `orb-preformat-keywords' as usual.
+
+The variable `orb-file-field-extensions' controls which filtering
+of the file names based on file extensions.
 
 See also `orb-file-field-extensions' for filtering file names
 based on their extension."
@@ -342,15 +351,11 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
          (plst (cdr template))
          ;; regexp for org-capture prompt wildcard
          (rx "\\(%\\^{[[:alnum:]-_]*}\\)")
-         process-file-keyword
-         lst)
-    ;; Maybe treat "file" keyword specially
-    (when orb-process-file-keyword
-      (let ((file-keyword (or (and (stringp orb-process-file-keyword)
+         (file-keyword (when orb-process-file-keyword
+                         (or (and (stringp orb-process-file-keyword)
                                    orb-process-file-keyword)
                               "file")))
-        (setq kwds (append (list file-keyword) kwds)
-              process-file-keyword t)))
+         lst)
     ;; First run:
     ;; 1) Make a list of (rplc-s field-value match-position) for the
     ;; second run
@@ -363,11 +368,14 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
              ;; get the bibtex field value
              (field-value
               ;; maybe process file keyword
-              (if process-file-keyword
+              (if (and file-keyword (string= field-name file-keyword))
                   (prog1
                       (orb-process-file-field
                        (bibtex-completion-apa-get-value "=key=" entry))
-                    (setq process-file-keyword nil))
+                    ;; we're done so don't even compare file-name with
+                    ;; file-keyword in the successive cycles
+                    (setq file-keyword nil))
+                ;; do the usual processing otherwise
                 ;; condition-case to temporary workaround an upstream bug
                 (condition-case nil
                     (bibtex-completion-apa-get-value field-name entry)
