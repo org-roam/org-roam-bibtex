@@ -251,6 +251,31 @@ See `orb-edit-notes' for details."
           (const :tag "No" nil))
   :group 'org-roam-bibtex)
 
+(defcustom orb-ignore-bibtex-store-link-functions
+  '(org-bibtex-store-link)
+  "Functions to overide with `ignore' during note creation process.
+
+Org Ref defines the function `org-ref-bibtex-store-link' to store
+links to a BibTeX buffer, e.g. with `org-store-link'.  At the
+same time, Org ref requires `ol-bibtex' library, which defines
+`org-bibtex-store-link' to do the same.  When creating a note
+with `orb-edit-notes' from a BibTeX buffer, for example by
+calling `org-ref-open-bibtex-notes', the initiated `org-capture'
+process implicitly calls `org-store-link'.  The latter loops
+through all the functions for storing links, and if more than one
+function can store links to the location, the BibTeX buffer in
+this particular case, the user will be prompted to choose one.
+This is definitely annoying, hence ORB will advise all functions
+in this list to return nil to trick `org-capture' and get rid of
+the prompt.
+
+The default value is `(org-bibtex-store-link)', which means this
+function will be ignored and `org-ref-bibtex-store-link' will be
+used to store a link to the BibTeX buffer.  See
+`org-capture-templates' on how to use the link in your templates."
+  :type '(repeat (function))
+  :risky t
+  :group 'org-roam-bibtex)
 
 ;; * Interface functions
 
@@ -273,7 +298,6 @@ intended for use with Org-ref."
 This function replaces `bibtex-completion-edit-notes'.  Only the
 first key from KEYS will actually be used."
   (orb-edit-notes (car keys)))
-
 
 ;; * Helper functions
 
@@ -439,6 +463,19 @@ CANDIDATES is a an alist of candidates to consider.  Defaults to
                 (v (list :path file-path :title title)))
             (push (cons k v) completions)))))))
 
+(defun orb--store-link-functions-advice (action)
+  "Add or remove advice for each of `orb-ignore-bibtex-store-link-functions'.
+ACTION should be a symbol `add' or `remove'.  A piece of advice
+is the function `ignore', it is added as `:override'."
+  (when orb-ignore-bibtex-store-link-functions
+    (let ((advice-func (intern (format "advice-%s" action)))
+          (advice (cl-case action
+                    (add (list :override #'ignore))
+                    (remove (list #'ignore))
+                    (t (user-error "Action type not recognised: %s" action)))))
+      (dolist (advisee orb-ignore-bibtex-store-link-functions)
+        (apply advice-func (push advisee advice))))))
+
 
 ;; * Main functions
 
@@ -570,16 +607,20 @@ before calling any Org-roam functions."
                  (or (bibtex-completion-apa-get-value "title" entry)
                      "Title not found for this entry \
 (Check your BibTeX file)")))
-          ;; Check if a custom template has been set
-          (if orb-templates
-              (let ((org-roam-capture--context 'ref)
-                    (org-roam-capture--info
-                     (list (cons 'title title)
-                           (cons 'ref citekey-formatted)
-                           (cons 'slug (funcall org-roam-title-to-slug-function citekey)))))
-                (setq org-roam-capture-additional-template-props (list :finalize 'find-file))
-                (org-roam-capture--capture))
-            (org-roam-find-file title))
+          (progn
+            (orb--store-link-functions-advice 'add)
+            (unwind-protect
+                ;; Check if a custom template has been set
+                (if orb-templates
+                    (let ((org-roam-capture--context 'ref)
+                          (org-roam-capture--info
+                           (list (cons 'title title)
+                                 (cons 'ref citekey-formatted)
+                                 (cons 'slug (funcall org-roam-title-to-slug-function citekey)))))
+                      (setq org-roam-capture-additional-template-props (list :finalize 'find-file))
+                      (org-roam-capture--capture))
+                  (org-roam-find-file title))
+              (orb--store-link-functions-advice 'remove)))
         (message "Something went wrong. Check the *Warnings* buffer.")))))
 
 ;;;###autoload
