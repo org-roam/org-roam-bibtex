@@ -9,8 +9,8 @@
 ;; 	Jethro Kuan <jethrokuan95@gmail.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
-;; Version: 0.2.3
-;; Package-Requires: ((emacs "26.1") (org-roam "1.0.0") (bibtex-completion "2.0.0"))
+;; Verstion 0.3.1
+;; Package-Requires: ((emacs "27.1") (org-roam "1.2.2") (bibtex-completion "2.0.0"))
 
 ;; Soft dependencies: projectile, persp-mode, helm, ivy, hydra
 
