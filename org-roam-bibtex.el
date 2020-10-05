@@ -253,9 +253,9 @@ See `orb-edit-notes' for details."
 
 (defcustom orb-ignore-bibtex-store-link-functions
   '(org-bibtex-store-link)
-  "Functions to overide with `ignore' during note creation process.
+  "Functions to override with `ignore' during note creation process.
 
-Org Ref defines the function `org-ref-bibtex-store-link' to store
+Org Ref defines function `org-ref-bibtex-store-link' to store
 links to a BibTeX buffer, e.g. with `org-store-link'.  At the
 same time, Org ref requires `ol-bibtex' library, which defines
 `org-bibtex-store-link' to do the same.  When creating a note

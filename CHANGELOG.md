@@ -8,6 +8,34 @@ Well, at least we try!
 
 ## [Unreleased]
 
+## [0.3.1] - 2020-05-10
+### Added
+- Smart ${file} and %^{file} wildcards 
+  If `orb-process-file-keyword` is non nil, process these wildcards with
+  `orb-process-file-field`.  This allows to use `${file}` instead of more
+  verbose `(orb-process-file-field \"${citekey}\")` in templates
+
+- Only the files whose extensions match those specified in
+  `orb-file-field-extensions` will be returned by `orb-process-file-field` or
+  all if this variable is nil.
+
+- Functions listed `orb-ignore-bibtex-store-link-functions` will be forced to
+  return nil during note taking with ORB, e.g. *via* `org-ref` interface.  This
+  has been introduced to achieve a better user experience with `org-ref`, which
+  causes two functions, native `org-ref-bibtex-store-link` and `ol-bibtex`'
+  `org-bibtex-store-link` to be defined at runtime.  With two functions,
+  `org-capture` cannot decide which one to use and annoyingly prompts to choose
+  one every time `org-capture` is initiated from a BibTeX buffer
+
+### Changed
+- Respect `org-roam-title-to-slug-function`, thanks to @Wetlize
+- Remove `org-roam--with-template-error`, which was removed from Org Roam
+- Improve ORB PDF Scrapper training session messages
+
+### Fixed
+- Broken link to Spacemacs instructions
+- Ensure Anystyle receives absolute file paths
+
 ## [0.3.0] - 2020-29-07
 ### Added
 - Feature: ORB PDF Scrapper
@@ -128,7 +156,8 @@ Well, at least we try!
 [org-roam]: https://github.com/jethrokuan/org-roam
 [helm-bibtex/bibtex-completion]: https://github.com/tmalsburg/helm-bibtex
 
-[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/org-roam/org-roam-bibtex/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.1...v0.2.2
