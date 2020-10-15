@@ -223,6 +223,23 @@ will be formatted as specified here."
   :type 'string
   :group 'org-roam-bibtex)
 
+(defcustom orb-slug-source 'citekey
+  "What should be used as a source for creating the note's slug.
+Supported values are symbols `citekey' and `title'.
+
+A special variable `${slug}` in `orb-templates' (and
+`org-roam-capture-templates') is used as a placeholder for an
+automatically generated string which is meant to be used in
+filenames.  Org Roam uses the note's title to create a slug.  ORB
+also allows for the citekey.  The function specified in
+`org-roam-title-to-slug-function' is used to create the slug.
+This operation typilcally involves removing whitespace and
+converting words to lowercase, among possibly other things."
+  :type '(choice
+          (const citekey)
+          (const title))
+  :group 'org-roam-bibtex)
+
 (defcustom orb-persp-project `("notes" . ,org-roam-directory)
   "Perspective name and path to the project with bibliography notes.
 A cons cell (PERSP-NAME . PROJECT-PATH).  Only relevant when
@@ -612,12 +629,20 @@ before calling any Org-roam functions."
             (unwind-protect
                 ;; Check if a custom template has been set
                 (if orb-templates
-                    (let ((org-roam-capture--context 'ref)
-                          (org-roam-capture--info
-                           (list (cons 'title title)
-                                 (cons 'ref citekey-formatted)
-                                 (cons 'slug (funcall org-roam-title-to-slug-function citekey)))))
-                      (setq org-roam-capture-additional-template-props (list :finalize 'find-file))
+                    (let* ((org-roam-capture--context 'ref)
+                           (slug-source (cl-case orb-slug-source
+                                          (citekey citekey)
+                                          (title title)
+                                          (t (user-error "Only `citekey' \
+or `title' should be used for slug: %s not supported" orb-slug-source))))
+                           (org-roam-capture--info
+                            (list (cons 'title title)
+                                  (cons 'ref citekey-formatted)
+                                  (cons 'slug (funcall
+                                               org-roam-title-to-slug-function
+                                               slug-source)))))
+                      (setq org-roam-capture-additional-template-props
+                            (list :finalize 'find-file))
                       (org-roam-capture--capture))
                   (org-roam-find-file title))
               (orb--store-link-functions-advice 'remove)))
