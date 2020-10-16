@@ -409,18 +409,19 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
              ;; get the bibtex field value
              (field-value
               ;; maybe process file keyword
-              (if (and file-keyword (string= field-name file-keyword))
-                  (prog1
-                      (orb-process-file-field
-                       (bibtex-completion-apa-get-value "=key=" entry))
-                    ;; we're done so don't even compare file-name with
-                    ;; file-keyword in the successive cycles
-                    (setq file-keyword nil))
-                ;; do the usual processing otherwise
-                ;; condition-case to temporary workaround an upstream bug
-                (condition-case nil
-                    (bibtex-completion-apa-get-value field-name entry)
-                  (error ""))))
+              (or (if (and file-keyword (string= field-name file-keyword))
+                      (prog1
+                          (orb-process-file-field
+                           (bibtex-completion-apa-get-value "=key=" entry))
+                        ;; we're done so don't even compare file-name with
+                        ;; file-keyword in the successive cycles
+                        (setq file-keyword nil))
+                    ;; do the usual processing otherwise
+                    ;; condition-case to temporary workaround an upstream bug
+                    (condition-case nil
+                        (bibtex-completion-apa-get-value field-name entry)
+                      (error "")))
+                  ""))
              ;; org-capture prompt wildcard
              (rplc-s (concat "%^{" (or keyword "citekey") "}"))
              ;; org-roam-capture prompt wildcard
