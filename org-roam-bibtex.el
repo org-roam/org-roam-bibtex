@@ -492,7 +492,8 @@ is the function `ignore', it is added as `:override'."
                     (remove (list #'ignore))
                     (t (user-error "Action type not recognised: %s" action)))))
       (dolist (advisee orb-ignore-bibtex-store-link-functions)
-        (apply advice-func (push advisee advice))))))
+        (when (boundp advisee)
+          (apply advice-func (push advisee advice)))))))
 
 
 ;; * Main functions
@@ -595,40 +596,40 @@ before calling any Org-roam functions."
     (unless (ignore-errors (org-roam--find-ref citekey))
       ;; Check if the requested entry actually exists and fail gracefully
       (if-let* ((entry (bibtex-completion-get-entry citekey))
-                ;; Depending on the templates used:
-                ;; run org-roam-capture--capture or
-                ;; call org-roam-find-file
-                (templates
+                ;; decide which templates to use, prefer orb-templates
+                (org-roam-capture-templates
                  (or orb-templates
                      org-roam-capture-templates
                      (and (display-warning
                            :warning "Could not find the requested templates.")
                           nil)))
-                (org-roam-capture-templates
-                 ;; Optionally preformat keywords
-                 (or
-                  (when orb-preformat-templates
-                    (let* ((tmpls (copy-tree templates))
-                           result)
-                      ;; HACK: Currently, there is no easy way to
-                      ;; inject ourselves into the org-capture process
-                      ;; once it's started. We traverse and preformat
-                      ;; all the templates beforehand, although only
-                      ;; one will be used eventually.  This is a waste
-                      ;; of resources and may be slow with many
-                      ;; templates.
-                      (dolist (tmpl tmpls (nreverse result))
-                        (cl-pushnew
-                         (orb--preformat-template tmpl entry) result))))
-                  templates))
                 (title
                  (or (bibtex-completion-apa-get-value "title" entry)
                      "Title not found for this entry \
-(Check your BibTeX file)")))
+(Check your BibTeX file)"))
+                ;; hijack org-capture-templates
+                (org-capture-templates org-roam-capture-templates)
+                ;; entry is our bibtex entry, it just happens that
+                ;; `org-capture' calls a single template entry "entry"
+                (template (--> (org-capture-select-template)
+                               ;; optionally preformat templates
+                               (if orb-preformat-templates
+                                   (orb--preformat-template it entry)
+                                 it)))
+                ;; Org-roam coverts the templates to its own syntax;
+                ;; since we are forcing `org-capture' to use the template entry
+                ;; (by setting `org-capture-entry'), and Org-roam converts the
+                ;; whole template list, we must do the conversion of the entry
+                ;; ourselves
+                (org-capture-entry
+                 (org-roam-capture--convert-template template)))
           (progn
+            ;; fix some Org-ref related stuff
             (orb--store-link-functions-advice 'add)
             (unwind-protect
-                ;; Check if a custom template has been set
+                ;; Depending on the templates used:
+                ;; run `org-roam-capture--capture' with ORB-predefined settings
+                ;; or call vanilla `org-roam-find-file'
                 (if orb-templates
                     (let* ((org-roam-capture--context 'ref)
                            (slug-source (cl-case orb-slug-source
