@@ -110,6 +110,12 @@ Returns the new plist."
   "Get PROP from `orb-plist'."
   (plist-get orb-plist prop))
 
+(defun orb-cleanup ()
+  "Clean up `orb-plist'."
+  (let ((keywords (-filter #'keywordp orb-plist)))
+    (dolist (keyword keywords)
+      (orb-plist-put keyword nil))))
+
 ;; ** File field
 
 (defcustom orb-file-field-extensions '("pdf")
