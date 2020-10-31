@@ -616,8 +616,15 @@ before calling any Org-roam functions."
                                (if orb-preformat-templates
                                    (orb--preformat-template it entry)
                                  it)))
+                ;; pretend we had only one template
+                ;; `org-roam-capture--capture' behaves specially in this case
+                ;; NOTE: this circumvents using functions other than
+                ;; `org-capture', see `org-roam-capture-function'.
+                ;; If the users start complaining, we may revert previous
+                ;; implementation
+                (org-roam-capture-templates (list template))
                 ;; Org-roam coverts the templates to its own syntax;
-                ;; since we are forcing `org-capture' to use the template entry
+                ;; since we are telling `org-capture' to use the template entry
                 ;; (by setting `org-capture-entry'), and Org-roam converts the
                 ;; whole template list, we must do the conversion of the entry
                 ;; ourselves
