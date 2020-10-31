@@ -620,7 +620,7 @@ before calling any Org-roam functions."
                 ;; `org-roam-capture--capture' behaves specially in this case
                 ;; NOTE: this circumvents using functions other than
                 ;; `org-capture', see `org-roam-capture-function'.
-                ;; If the users start complaining, we may revert previous
+                ;; If users start complaining, we may revert to previous
                 ;; implementation
                 (org-roam-capture-templates (list template))
                 ;; Org-roam coverts the templates to its own syntax;
