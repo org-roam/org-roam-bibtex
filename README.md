@@ -156,9 +156,7 @@ add this after `org-roam/init-org-roam`:
 (defun org-roam/init-org-roam-bibtex ()
   (use-package org-roam-bibtex
     :after org-roam
-    :hook (org-roam-mode . org-roam-bibtex-mode)
-    :bind (:map org-mode-map
-          (("C-c n a" . orb-note-actions)))))
+    :hook (org-roam-mode . org-roam-bibtex-mode))
 ```
 
 ### Doom Emacs
@@ -193,17 +191,13 @@ sexps in your
 ;; If you installed via MELPA
 (use-package org-roam-bibtex
   :after org-roam
-  :hook (org-roam-mode . org-roam-bibtex-mode)
-  :bind (:map org-mode-map
-         (("C-c n a" . orb-note-actions))))
+  :hook (org-roam-mode . org-roam-bibtex-mode))
 
 ;; If you cloned the repository
 (use-package org-roam-bibtex
   :after org-roam
   :load-path "~/projects/org-roam-bibtex/" ;Modify with your own path
-  :hook (org-roam-mode . org-roam-bibtex-mode)
-  :bind (:map org-mode-map
-         (("C-c n a" . orb-note-actions))))
+  :hook (org-roam-mode . org-roam-bibtex-mode))
 ```
 
 ### Without `use-package`
@@ -235,16 +229,12 @@ To revert those actions to their defaults, disable
 
 ### Commands
 
-#### `orb-find-non-ref-file`
+#### `orb-insert` (`C-c n i`)
 
-Similar to `org-roam-find-file`, but it excludes your bibliographical
-notes from the completion-candidates.  This is useful if you have a
-lot of them and do not want to clutter up your other notes.
-
-#### `orb-insert-non-ref`
-
-Similar to `org-roam-insert`, but it excludes your bibliographical
-notes from the completion-list.
+Select a bibliography entry and insert a link to a note associated with it.  If
+the note does not exist yet, create it.  Similar to `org-roam-insert`, if a
+region is selected, it becomes the link description.  Check also [orb-insert
+configuration](#orb-insert-configuration) for a few configuration options.
 
 #### `orb-note-actions`
 
@@ -253,6 +243,19 @@ in note's context.  These commands are run with the note's BibTeX key
 as an argument. The key is taken from the `#+ROAM_KEY:` file property.
 See section [ORB Note Actions](#orb-note-actions-section) for
 details.
+
+#### `orb-find-non-ref-file`
+
+Similar to `org-roam-find-file`, but it excludes your bibliographical
+notes from the completion-candidates.  This is useful if you have a
+lot of them and do not want to clutter up your other notes.
+Default keybinding `C-c n C-f`.
+
+#### `orb-insert-non-ref`
+
+Similar to `org-roam-insert`, but it excludes your bibliographical
+notes from the completion-list.
+Default keybinding `C-c n C-i`.
 
 Configuration
 ---------------
@@ -369,7 +372,30 @@ following BibTeX fields: "citekey", "date", "type", "pdf?", "note?",
 Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex)
 package for additional information about BibTeX field names.
 
-#### Handling long templates
+#### `orb-insert` configuration
+##### `orb-insert-frontend`
+
+Frontend to use with `orb-insert`.  Supported frontends are `helm-bibtex`,
+`ivy-bibtex`, and `generic` (`orb-insert-generic`)
+
+##### `orb-insert-link-description`
+
+What piece of information should be used as the link description:
+
+* `title`    - entry's title
+* `citekey`  - entry's citation key
+* `citation` - insert Org-ref citation (default "cite:") instead of a file link.
+
+##### `orb-insert-generic-candidates-format`
+
+How the selection candidates should be presented when using `generic` frontend:
+
+* `key`   - only citation keys.  Fast and pretty, but too little contextual information
+* `entry` - formatted entry.  More information, but not particluarly
+pretty. Consider using `helm-bibtex` or `ivy-bibtex` instead.
+
+#### Tips and tricks
+##### Handling long templates
 
 Long templates can be placed in a separate file, with template
 expansion of BibTeX fields working as usual:
@@ -398,7 +424,7 @@ fullcite:%\1
 You can also use a function to generate the template on the fly, see
 `org-capture-templates` for details.
 
-#### Org-noter integration.  Special treatment of the "file" keyword
+##### Org-noter integration.  Special treatment of the "file" keyword
 
 If `orb-process-file-keyword` is non-nil, the "file" field will be treated
 specially.  If the field contains only one file name, its value will be used
