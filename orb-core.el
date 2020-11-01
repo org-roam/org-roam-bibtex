@@ -116,6 +116,14 @@ Returns the new plist."
     (dolist (keyword keywords)
       (orb-plist-put keyword nil))))
 
+(defmacro with-orb-cleanup (&rest body)
+  "Execute BODY calling `orb-cleanup' as its last form.
+Return the result of executing BODY."
+  (declare (indent 0) (debug t))
+  `(prog1
+       ,@body
+     (orb-cleanup)))
+
 ;; ** File field
 
 (defcustom orb-file-field-extensions '("pdf")
