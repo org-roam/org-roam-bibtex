@@ -612,6 +612,7 @@ before calling any Org-roam functions."
                 ;; entry is our bibtex entry, it just happens that
                 ;; `org-capture' calls a single template entry "entry"
                 (template (--> (org-capture-select-template)
+                               (copy-tree it)
                                ;; optionally preformat templates
                                (if orb-preformat-templates
                                    (orb--preformat-template it entry)
