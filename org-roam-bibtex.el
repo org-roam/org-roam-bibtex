@@ -447,7 +447,7 @@ is the function `ignore', it is added as `:override'."
       (dolist (advisee orb-ignore-bibtex-store-link-functions)
         (apply advice-func (push advisee advice))))))
 
-;; ** Templates
+;; ** Templates and edit notes
 
 (defun orb--preformat-template (template entry)
   "Helper function for `orb--preformat-templates'.
@@ -545,6 +545,82 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
                 tp (s-replace (car l) (nth 1 l) tp))))
       (setf (nth 4 template) tp))
     template))
+
+(defun orb--edit-notes (citekey)
+  "Process templates and run `org-roam-capture--capture'.
+CITEKEY is a citation key.
+Helper function for `orb-edit-notes', which abstracts initiating
+a capture session."
+  ;; Check if the requested BibTeX entry actually exists and fail
+  ;; gracefully otherwise
+  (if-let* ((entry (or (bibtex-completion-get-entry citekey)
+                       (orb-warning
+                        "Could not find the BibTeX entry" citekey)))
+            ;; Depending on the templates used: run
+            ;; `org-roam-capture--capture' or call `org-roam-find-file'
+            (org-capture-templates
+             (or orb-templates org-roam-capture-templates
+                 (orb-warning "Could not find the requested templates")))
+            ;; hijack org-capture-templates
+            ;; entry is our bibtex entry, it just happens that
+            ;; `org-capture' calls a single template entry "entry"
+            (template (--> (org-capture-select-template)
+                           (copy-tree it)
+                           ;; optionally preformat templates
+                           (if orb-preformat-templates
+                               (orb--preformat-template it entry)
+                             it)))
+            ;; pretend we had only one template
+            ;; `org-roam-capture--capture' behaves specially in this case
+            ;; NOTE: this circumvents using functions other than
+            ;; `org-capture', see `org-roam-capture-function'.
+            ;; If the users start complaining, we may revert previous
+            ;; implementation
+            (org-roam-capture-templates (list template))
+            ;; Org-roam coverts the templates to its own syntax;
+            ;; since we are telling `org-capture' to use the template entry
+            ;; (by setting `org-capture-entry'), and Org-roam converts the
+            ;; whole template list, we must do the conversion of the entry
+            ;; ourselves
+            (org-capture-entry
+             (org-roam-capture--convert-template template))
+            (citekey-formatted (format (or orb-citekey-format "%s") citekey))
+            (title
+             (or (bibtex-completion-apa-get-value "title" entry)
+                 (orb-warning "Title not found for this entry")
+                 ;; this is not critical, the user may input their own
+                 ;; title
+                 "Title not found")))
+      (progn
+        ;; fix some Org-ref related stuff
+        (orb--store-link-functions-advice 'add)
+        (unwind-protect
+            ;; data collection hooks functions: remove themselves once run
+            (progn
+              ;; install capture hook functions
+              (orb-do-hook-functions 'add)
+              ;; Depending on the templates used: run
+              ;; `org-roam-capture--capture' with ORB-predefined
+              ;; settings or call vanilla `org-roam-find-file'
+              (if orb-templates
+                  (let* ((org-roam-capture--context 'ref)
+                         (slug-source (cl-case orb-slug-source
+                                        (citekey citekey)
+                                        (title title)
+                                        (t (user-error "Only `citekey' \
+or `title' should be used for slug: %s not supported" orb-slug-source))))
+                         (org-roam-capture--info
+                          `((title . ,title)
+                            (ref . ,citekey-formatted)
+                            (slug. ,(funcall
+                                     org-roam-title-to-slug-function
+                                     slug-source)))))
+                    (setq org-roam-capture-additional-template-props
+                          (list :finalize 'find-file))
+                    (org-roam-capture--capture))
+                (org-roam-find-file title)))
+          (orb--store-link-functions-advice 'remove)))
+    (message "ORB: Something went wrong. Check the *Warnings* buffer")))
 
 ;; ** Insert link
 
@@ -657,7 +733,9 @@ Return the filename if it exists."
     (set-window-configuration (orb-plist-get :window-conf))
     (when (and orb-insert-follow-link
                (looking-at org-link-any-re))
-      (org-open-at-point))))
+      (org-open-at-point))
+    ;; if any left
+    (orb-do-hook-functions 'remove)))
 
 (defun orb-note-exists-p (citekey)
   "Check if a note exists whose citekey is CITEKEY.
@@ -741,18 +819,29 @@ initiated or not."
          (func (alist-get name functions)))
     (when func (funcall (car func)))))
 
-(defun orb-do-hook-functions (action)
-  "Add or remove functions to one `org-capture-...-finilize-hook'.
-ACTION should be a symbol `add' or `remove'."
-  (dolist (target '(prepare before after))
-    (let ((functions (sort (orb-plist-get
-                            (intern (format ":%s-functions" target)))
-                           (lambda (a b)
-                             (> (nth 2 a) (nth 2 b))))))
-      (dolist (func functions)
-        (let ((f (intern (format "%s-hook" action)))
-              (hook (intern (format "org-capture-%s-finalize-hook" target))))
-          (funcall f hook (nth 1 func)))))))
+(defun orb-do-hook-functions (action &optional targets)
+  "Add or remove functions to `org-capture-...-finilize-hook's.
+ACTION should be a symbol `add' or `remove'.  If optional TARGETS
+list is provided, do only the hooks in TARGETS.  TARGETS should
+be any of symbols `prepare', `before' and `after'.  TARGETS can
+also be a single symbols.  If TARGETS is nil, a list of all three
+symbols is implied."
+  (let* ((targets (--> (if (and targets (not (listp targets)))
+                           (listp targets)
+                         targets)
+                       ;; filter unrelevant symbols
+                       ;; or if targets were nil, make all targets
+                       (or (-intersection it '(prepare before after))
+                           '(prepare before after)))))
+    (dolist (target targets)
+      (let ((functions (sort (orb-plist-get
+                              (intern (format ":%s-functions" target)))
+                             (lambda (a b)
+                               (> (nth 2 a) (nth 2 b))))))
+        (dolist (func functions)
+          (let ((f (intern (format "%s-hook" action)))
+                (hook (intern (format "org-capture-%s-finalize-hook" target))))
+            (funcall f hook (nth 1 func))))))))
 
 ;; ** Interface functions
 ;;
@@ -817,7 +906,14 @@ newly created note."
   (orb-plist-put :buffer (current-buffer)
                  :window-conf (current-window-configuration)
                  :citekey (car citekey))
-
+  ;; Here, we play on the specifics of a capture process.
+  ;; `org-capture-finalize' runs `prepare-hook', `before-hook' and `after-hook'
+  ;; in that order.  But, if `org-capture-finalize' was run via
+  ;; `org-capture-kill', the `before-hook' is forced to nil via a let form.
+  ;;
+  ;; 1. In an interactive session, we get the title while the capture buffer
+  ;; still exists.  But if the capture process was killed, our before hook
+  ;; function did not run and therefore title is nil on `orb-plist'.
   (orb-register-hook-function get-title before nil
     (orb-plist-put :title (orb-get-buffer-keyword "title")
                    :immediate-finish
@@ -825,14 +921,15 @@ newly created note."
 
   (orb-register-hook-function get-file after -90
     (let ((file (buffer-file-name)))
-      ;; check whether the title matches the one we retrieved in the
-      ;; before-hook.  If it does not, then the capture process was
-      ;; cancelled and we set the file to nil to signal the link should
-      ;; not be inserted.
-      (unless (orb-plist-get :immediate-finish)
-        (let ((title (orb-get-buffer-keyword "title")))
-          (unless (string= title (orb-plist-get :title))
-            (setq file nil))))
+      ;; 2. We check whether the title on `orb-plist' is nil.  When it is, we
+      ;; set file to nil to signal `org-insert--link-h' not to insert a link.
+      ;; We do this only in interactive process
+      (unless (or (orb-plist-get :immediate-finish)
+                  (orb-plist-get :title))
+        (setq file nil)
+        ;; before hook functions did not run, so they are still in
+        ;; `org-capture-before-finalize-hook'; remove them.
+        (orb-do-hook-functions 'remove 'before))
       (orb-plist-put :file file)))
 
   (orb-register-hook-function insert-link after 90
@@ -840,6 +937,8 @@ newly created note."
 
   (save-excursion
     (orb-edit-notes (car citekey)))
+  ;; when note existed, a capture process did not run.  We have all the info on
+  ;; `orb-plist', so just insert a link
   (when (orb-plist-get :note-existed)
     ;; we call the hook function so that the hook is removed
     (orb-call-hook-function 'insert-link)))
@@ -957,80 +1056,9 @@ before calling any Org-roam functions."
       ;; we need to clean up if the capture process was aborted signaling
       ;; user-error
       (condition-case nil
-          ;; Check if the requested BibTeX entry actually exists and fail
-          ;; gracefully otherwise
-          (if-let* ((entry (or (bibtex-completion-get-entry citekey)
-                               (orb-warning
-                                "Could not find the BibTeX entry" citekey)))
-                    ;; Depending on the templates used: run
-                    ;; `org-roam-capture--capture' or call `org-roam-find-file'
-                    (org-capture-templates
-                     (or orb-templates org-roam-capture-templates
-                         (orb-warning "Could not find the requested templates")))
-                    ;; hijack org-capture-templates
-                    ;; entry is our bibtex entry, it just happens that
-                    ;; `org-capture' calls a single template entry "entry"
-                    (template (--> (org-capture-select-template)
-                                   (copy-tree it)
-                                   ;; optionally preformat templates
-                                   (if orb-preformat-templates
-                                       (orb--preformat-template it entry)
-                                     it)))
-                    ;; pretend we had only one template
-                    ;; `org-roam-capture--capture' behaves specially in this case
-                    ;; NOTE: this circumvents using functions other than
-                    ;; `org-capture', see `org-roam-capture-function'.
-                    ;; If the users start complaining, we may revert previous
-                    ;; implementation
-                    (org-roam-capture-templates (list template))
-                    ;; Org-roam coverts the templates to its own syntax;
-                    ;; since we are telling `org-capture' to use the template entry
-                    ;; (by setting `org-capture-entry'), and Org-roam converts the
-                    ;; whole template list, we must do the conversion of the entry
-                    ;; ourselves
-                    (org-capture-entry
-                     (org-roam-capture--convert-template template))
-                    (citekey-formatted (format (or orb-citekey-format "%s") citekey))
-                    (title
-                     (or (bibtex-completion-apa-get-value "title" entry)
-                         (orb-warning "Title not found for this entry")
-                         ;; this is not critical, the user may input their own
-                         ;; title
-                         "Title not found")))
-              (progn
-                ;; fix some Org-ref related stuff
-                (orb--store-link-functions-advice 'add)
-                (unwind-protect
-                    ;; data collection hooks functions: remove themselves once run
-                    (progn
-                      ;; install capture hook functions
-                      (orb-do-hook-functions 'add)
-                      ;; Depending on the templates used: run
-                      ;; `org-roam-capture--capture' with ORB-predefined
-                      ;; settings or call vanilla `org-roam-find-file'
-                      (if orb-templates
-                          (let* ((org-roam-capture--context 'ref)
-                                 (slug-source (cl-case orb-slug-source
-                                                (citekey citekey)
-                                                (title title)
-                                                (t (user-error "Only `citekey' \
-or `title' should be used for slug: %s not supported" orb-slug-source))))
-                                 (org-roam-capture--info
-                                  `((title . ,title)
-                                    (ref . ,citekey-formatted)
-                                    (slug. ,(funcall
-                                             org-roam-title-to-slug-function
-                                             slug-source)))))
-                            (setq org-roam-capture-additional-template-props
-                                  (list :finalize 'find-file))
-                            (org-roam-capture--capture))
-                        (org-roam-find-file title)))
-                  (orb--store-link-functions-advice 'remove)))
-            (message "ORB: Something went wrong. Check the *Warnings* buffer"))
-        ;; Clean-up in case of user aborts the capture process
+          (orb--edit-notes citekey)
         (error
-         (with-orb-cleanup
-           (orb-do-hook-functions 'remove)))))))
+         (with-orb-cleanup (orb-do-hook-functions 'remove)))))))
 
 ;;;###autoload
 (defun orb-insert (&optional arg)
