@@ -386,6 +386,10 @@ What piece of information should be used as the link description:
 * `citekey`  - entry's citation key
 * `citation` - insert Org-ref citation (default "cite:") instead of a file link.
 
+##### `orb-insert-follow-link`
+
+Whether to follow a newly created link.
+
 ##### `orb-insert-generic-candidates-format`
 
 How the selection candidates should be presented when using `generic` frontend:

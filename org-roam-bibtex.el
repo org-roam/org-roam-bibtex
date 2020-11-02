@@ -286,12 +286,6 @@ See `orb-edit-notes' for details."
           (const :tag "No" nil))
   :group 'org-roam-bibtex)
 
-(defcustom orb-edit-notes-note-exists-hook nil
-  "Functions to call when in `orb-edit-notes' and the note already exists.
-Each function is called with citation key as its single argument."
-  :type 'hook
-  :group 'org-roam-bibtex)
-
 (defcustom orb-ignore-bibtex-store-link-functions
   '(org-bibtex-store-link)
   "Functions to override with `ignore' during note creation process.
@@ -355,6 +349,13 @@ information."
           (const :tag "Title" title)
           (const :tag "Citation key" citekey)
           (const :tag "Citation link" citation)))
+
+(defcustom orb-insert-follow-link nil
+  "Whether to follow a newly inserted link."
+  :group 'orb-roam-bibtex
+  :type '(choice
+          (const :tag "Yes" t)
+          (const :tag "No" nil)))
 
 (defcustom orb-insert-generic-candidates-format 'key
   "Format of selection candidates for `orb-insert' with `generic' frontend.
@@ -481,8 +482,8 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
          (rx "\\(%\\^{[[:alnum:]-_]*}\\)")
          (file-keyword (when orb-process-file-keyword
                          (or (and (stringp orb-process-file-keyword)
-                                   orb-process-file-keyword)
-                              "file")))
+                                  orb-process-file-keyword)
+                             "file")))
          lst)
     ;; First run:
     ;; 1) Make a list of (rplc-s field-value match-position) for the
@@ -640,39 +641,37 @@ Return the filename if it exists."
   "Prepare the environement and call `orb-insert--link'."
   ;; insert link only when file is non-nil
   (with-orb-cleanup
-   (when-let ((file (orb-plist-get :file)))
-     (let* ((citekey (orb-plist-get :citekey))
-            (insert-description (or (orb-plist-get :link-description)
-                                    orb-insert-link-description))
-            (lowercase (or (orb-plist-get :link-lowercase)
-                           orb-insert-lowercase))
-            (description (cl-case insert-description
-                           (title (orb-plist-get :title))
-                           (citekey citekey)
-                           (citation nil))))
-       (with-current-buffer (orb-plist-get :buffer)
-         (save-excursion
-           (message "%s : %s : %s" citekey file (orb-plist-get :title))
-           (orb-insert--link file citekey description lowercase))))
-     (when (orb-plist-get :immediate-finish)
-       (set-window-configuration (orb-plist-get :window-conf))))))
+    (when-let ((file (orb-plist-get :file)))
+      (let* ((citekey (orb-plist-get :citekey))
+             (insert-description (or (orb-plist-get :link-description)
+                                     orb-insert-link-description))
+             (lowercase (or (orb-plist-get :link-lowercase)
+                            orb-insert-lowercase))
+             (description (cl-case insert-description
+                            (title (orb-plist-get :title))
+                            (citekey citekey)
+                            (citation nil))))
+        (with-current-buffer (orb-plist-get :buffer)
+          (save-excursion
+            (orb-insert--link file citekey description lowercase)))))
+    (set-window-configuration (orb-plist-get :window-conf))
+    (when (and orb-insert-follow-link
+               (looking-at org-link-any-re))
+      (org-open-at-point))))
 
-(defun orb-insert--get-from-db (citekey)
-  "Get information from org-roam.db about a note whose #+ROAM_KEY is CITEKEY.
-Return a list (TITLE FILE)."
+(defun orb-note-exists-p (citekey)
+  "Check if a note exists whose citekey is CITEKEY.
+Return alist (CITEKEY :title title :file :file) if note exists or
+nil otherwise."
   ;; NOTE: This function can be made more general.
-  (let ((query-data
-         (car
-          (org-roam-db-query
-           [:select [titles:title refs:file]
-            :from titles
-            :left :join refs :on (= titles:file refs:file)
-            :where (like refs:ref $r1)] (format "%%\"%s\"%%" citekey)))))
-    (orb-plist-put :title (car query-data)
-                   :file (nth 1 query-data)
-                   :immediate-finish t)))
-
-(add-hook 'orb-edit-notes-note-exists-hook #'orb-insert--get-from-db)
+  (when-let ((query-data
+              (car
+               (org-roam-db-query
+                [:select [titles:title refs:file]
+                 :from titles
+                 :left :join refs :on (= titles:file refs:file)
+                 :where (like refs:ref $r1)] (format "%%\"%s\"%%" citekey)))))
+    `(,citekey :title ,(car query-data) :file ,(nth 1 query-data))))
 
 ;; * API
 ;; ** Hook management
@@ -822,9 +821,7 @@ newly created note."
   (orb-register-hook-function get-title before nil
     (orb-plist-put :title (orb-get-buffer-keyword "title")
                    :immediate-finish
-                   (plist-get org-capture-plist :immediate-finish))
-    (message "buffer title: %s" (orb-get-buffer-keyword "title"))
-    (message "plist title: %s" (orb-plist-get :title)))
+                   (plist-get org-capture-plist :immediate-finish)))
 
   (orb-register-hook-function get-file after -90
     (let ((file (buffer-file-name)))
@@ -841,11 +838,11 @@ newly created note."
   (orb-register-hook-function insert-link after 90
     (orb-insert--link-h))
 
-  (if (orb-plist-get :note-existed)
-      ;; we call the hook function so that the hook is removed
-      (orb-call-hook-function 'insert-link)
   (save-excursion
-    (orb-edit-notes (car citekey)))))
+    (orb-edit-notes (car citekey)))
+  (when (orb-plist-get :note-existed)
+    ;; we call the hook function so that the hook is removed
+    (orb-call-hook-function 'insert-link)))
 
 ;; helm-bibtex and ivy-bibtex expose handy macros to convert a generic function
 ;; into a function tailored to the particular frontend.
@@ -949,62 +946,65 @@ before calling any Org-roam functions."
   ;; Optionally switch to the notes perspective
   (when orb-switch-persp
     (orb--switch-perspective))
-  (let* ((citekey-formatted (format (or orb-citekey-format "%s") citekey))
-         (note-exists (ignore-errors (org-roam--find-ref citekey))))
-    (orb-plist-put :note-existed note-exists)
-    (if note-exists
-        ;; Find org-roam reference with the CITEKEY and collect data into
-        ;; `orb-plist'
-        (dolist (func orb-edit-notes-note-exists-hook)
-          (funcall func citekey))
-      ;; Check if the requested entry actually exists and fail gracefully
-      ;; otherwise
-      (if-let* ((entry (or (bibtex-completion-get-entry citekey)
-                           (orb-warning
-                            "Could not find the BibTeX entry" citekey)))
-                ;; Depending on the templates used: run
-                ;; `org-roam-capture--capture' or call `org-roam-find-file'
-                (org-capture-templates
-                 (or orb-templates org-roam-capture-templates
-                     (orb-warning "Could not find the requested templates")))
-                ;; hijack org-capture-templates
-                ;; entry is our bibtex entry, it just happens that
-                ;; `org-capture' calls a single template entry "entry"
-                (template (--> (org-capture-select-template)
-                               (copy-tree it)
-                               ;; optionally preformat templates
-                               (if orb-preformat-templates
-                                   (orb--preformat-template it entry)
-                                 it)))
-                ;; pretend we had only one template
-                ;; `org-roam-capture--capture' behaves specially in this case
-                ;; NOTE: this circumvents using functions other than
-                ;; `org-capture', see `org-roam-capture-function'.
-                ;; If the users start complaining, we may revert previous
-                ;; implementation
-                (org-roam-capture-templates (list template))
-                ;; Org-roam coverts the templates to its own syntax;
-                ;; since we are telling `org-capture' to use the template entry
-                ;; (by setting `org-capture-entry'), and Org-roam converts the
-                ;; whole template list, we must do the conversion of the entry
-                ;; ourselves
-                (org-capture-entry
-                 (org-roam-capture--convert-template template))
-                (title
-                 (or (bibtex-completion-apa-get-value "title" entry)
-                     (orb-warning "Title not found for this entry")
-                     ;; this is not critical, the user may input their own
-                     ;; title
-                     "Title not found")))
-          (progn
-            ;; fix some Org-ref related stuff
-            (orb--store-link-functions-advice 'add)
-            (unwind-protect
-                ;; data collection hooks functions: remove themselves once run
-                (progn
-                  ;; install capture hook functions
-                  (orb-do-hook-functions 'add)
-                  (condition-case nil
+  (let ((note-data (orb-note-exists-p citekey)))
+      ;; Find org-roam reference with the CITEKEY and collect data into
+      ;; `orb-plist'
+    (orb-plist-put :note-existed (and note-data t))
+    (if note-data
+        (progn
+          (apply #'orb-plist-put (cdr note-data))
+          (ignore-errors (org-roam--find-file (plist-get note-data :file))))
+      ;; we need to clean up if the capture process was aborted signaling
+      ;; user-error
+      (condition-case nil
+          ;; Check if the requested BibTeX entry actually exists and fail
+          ;; gracefully otherwise
+          (if-let* ((entry (or (bibtex-completion-get-entry citekey)
+                               (orb-warning
+                                "Could not find the BibTeX entry" citekey)))
+                    ;; Depending on the templates used: run
+                    ;; `org-roam-capture--capture' or call `org-roam-find-file'
+                    (org-capture-templates
+                     (or orb-templates org-roam-capture-templates
+                         (orb-warning "Could not find the requested templates")))
+                    ;; hijack org-capture-templates
+                    ;; entry is our bibtex entry, it just happens that
+                    ;; `org-capture' calls a single template entry "entry"
+                    (template (--> (org-capture-select-template)
+                                   (copy-tree it)
+                                   ;; optionally preformat templates
+                                   (if orb-preformat-templates
+                                       (orb--preformat-template it entry)
+                                     it)))
+                    ;; pretend we had only one template
+                    ;; `org-roam-capture--capture' behaves specially in this case
+                    ;; NOTE: this circumvents using functions other than
+                    ;; `org-capture', see `org-roam-capture-function'.
+                    ;; If the users start complaining, we may revert previous
+                    ;; implementation
+                    (org-roam-capture-templates (list template))
+                    ;; Org-roam coverts the templates to its own syntax;
+                    ;; since we are telling `org-capture' to use the template entry
+                    ;; (by setting `org-capture-entry'), and Org-roam converts the
+                    ;; whole template list, we must do the conversion of the entry
+                    ;; ourselves
+                    (org-capture-entry
+                     (org-roam-capture--convert-template template))
+                    (citekey-formatted (format (or orb-citekey-format "%s") citekey))
+                    (title
+                     (or (bibtex-completion-apa-get-value "title" entry)
+                         (orb-warning "Title not found for this entry")
+                         ;; this is not critical, the user may input their own
+                         ;; title
+                         "Title not found")))
+              (progn
+                ;; fix some Org-ref related stuff
+                (orb--store-link-functions-advice 'add)
+                (unwind-protect
+                    ;; data collection hooks functions: remove themselves once run
+                    (progn
+                      ;; install capture hook functions
+                      (orb-do-hook-functions 'add)
                       ;; Depending on the templates used: run
                       ;; `org-roam-capture--capture' with ORB-predefined
                       ;; settings or call vanilla `org-roam-find-file'
@@ -1024,13 +1024,13 @@ or `title' should be used for slug: %s not supported" orb-slug-source))))
                             (setq org-roam-capture-additional-template-props
                                   (list :finalize 'find-file))
                             (org-roam-capture--capture))
-                        (org-roam-find-file title))
-                    ;; Clean-up in case of user aborts the capture process
-                    (error
-                     (with-orb-cleanup
-                       (orb-do-hook-functions 'remove)))))
-              (orb--store-link-functions-advice 'remove)))
-        (message "ORB: Something went wrong. Check the *Warnings* buffer")))))
+                        (org-roam-find-file title)))
+                  (orb--store-link-functions-advice 'remove)))
+            (message "ORB: Something went wrong. Check the *Warnings* buffer"))
+        ;; Clean-up in case of user aborts the capture process
+        (error
+         (with-orb-cleanup
+           (orb-do-hook-functions 'remove)))))))
 
 ;;;###autoload
 (defun orb-insert (&optional arg)
