@@ -56,7 +56,7 @@ Return result of evaluating the BODY."
      (message "%s...done" ,message)))
 
 ;; * Functions
-
+;; ** Various functions
 (defun orb--unformat-citekey (citekey)
   "Remove format from CITEKEY.
 Format is `orb-citekey-format'."
@@ -183,6 +183,24 @@ the value of `orb--temp-dir'."
 (add-hook 'kill-emacs-hook 'orb--remove-temp-dir)
 
 ;;; End of code adopted from ob-core.el
+
+;; ** Document properties
+
+(defun orb-get-buffer-keyword (keyword &optional buffer)
+  "Return the value of Org-mode KEYWORD in-buffer directive.
+The KEYWORD should be given as a string without \"#+\", e.g. \"title\".
+
+If optional BUFFER is non-nil, return the value from that buffer
+instead of `current-buffer'."
+  ;; NOTE: does not work with `org-element-multiple-keywords' keywords
+  ;; if that will somewhen be required, `org-element' should be used.
+  (with-current-buffer (or buffer (current-buffer))
+    (let ((case-fold-search t))
+      (save-excursion
+        (goto-char (point-min))
+        (re-search-forward
+         (format "^[ 	]*#\\+%s:[ 	]*\\(.*\\)$" keyword) nil t)
+        (match-string-no-properties 1)))))
 
 (provide 'orb-utils)
 ;;; orb-utils.el ends here

@@ -85,7 +85,46 @@
   :group 'org-roam-bibtex
   :prefix "orb-autokey-")
 
-;; Various utility functions
+;; * Various utility functions
+;; ** Messaging
+
+(defun orb-warning (warning &optional citekey)
+  "Display a WARNING message.  Return nil.
+Include CITEKEY if it is non-nil."
+  (display-warning
+   :warning (concat "ORB :" (when citekey (format "%s :" citekey)) warning))
+  nil)
+
+;; ** orb-plist
+
+(defvar orb-plist nil
+  "Communication channel for `orb-edit-notes' and related functions.")
+
+(defun orb-plist-put (&rest props)
+  "Add properties PROPS to `orb-plist'.
+Returns the new plist."
+  (while props
+    (setq orb-plist (plist-put orb-plist (pop props) (pop props)))))
+
+(defun orb-plist-get (prop)
+  "Get PROP from `orb-plist'."
+  (plist-get orb-plist prop))
+
+(defun orb-cleanup ()
+  "Clean up `orb-plist'."
+  (let ((keywords (-filter #'keywordp orb-plist)))
+    (dolist (keyword keywords)
+      (orb-plist-put keyword nil))))
+
+(defmacro with-orb-cleanup (&rest body)
+  "Execute BODY calling `orb-cleanup' as its last form.
+Return the result of executing BODY."
+  (declare (indent 0) (debug t))
+  `(prog1
+       ,@body
+     (orb-cleanup)))
+
+;; ** File field
 
 (defcustom orb-file-field-extensions '("pdf")
   "Extensions of file names to keep when retrieving values from the file field.
@@ -136,7 +175,7 @@ Returns the path to the note file, or nil if it doesn’t exist."
   (let* ((completions (org-roam--get-ref-path-completions)))
     (plist-get (cdr (assoc citekey completions)) :path)))
 
-;; * Automatic generation of citation keys
+;; ** Automatic generation of citation keys
 
 (defcustom orb-autokey-format "%a%y%T[4][1]"
   "Format string for automatically generated citation keys.
