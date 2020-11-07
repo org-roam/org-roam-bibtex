@@ -11,7 +11,7 @@ Well, at least we try!
 ## [0.4.0] - 2020-11-07
 ### Added
 - `orb-insert` user command to insert links to bibliography notes.  If a note does
-  not exist, create it.
+  not exist, create it.  Thanks @garrettdreyfus for the idea!
 
 - user options associated with `orb-insert`: `orb-insert-frontend`,
   `orb-insert-follow-link`, `orb-insert-link-description`,
