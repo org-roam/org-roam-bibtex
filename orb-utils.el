@@ -1,4 +1,4 @@
-;;; orb-utils.el --- Org Roam BibTeX: Utility macros and functions -*- coding: utf-8; lexical-binding: t -*-
+;;; orb-utils.el --- Org Roam BibTeX: utility macros and functions -*- lexical-binding: t -*-
 
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; Copyright © 2020 Leo Vivier <leo.vivier+dev@gmail.com>
@@ -6,8 +6,6 @@
 ;; Author: Mykhailo Shevchuk <mail@mshevchuk.com>
 ;;         Leo Vivier <leo.vivier+dev@gmail.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex
-;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
-;; Verstion 0.3.1
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -205,5 +203,6 @@ instead of `current-buffer'."
 (provide 'orb-utils)
 ;;; orb-utils.el ends here
 ;; Local Variables:
+;; coding: utf-8
 ;; fill-column: 79
 ;; End:

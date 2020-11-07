@@ -1,4 +1,4 @@
-;;; org-roam-bibtex-compat.el --- Org Roam BibTeX: Obsolete definitions -*- coding: utf-8; lexical-binding: t -*-
+;;; org-roam-bibtex-compat.el --- Org Roam BibTeX: obsolete definitions -*- lexical-binding: t -*-
 
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; Copyright © 2020 Leo Vivier <leo.vivier+dev@gmail.com>
@@ -6,8 +6,6 @@
 ;; Author: Leo Vivier <leo.vivier+dev@gmail.com>
 ;; 	Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex
-;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
-;; Verstion 0.3.1
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -60,5 +58,6 @@
 (provide 'orb-compat)
 ;;; orb-compat.el ends here
 ;; Local Variables:
+;; coding: utf-8
 ;; fill-column: 79
 ;; End:

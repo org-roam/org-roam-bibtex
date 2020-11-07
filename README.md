@@ -206,13 +206,11 @@ sexps in your
 ;; If you installed via MELPA
 (require 'org-roam-bibtex)
 (add-hook 'after-init-hook #'org-roam-bibtex-mode)
-(define-key org-roam-bibtex-mode-map (kbd "C-c n a") #'orb-note-actions)
 
 ;; If you cloned the repository
 (add-to-list 'load-path "~/projects/org-roam-bibtex/") ;Modify with your own path
 (require 'org-roam-bibtex)
 (add-hook 'after-init-hook #'org-roam-bibtex-mode)
-(define-key org-roam-bibtex-mode-map (kbd "C-c n a") #'orb-note-actions)
 ```
 
 Usage
@@ -229,14 +227,14 @@ To revert those actions to their defaults, disable
 
 ### Commands
 
-#### `orb-insert` (`C-c n i`)
+#### `orb-insert` (`C-c ) i`)
 
 Select a bibliography entry and insert a link to a note associated with it.  If
 the note does not exist yet, create it.  Similar to `org-roam-insert`, if a
 region is selected, it becomes the link description.  Check also [orb-insert
 configuration](#orb-insert-configuration) for a few configuration options.
 
-#### `orb-note-actions`
+#### `orb-note-actions` (`C-c ) a`)
 
 Type `M-x orb-note-actions` to easily access additional commands useful
 in note's context.  These commands are run with the note's BibTeX key
@@ -249,13 +247,13 @@ details.
 Similar to `org-roam-find-file`, but it excludes your bibliographical
 notes from the completion-candidates.  This is useful if you have a
 lot of them and do not want to clutter up your other notes.
-Default keybinding `C-c n C-f`.
+Default keybinding `C-c ) C-f`.
 
 #### `orb-insert-non-ref`
 
 Similar to `org-roam-insert`, but it excludes your bibliographical
 notes from the completion-list.
-Default keybinding `C-c n C-i`.
+Default keybinding `C-c ) C-i`.
 
 Configuration
 ---------------
