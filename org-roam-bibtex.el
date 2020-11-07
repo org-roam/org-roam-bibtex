@@ -1,4 +1,4 @@
-;;; org-roam-bibtex.el --- Org Roam meets BibTeX -*- coding: utf-8; lexical-binding: t -*-
+;;; org-roam-bibtex.el --- Org Roam meets BibTeX -*- lexical-binding: t -*-
 
 ;; Copyright © 2020 Jethro Kuan <jethrokuan95@gmail.com>
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
@@ -8,8 +8,8 @@
 ;; 	Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; 	Jethro Kuan <jethrokuan95@gmail.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex
-;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
-;; Verstion 0.3.1
+;; Keywords: bib, hypermedia, outlines, wp
+;; Verstion 0.4.0
 ;; Package-Requires: ((emacs "27.1") (org-roam "1.2.2") (bibtex-completion "2.0.0"))
 
 ;; Soft dependencies: projectile, persp-mode, helm, ivy, hydra
@@ -1180,5 +1180,6 @@ details."
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
 ;; Local Variables:
+;; coding: utf-8
 ;; fill-column: 79
 ;; End:

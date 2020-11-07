@@ -8,7 +8,33 @@ Well, at least we try!
 
 ## [Unreleased]
 
-## [0.3.1] - 2020-05-10
+## [0.4.0] - 2020-11-07
+### Added
+- `orb-insert` user command to insert links to bibliography notes.  If a note does
+  not exist, create it.
+
+- user options associated with `orb-insert`: `orb-insert-frontend`,
+  `orb-insert-follow-link`, `orb-insert-link-description`,
+  `orb-insert-generic-candidates-format`.
+
+- user option `orb-use-as-slug` to allow for specifying what should be used to
+  expand the ${slug} keyword in templates.
+
+- Default keybindings for `orb-insert`, `orb-insert-non-ref`,
+  `orb-find-file-non-ref`, `orb-note-actions`.
+
+### Changed
+- Internals of `orb-edit-notes`.  The original function was split into two.
+  Template pre-selection happens in `orb--edit-notes`, not in `org-capture`,
+  which obviates the need to pre-format all the templates.
+
+### Fixed
+- Fix typo in `orb--autokey-format-field` leading to the function's incorrect
+  behaviour in some cases.
+- Fix behaviour `orb-edit-notes` throwing an error when the BibTeX field "file"
+  was not present.
+
+## [0.3.1] - 2020-10-05
 ### Added
 - Smart ${file} and %^{file} wildcards 
   If `orb-process-file-keyword` is non nil, process these wildcards with
@@ -36,7 +62,7 @@ Well, at least we try!
 - Broken link to Spacemacs instructions
 - Ensure Anystyle receives absolute file paths
 
-## [0.3.0] - 2020-29-07
+## [0.3.0] - 2020-07-29
 ### Added
 - Feature: ORB PDF Scrapper
 
@@ -156,7 +182,8 @@ Well, at least we try!
 [org-roam]: https://github.com/jethrokuan/org-roam
 [helm-bibtex/bibtex-completion]: https://github.com/tmalsburg/helm-bibtex
 
-[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/org-roam/org-roam-bibtex/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.2...v0.2.3

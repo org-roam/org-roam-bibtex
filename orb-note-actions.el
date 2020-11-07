@@ -1,4 +1,4 @@
-;;; orb-note-actions.el --- Org Roam Bibtex: Note actions -*- coding: utf-8; lexical-binding: t -*-
+;;; orb-note-actions.el --- Org Roam Bibtex: note actions -*- lexical-binding: t -*-
 
 ;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; Copyright © 2020 Leo Vivier <leo.vivier+dev@gmail.com>
@@ -6,8 +6,6 @@
 ;; Author: Leo Vivier <leo.vivier+dev@gmail.com>
 ;; 	Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex
-;; Keywords: org-mode, roam, convenience, bibtex, helm-bibtex, ivy-bibtex, org-ref
-;; Verstion 0.3.1
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -259,5 +257,6 @@ user actions can be set in `orb-note-actions-user'."
 (provide 'orb-note-actions)
 ;;; orb-note-actions.el ends here
 ;; Local Variables:
+;; coding: utf-8
 ;; fill-column: 79
 ;; End:
