@@ -791,11 +791,14 @@ appended to BODY, making the closure self-removable:
             BODY
            (remove-hook 'org-capture-TARGET-finalize-hook NAME)))))
 
+These hook functions are therefore meant to run only in next
+`org-capture' session.
+
 The function is not actually added to a hook but is instead
-registered on `orb-plist'.  The function `orb-do-hook-functions',
-called in `orb-edit-notes' before starting an `org-capture'
-process, takes care of putting the registered closures into the
-respective hook variable.
+registered on `orb-plist'.  The function `orb-edit-notes'
+installs the hooks just before starting an `org-capture' process
+by calling `orb-do-hook-functions'.  It also takes care of
+removing the hooks in case the `org-capture' process was aborted.
 
 After a function has been registered, it is possible to call it
 by passing its NAME as a quoted symbol to
@@ -829,7 +832,7 @@ symbols is implied."
   (let* ((targets (--> (if (and targets (not (listp targets)))
                            (listp targets)
                          targets)
-                       ;; filter unrelevant symbols
+                       ;; filter irrelevant symbols,
                        ;; or if targets were nil, make all targets
                        (or (-intersection it '(prepare before after))
                            '(prepare before after)))))
@@ -841,7 +844,8 @@ symbols is implied."
         (dolist (func functions)
           (let ((f (intern (format "%s-hook" action)))
                 (hook (intern (format "org-capture-%s-finalize-hook" target))))
-            (funcall f hook (nth 1 func))))))))
+            (funcall f hook (when (eq action 'add)
+                              (nth 1 func)))))))))
 
 ;; ** Interface functions
 ;;
@@ -1049,16 +1053,16 @@ before calling any Org-roam functions."
       ;; Find org-roam reference with the CITEKEY and collect data into
       ;; `orb-plist'
     (orb-plist-put :note-existed (and note-data t))
-    (if note-data
-        (progn
-          (apply #'orb-plist-put (cdr note-data))
-          (ignore-errors (org-roam--find-file (plist-get note-data :file))))
-      ;; we need to clean up if the capture process was aborted signaling
-      ;; user-error
-      (condition-case nil
-          (orb--edit-notes citekey)
-        (error
-         (with-orb-cleanup (orb-do-hook-functions 'remove)))))))
+    (cond
+     (note-data
+      (apply #'orb-plist-put (cdr note-data))
+      (ignore-errors (org-roam--find-file (plist-get note-data :file))))
+     ;; we need to clean up if the capture process was aborted signaling
+     ;; user-error
+     (t (condition-case nil
+            (orb--edit-notes citekey)
+          (error
+           (with-orb-cleanup (orb-do-hook-functions 'remove))))))))
 
 ;;;###autoload
 (defun orb-insert (&optional arg)
@@ -1140,10 +1144,9 @@ two or three universal arguments `\\[universal-argument]' are supplied."
          (helm-bibtex clear-cache)))
       (ivy-bibtex
        (let* ((ivy-actions (copy-tree ivy--actions-list))
-              (ivy--actions-list ivy-actions)
+              (ivy--actions-list
+               (plist-put ivy-actions 'ivy-bibtex orb-insert--ivy-actions))
               (ivy-bibtex-default-action 'ivy-orb-insert-edit-notes))
-         (plist-put ivy--actions-list 'ivy-bibtex
-                    orb-insert--ivy-actions)
          (ivy-bibtex clear-cache)))
       (t
        (orb-insert-generic clear-cache)))))
@@ -1169,10 +1172,10 @@ details."
 
 ;; ** Keybindings
 
-(define-key org-roam-bibtex-mode-map (kbd "C-c n a") #'orb-note-actions)
-(define-key org-roam-bibtex-mode-map (kbd "C-c n i") #'orb-insert)
-(define-key org-roam-bibtex-mode-map (kbd "C-c n C-f") #'orb-find-non-ref-file)
-(define-key org-roam-bibtex-mode-map (kbd "C-c n C-i") #'orb-insert-non-ref)
+(define-key org-roam-bibtex-mode-map (kbd "C-c ) a") #'orb-note-actions)
+(define-key org-roam-bibtex-mode-map (kbd "C-c ) i") #'orb-insert)
+(define-key org-roam-bibtex-mode-map (kbd "C-c ) C-f") #'orb-find-non-ref-file)
+(define-key org-roam-bibtex-mode-map (kbd "C-c ) C-i") #'orb-insert-non-ref)
 
 (provide 'org-roam-bibtex)
 ;;; org-roam-bibtex.el ends here
