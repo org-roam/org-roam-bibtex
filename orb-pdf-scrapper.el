@@ -414,7 +414,7 @@ Pressing the RED button, just in case")
   (cl-case (orb-pdf-scrapper--get :context)
     ;; parse pdf file and switch to text editing mode
     ('start
-     (let ((temp-txt (orb--temp-file "orb-pdf-scrapper-" ".txt"))
+     (let ((temp-txt (orb-temp-file "orb-pdf-scrapper-" ".txt"))
            (pdf-file (orb-pdf-scrapper--get :pdf-file)))
        (orb-pdf-scrapper--put :temp-txt temp-txt)
        (let ((same-window-buffer-names (list orb-pdf-scrapper--buffer)))
@@ -451,10 +451,10 @@ Pressing the RED button, just in case")
   (cl-case (orb-pdf-scrapper--get :context)
     ('start
      (let* ((temp-bib (or (orb-pdf-scrapper--get :temp-bib)
-                          (orb--temp-file "orb-pdf-scrapper-" ".bib"))))
+                          (orb-temp-file "orb-pdf-scrapper-" ".bib"))))
        (orb-pdf-scrapper--put :temp-bib temp-bib)
        ;; save previous progress in txt buffer
-       (write-region (orb--buffer-string)
+       (write-region (orb-buffer-string)
                      nil (orb-pdf-scrapper--get :temp-txt) nil -1)
        (orb-pdf-scrapper--put :txt-undo-list (copy-tree buffer-undo-list))
        (orb--with-message! "Generating BibTeX data"
@@ -468,7 +468,7 @@ Pressing the RED button, just in case")
            :input (orb-pdf-scrapper--get :temp-txt)
            :stdout t
            :buffer orb-pdf-scrapper--buffer)
-         (write-region (orb--buffer-string) nil temp-bib nil -1))
+         (write-region (orb-buffer-string) nil temp-bib nil -1))
        (setq buffer-undo-list nil))
      (orb-pdf-scrapper--refresh-mode 'bib))
     ('continue
@@ -526,12 +526,12 @@ Pressing the RED button, just in case")
         t))
      (when (> (cl-random 100) 98)
        (orb--with-message! "Pressing the RED button"))
-     (write-region (orb--buffer-string)
+     (write-region (orb-buffer-string)
                    nil (orb-pdf-scrapper--get :temp-bib) nil 1)
      (orb-pdf-scrapper--put :bib-undo-list (copy-tree buffer-undo-list))
      ;; generate Org-mode buffer
      (let* ((temp-org (or (orb-pdf-scrapper--get :temp-org)
-                          (orb--temp-file "orb-pdf-scrapper-" ".org"))))
+                          (orb-temp-file "orb-pdf-scrapper-" ".org"))))
        (orb-pdf-scrapper--put :temp-org temp-org
                               :caller 'edit-org)
        ;; we must change the mode in the beginning to get all the Org-mode
@@ -569,7 +569,7 @@ Pressing the RED button, just in case")
                 (orb-pdf-scrapper--insert-org-as-table refs))
                (t
                 (orb-pdf-scrapper--insert-org-as-list refs)))))
-         (write-region (orb--buffer-string) nil temp-org nil -1)
+         (write-region (orb-buffer-string) nil temp-org nil -1)
          (setq buffer-undo-list nil)
          (set-buffer-modified-p nil)
          (goto-char (point-min)))))
@@ -589,14 +589,14 @@ Pressing the RED button, just in case")
   (cl-case (orb-pdf-scrapper--get :context)
     ('start
      (let* ((temp-xml (or (orb-pdf-scrapper--get :temp-xml)
-                          (orb--temp-file "orb-pdf-scrapper-" ".xml"))))
+                          (orb-temp-file "orb-pdf-scrapper-" ".xml"))))
        (orb-pdf-scrapper--put :temp-xml temp-xml)
        (orb--with-message! "Generating XML data"
          ;; save progress in text mode when called from there if called from
          ;; anywhere else, text mode progress is already saved, other data will
          ;; be re-generated anyway
          (when (eq (orb-pdf-scrapper--get :caller) 'edit-txt)
-           (write-region (orb--buffer-string)
+           (write-region (orb-buffer-string)
                          nil (orb-pdf-scrapper--get :temp-txt) nil -1)
            (orb-pdf-scrapper--put :txt-undo-list (copy-tree buffer-undo-list)))
          (erase-buffer)
@@ -606,7 +606,7 @@ Pressing the RED button, just in case")
            :input (orb-pdf-scrapper--get :temp-txt)
            :stdout t
            :buffer orb-pdf-scrapper--buffer)
-         (write-region (orb--buffer-string) nil temp-xml nil -1)
+         (write-region (orb-buffer-string) nil temp-xml nil -1)
          (setq buffer-undo-list nil)
          (orb-pdf-scrapper--refresh-mode 'xml))))
     ('edit-master
@@ -626,7 +626,7 @@ Pressing the RED button, just in case")
     (orb--with-message! (format "Appending to master training set %s"
                                 orb-anystyle-parser-training-set)
       ;; save any progress in XML mode
-      (write-region (orb--buffer-string) nil
+      (write-region (orb-buffer-string) nil
                     (orb-pdf-scrapper--get :temp-xml) nil -1)
       (let (new-data)
         ;; strip down the header and footer tokens from our data
@@ -640,7 +640,7 @@ Pressing the RED button, just in case")
               (re-search-forward "\\(^[ \t]*</dataset>[ \t]*\n\\)" nil t)
               (setq end (or (match-beginning 1)
                             (point-max)))
-              (setq new-data (orb--buffer-string beg end)))))
+              (setq new-data (orb-buffer-string beg end)))))
         ;; append our data to the master file
         (with-temp-buffer
           (insert-file-contents orb-anystyle-parser-training-set)
@@ -652,7 +652,7 @@ Pressing the RED button, just in case")
           (forward-line -1)
           (insert new-data)
           (f-touch orb-anystyle-parser-training-set)
-          (write-region (orb--buffer-string) nil
+          (write-region (orb-buffer-string) nil
                         orb-anystyle-parser-training-set nil -1))))))
 
 (defun orb-pdf-scrapper--train (&optional review)
@@ -948,14 +948,14 @@ for future use."
                           refs)
               (bibtex-skip-to-valid-entry))
             (setq orb-pdf-scrapper--refs refs)))))
-    (write-region (orb--buffer-string) nil
+    (write-region (orb-buffer-string) nil
                   (orb-pdf-scrapper--get :temp-bib) nil -1)
     (set-buffer-modified-p nil)))
 
 (defun orb-pdf-scrapper-sanitize-text (&optional contents)
   "Run string processing in current buffer.
 Try to get every reference onto newline.  Return this buffer's
-contents (`orb--buffer-string').
+contents (`orb-buffer-string').
 
 If optional string CONTENTS was specified, run processing on this
 string instead.  Return modified CONTENTS."
@@ -982,7 +982,7 @@ string instead.  Return modified CONTENTS."
       (while (re-search-forward regexp nil t)
         (replace-match "\n\\1" nil nil))
       (goto-char (point-min))
-      (orb--buffer-string))))
+      (orb-buffer-string))))
 
 (defun orb-pdf-scrapper-training-session (&optional context)
   "Run training session subroutines depending on CONTEXT.
@@ -1062,7 +1062,7 @@ Kill it and start a new one %s? "
          ;; currently, this is unnecessary but may be useful
          ;; if some recovery options are implemented
          (orb--with-scrapper-buffer!
-           (write-region (orb--buffer-string)
+           (write-region (orb-buffer-string)
                          nil (orb-pdf-scrapper--get :temp-org) nil 1))
          (orb-pdf-scrapper--checkout))
         (t

@@ -37,11 +37,22 @@
 ;; only depend on built-in Emacs libraries.
 
 ;;; Code:
-;; * Library requires
+
+;; ============================================================================
+;;;; Dependencies
+;; ============================================================================
+;;
+;; org-roam requires org,org-element, dash, f, s, emacsql, emacsql-sqlite,
+;; so all these libraries are always at our disposal
+
+(require 'org-roam)
+(require 'warnings)
 
 (defvar orb-citekey-format)
 
-;; * Macros
+;; ============================================================================
+;;;; Macros
+;; ============================================================================
 
 (defmacro orb--with-message! (message &rest body)
   "Put MESSAGE before and after BODY.
@@ -53,8 +64,40 @@ Return result of evaluating the BODY."
        (progn ,@body)
      (message "%s...done" ,message)))
 
-;; * Functions
-;; ** Various functions
+(defmacro orb-note-actions-defun (frontend &rest body)
+  "Return a function definition for FRONTEND.
+Function name takes a form of orb-note-actions--FRONTEND.
+A simple docstring is constructed and BODY is injected into a
+`let' form, which has two variables bound, NAME and
+CANDIDATES.  NAME is a string formatted with
+`org-ref-format-entry' and CANDIDATES is a cons cell alist
+constructed from `orb-note-actions-default',
+`orb-note-actions-extra', and `orb-note-actions-user'."
+  (declare (indent 1) (debug (symbolp &rest form)))
+  (let* ((frontend-name (symbol-name frontend))
+         (fun-name (intern (concat "orb-note-actions-" frontend-name))))
+    `(defun ,fun-name (citekey)
+       ,(format "Provide note actions using %s interface.
+CITEKEY is the citekey." (capitalize frontend-name))
+       (let ((name (org-ref-format-entry citekey)) ;; TODO: make a native format function
+             (candidates
+              ,(unless (eq frontend 'hydra)
+                 '(append  orb-note-actions-default
+                           orb-note-actions-extra
+                           orb-note-actions-user))))
+         ,@body))))
+ 
+;; ============================================================================
+;;;; General utilities
+;; ============================================================================
+
+(defun orb-warning (warning &optional citekey)
+  "Display a WARNING message.  Return nil.
+Include CITEKEY if it is non-nil."
+  (display-warning
+   :warning (concat "ORB :" (when citekey (format "%s :" citekey)) warning))
+  nil)
+
 (defun orb--unformat-citekey (citekey)
   "Remove format from CITEKEY.
 Format is `orb-citekey-format'."
@@ -65,7 +108,7 @@ Format is `orb-citekey-format'."
                    (length orb-citekey-format)))))
     (substring citekey beg end)))
 
-(defun orb--buffer-string (&optional start end)
+(defun orb-buffer-string (&optional start end)
   "Retun buffer (sub)string with no text porperties.
 Like `buffer-substring-no-properties' but START and END are
 optional and equal to (`point-min') and (`point-max'),
@@ -73,7 +116,7 @@ respectively, if nil."
   (buffer-substring-no-properties (or start (point-min))
                                   (or end (point-max))))
 
-(defun orb--format (&rest args)
+(defun orb-format (&rest args)
   "Format ARGS conditionally and return a string.
 ARGS must be a plist, whose keys are `format' control strings and
 values are `format' objects.  Thus only one object per control
@@ -83,7 +126,7 @@ string.
 In the simplest case, it behaves as a sort of interleaved `format':
 ==========
 
-\(orb--format \"A: %s\" 'hello
+\(orb-format \"A: %s\" 'hello
             \" B: %s\" 'world
             \" C: %s\" \"!\")
 
@@ -92,7 +135,7 @@ In the simplest case, it behaves as a sort of interleaved `format':
 If format object is nil, it will be formatted as empty string:
 ==========
 
-\(orb--format \"A: %s\" 'hello
+\(orb-format \"A: %s\" 'hello
             \" B: %s\" nil
             \" C: %s\" \"!\")
   => 'A: hello C: !'
@@ -101,7 +144,7 @@ Object can also be a cons cell.  If its car is nil then its cdr
 will be treated as default value and formatted as \"%s\":
 ==========
 
-\(orb--format \"A: %s\" 'hello
+\(orb-format \"A: %s\" 'hello
             \" B: %s\" '(nil . dworl)
             \" C: %s\" \"!\")
   => 'A: hellodworl C: !'
@@ -109,7 +152,7 @@ will be treated as default value and formatted as \"%s\":
 Finally, if the control string is nil, the object will be formatted as \"%s\":
 ==========
 
-\(orb--format \"A: %s\" 'hello
+\(orb-format \"A: %s\" 'hello
             \" B: %s\" '(nil . \" world\")
              nil \"!\")
 => 'A: hello world!'."
@@ -125,7 +168,11 @@ Finally, if the control string is nil, the object will be formatted as \"%s\":
                               (or (car obj) (cdr obj) ""))))))
     res))
 
-;;; Code in this section was adopted from ob-core.el
+;; ============================================================================
+;;;; Temporary files
+;; ============================================================================
+
+;;;;; Code in this section was adopted from ob-core.el
 ;;
 ;; Copyright (C) 2009-2020 Free Software Foundation, Inc.
 ;;
@@ -140,10 +187,10 @@ Finally, if the control string is nil, the object will be formatted as \"%s\":
              orb--temp-dir)
         (make-temp-file "orb-" t))
 "Directory to hold temporary files created during reference parsing.
-Used by `orb--temp-file'.  This directory will be removed on Emacs
+Used by `orb-temp-file'.  This directory will be removed on Emacs
 shutdown."))
 
-(defun orb--temp-file (prefix &optional suffix)
+(defun orb-temp-file (prefix &optional suffix)
   "Create a temporary file in the `orb--temp-dir'.
 Passes PREFIX and SUFFIX directly to `make-temp-file' with the
 value of variable `temporary-file-directory' temporarily set to
@@ -180,9 +227,17 @@ the value of `orb--temp-dir'."
 
 (add-hook 'kill-emacs-hook 'orb--remove-temp-dir)
 
-;;; End of code adopted from ob-core.el
+;;;;; End of code adopted from ob-core.el
 
-;; ** Document properties
+;; ============================================================================
+;;;; Document properties
+;; ============================================================================
+
+(defun orb-find-note-file (citekey)
+  "Find note file associated with CITEKEY.
+Returns the path to the note file, or nil if it doesn’t exist."
+  (let* ((completions (org-roam--get-ref-path-completions)))
+    (plist-get (cdr (assoc citekey completions)) :path)))
 
 (defun orb-get-buffer-keyword (keyword &optional buffer)
   "Return the value of Org-mode KEYWORD in-buffer directive.
@@ -199,6 +254,20 @@ instead of `current-buffer'."
         (re-search-forward
          (format "^[ 	]*#\\+%s:[ 	]*\\(.*\\)$" keyword) nil t)
         (match-string-no-properties 1)))))
+
+(defun orb-note-exists-p (citekey)
+  "Check if a note exists whose citekey is CITEKEY.
+Return alist (CITEKEY :title title :file :file) if note exists or
+nil otherwise."
+  ;; NOTE: This function can be made more general.
+  (when-let ((query-data
+              (car
+               (org-roam-db-query
+                [:select [titles:title refs:file]
+                 :from titles
+                 :left :join refs :on (= titles:file refs:file)
+                 :where (like refs:ref $r1)] (format "%%\"%s\"%%" citekey)))))
+    `(,citekey :title ,(car query-data) :file ,(nth 1 query-data))))
 
 (provide 'orb-utils)
 ;;; orb-utils.el ends here

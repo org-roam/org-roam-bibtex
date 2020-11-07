@@ -33,12 +33,10 @@
 ;; bibtex-completion and their dependencies.
 
 ;;; Code:
-;; * Library requires
-;;
-;; org-roam requires org,org-element, dash, f, s, emacsql, emacsql-sqlite,
-;; so all these libraries are always at our disposal
-;;
-(require 'org-roam)
+
+;; ============================================================================
+;;;; Dependencies
+;; ============================================================================
 
 (require 'orb-utils)
 (require 'orb-compat)
@@ -55,8 +53,12 @@
 (declare-function
  bibtex-completion-find-pdf (key-or-entry &optional find-additional))
 
-;; * Customize groups (global)
+;; ============================================================================
+;;;; Customize groups
+;; ============================================================================
+;;
 ;; All modules should put their `defgroup' definitions here
+;; Defcustom definitions should stay in respective files
 
 (defgroup org-roam-bibtex nil
   "Org-ref and Bibtex-completion integration for Org-roam."
@@ -83,46 +85,9 @@
   :group 'org-roam-bibtex
   :prefix "orb-autokey-")
 
-;; * Various utility functions
-;; ** Messaging
-
-(defun orb-warning (warning &optional citekey)
-  "Display a WARNING message.  Return nil.
-Include CITEKEY if it is non-nil."
-  (display-warning
-   :warning (concat "ORB :" (when citekey (format "%s :" citekey)) warning))
-  nil)
-
-;; ** orb-plist
-
-(defvar orb-plist nil
-  "Communication channel for `orb-edit-notes' and related functions.")
-
-(defun orb-plist-put (&rest props)
-  "Add properties PROPS to `orb-plist'.
-Returns the new plist."
-  (while props
-    (setq orb-plist (plist-put orb-plist (pop props) (pop props)))))
-
-(defun orb-plist-get (prop)
-  "Get PROP from `orb-plist'."
-  (plist-get orb-plist prop))
-
-(defun orb-cleanup ()
-  "Clean up `orb-plist'."
-  (let ((keywords (-filter #'keywordp orb-plist)))
-    (dolist (keyword keywords)
-      (orb-plist-put keyword nil))))
-
-(defmacro with-orb-cleanup (&rest body)
-  "Execute BODY calling `orb-cleanup' as its last form.
-Return the result of executing BODY."
-  (declare (indent 0) (debug t))
-  `(prog1
-       ,@body
-     (orb-cleanup)))
-
-;; ** File field
+;; ============================================================================
+;;;; File field
+;; ============================================================================
 
 (defcustom orb-file-field-extensions '("pdf")
   "Extensions of file names to keep when retrieving values from the file field.
@@ -166,14 +131,9 @@ to enter."
           (car paths)
         (completing-read "File to use: " paths)))))
 
-;;;###autoload
-(defun orb-find-note-file (citekey)
-  "Find note file associated from BibTeX’s CITEKEY.
-Returns the path to the note file, or nil if it doesn’t exist."
-  (let* ((completions (org-roam--get-ref-path-completions)))
-    (plist-get (cdr (assoc citekey completions)) :path)))
-
-;; ** Automatic generation of citation keys
+;; ============================================================================
+;;;; Orb autokey
+;; ============================================================================
 
 (defcustom orb-autokey-format "%a%y%T[4][1]"
   "Format string for automatically generated citation keys.
@@ -261,113 +221,6 @@ sensitive."
 The key will be stripped of these characters."
   :type 'string
   :group 'orb-autokey)
-
-;;;
-;;;###autoload
-(defun orb-autokey-generate-key (entry &optional control-string)
-  "Generate citation key from ENTRY according to `orb-autokey-format'.
-Return a string.  If optional CONTROL-STRING is non-nil, use it
-instead of `orb-autokey-format'."
-  (let* ((case-fold-search nil)
-         (str (or control-string orb-autokey-format))
-         ;; star regexp: group 3!
-         (star '(opt (group-n 3 "*")))
-         ;; optional parameters: regexp groups 4-6!
-         (opt1 '(opt (and "[" (opt (group-n 4 digit)) "]")))
-         (opt2 '(opt (and "[" (opt (group-n 5 digit)) "]")))
-         (opt3 '(opt (and "[" (opt (group-n 6 (any alnum "_.:|-"))) "]")))
-         ;; capital letters: regexp group 2!
-         ;; author wildcard regexp
-         (a-rx (macroexpand
-                `(rx (group-n 1 (or "%a" (group-n 2 "%A"))
-                              ,star ,opt1 ,opt2 ,opt3))))
-         ;; title wildcard regexp
-         (t-rx (macroexpand
-                `(rx (group-n 1 (or "%t" (group-n 2 "%T"))
-                              ,star ,opt1 ,opt2 ,opt3))))
-         ;; any field wildcard regexp
-         ;; required parameter: group 7!
-         (f-rx (macroexpand
-                `(rx (group-n 1 (or "%f" (group-n 2 "%F"))
-                              (and "{" (group-n 7 (1+ letter)) "}")
-                              ,opt1 ,opt2 ,opt3))))
-         ;; year wildcard regexp
-         (y-rx (rx (group-n 1 "%y" (opt (group-n 3 "*")))))
-         ;; page wildcard regexp
-         (p-rx (macroexpand `(rx (group-n 1 "%p" ,star ,opt3))))
-         ;; elisp expression wildcard regexp
-         ;; elisp sexp: group 8!
-         (e-rx (rx (group-n 1 "%e"
-                            "{" (group-n 8 "(" (1+ ascii) ")") "}"))))
-    ;; Evaluating elisp expression should go the first because it can produce
-    ;; additional wildcards
-    (while (string-match e-rx str)
-      (setq str (replace-match
-                 (save-match-data
-                   (orb--autokey-evaluate-expression
-                    (match-string 8 str) entry)) t nil str 1)))
-    ;; Expanding all other wildcards are actually
-    ;; variations of calls to `orb--autokey-format-field' with many
-    ;; commonalities, so we wrap it into a macro
-    (cl-macrolet
-        ((expand
-          (wildcard &key field value entry capital
-                    starred words characters delimiter)
-          (let ((cap (or capital '(match-string 2 str)))
-                (star (or starred '(match-string 3 str)))
-                (opt1 (or words '(match-string 4 str)))
-                (opt2 (or characters '(match-string 5 str)))
-                (opt3 (or delimiter '(match-string 6 str))))
-            `(while (string-match ,wildcard str)
-               (setq str (replace-match
-                          ;; we can safely pass nil values
-                          ;; `orb--autokey-format-field' should
-                          ;; handle them correctly
-                          (orb--autokey-format-field ,field
-                            :entry ,entry :value ,value
-                            :capital ,cap :starred ,star
-                            :words ,opt1 :characters ,opt2 :delimiter ,opt3)
-                          t nil str 1))))))
-      ;; Handle author wildcards
-      (expand a-rx
-              :field "=name="
-              :value (or (bibtex-completion-get-value "author" entry)
-                         (bibtex-completion-get-value "editor" entry)))
-      ;; Handle title wildcards
-      (expand t-rx
-              :field "title"
-              :value (or (bibtex-completion-get-value "title" entry) ""))
-      ;; Handle custom field wildcards
-      (expand f-rx
-              :field (match-string 7 str)
-              :entry entry)
-      ;; Handle pages wildcards %p*[-]
-      (expand p-rx
-              :field (if (match-string 3 str)
-                         "pagetotal" "pages")
-              :entry entry
-              :words "1"))
-    ;; Handle year wildcards
-    ;; it's simple, so we do not use `orb--autokey-format-field' here
-    ;; year should be well-formed: YYYY
-    ;; TODO: put year into cl-macrolet
-    (let ((year (or (bibtex-completion-get-value "year" entry)
-                    (bibtex-completion-get-value "date" entry))))
-      (if (or (not year)
-              (string-empty-p year)
-              (string= year orb-autokey-empty-field-token))
-          (while (string-match y-rx str)
-            (setq str (replace-match orb-autokey-empty-field-token
-                                     t nil str 1)))
-        (while (string-match y-rx str)
-          (setq year (format "%04d" (string-to-number year))
-                str (replace-match
-                     (format "%s" (if (match-string 3 str)
-                                      (substring year 2 4)
-                                    (substring year 0 4)))
-                     t nil str 1)))))
-    str))
-
 (defun orb--autokey-format-field (field &rest specs)
   "Return BibTeX FIELD formatted according to plist SPECS.
 
@@ -488,6 +341,111 @@ string or nil."
       (user-error "Result: %s, invalid type.  \
 Expression must be string or nil" result))
     (or result "")))
+
+;;;###autoload
+(defun orb-autokey-generate-key (entry &optional control-string)
+  "Generate citation key from ENTRY according to `orb-autokey-format'.
+Return a string.  If optional CONTROL-STRING is non-nil, use it
+instead of `orb-autokey-format'."
+  (let* ((case-fold-search nil)
+         (str (or control-string orb-autokey-format))
+         ;; star regexp: group 3!
+         (star '(opt (group-n 3 "*")))
+         ;; optional parameters: regexp groups 4-6!
+         (opt1 '(opt (and "[" (opt (group-n 4 digit)) "]")))
+         (opt2 '(opt (and "[" (opt (group-n 5 digit)) "]")))
+         (opt3 '(opt (and "[" (opt (group-n 6 (any alnum "_.:|-"))) "]")))
+         ;; capital letters: regexp group 2!
+         ;; author wildcard regexp
+         (a-rx (macroexpand
+                `(rx (group-n 1 (or "%a" (group-n 2 "%A"))
+                              ,star ,opt1 ,opt2 ,opt3))))
+         ;; title wildcard regexp
+         (t-rx (macroexpand
+                `(rx (group-n 1 (or "%t" (group-n 2 "%T"))
+                              ,star ,opt1 ,opt2 ,opt3))))
+         ;; any field wildcard regexp
+         ;; required parameter: group 7!
+         (f-rx (macroexpand
+                `(rx (group-n 1 (or "%f" (group-n 2 "%F"))
+                              (and "{" (group-n 7 (1+ letter)) "}")
+                              ,opt1 ,opt2 ,opt3))))
+         ;; year wildcard regexp
+         (y-rx (rx (group-n 1 "%y" (opt (group-n 3 "*")))))
+         ;; page wildcard regexp
+         (p-rx (macroexpand `(rx (group-n 1 "%p" ,star ,opt3))))
+         ;; elisp expression wildcard regexp
+         ;; elisp sexp: group 8!
+         (e-rx (rx (group-n 1 "%e"
+                            "{" (group-n 8 "(" (1+ ascii) ")") "}"))))
+    ;; Evaluating elisp expression should go the first because it can produce
+    ;; additional wildcards
+    (while (string-match e-rx str)
+      (setq str (replace-match
+                 (save-match-data
+                   (orb--autokey-evaluate-expression
+                    (match-string 8 str) entry)) t nil str 1)))
+    ;; Expanding all other wildcards are actually
+    ;; variations of calls to `orb--autokey-format-field' with many
+    ;; commonalities, so we wrap it into a macro
+    (cl-macrolet
+        ((expand
+          (wildcard &key field value entry capital
+                    starred words characters delimiter)
+          (let ((cap (or capital '(match-string 2 str)))
+                (star (or starred '(match-string 3 str)))
+                (opt1 (or words '(match-string 4 str)))
+                (opt2 (or characters '(match-string 5 str)))
+                (opt3 (or delimiter '(match-string 6 str))))
+            `(while (string-match ,wildcard str)
+               (setq str (replace-match
+                          ;; we can safely pass nil values
+                          ;; `orb--autokey-format-field' should
+                          ;; handle them correctly
+                          (orb--autokey-format-field ,field
+                            :entry ,entry :value ,value
+                            :capital ,cap :starred ,star
+                            :words ,opt1 :characters ,opt2 :delimiter ,opt3)
+                          t nil str 1))))))
+      ;; Handle author wildcards
+      (expand a-rx
+              :field "=name="
+              :value (or (bibtex-completion-get-value "author" entry)
+                         (bibtex-completion-get-value "editor" entry)))
+      ;; Handle title wildcards
+      (expand t-rx
+              :field "title"
+              :value (or (bibtex-completion-get-value "title" entry) ""))
+      ;; Handle custom field wildcards
+      (expand f-rx
+              :field (match-string 7 str)
+              :entry entry)
+      ;; Handle pages wildcards %p*[-]
+      (expand p-rx
+              :field (if (match-string 3 str)
+                         "pagetotal" "pages")
+              :entry entry
+              :words "1"))
+    ;; Handle year wildcards
+    ;; it's simple, so we do not use `orb--autokey-format-field' here
+    ;; year should be well-formed: YYYY
+    ;; TODO: put year into cl-macrolet
+    (let ((year (or (bibtex-completion-get-value "year" entry)
+                    (bibtex-completion-get-value "date" entry))))
+      (if (or (not year)
+              (string-empty-p year)
+              (string= year orb-autokey-empty-field-token))
+          (while (string-match y-rx str)
+            (setq str (replace-match orb-autokey-empty-field-token
+                                     t nil str 1)))
+        (while (string-match y-rx str)
+          (setq year (format "%04d" (string-to-number year))
+                str (replace-match
+                     (format "%s" (if (match-string 3 str)
+                                      (substring year 2 4)
+                                    (substring year 0 4)))
+                     t nil str 1)))))
+    str))
 
 (provide 'orb-core)
 ;;; orb-core.el ends here

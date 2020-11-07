@@ -286,7 +286,7 @@ find, parse, check, train, help or license" input)))
        (when (and pdftotext (not (executable-find pdftotext)))
          (user-error "Executable not found: pdftotext, %s" pdftotext))
        (setq global-options
-             (orb--format "%s" global-options
+             (orb-format "%s" global-options
                           " --pdfinfo=\"%s\"" pdfinfo
                           " --pdftotext=\"%s\"" pdftotext))
        ;; Command options
@@ -311,7 +311,7 @@ find, parse, check, train, help or license" input)))
        ;; parse only accepts --[no]-layout, so we ignore the rest
        ;; append command options to command
        (setq command-options
-             (orb--format " --crop=%s" crop
+             (orb-format " --crop=%s" crop
                           " --layout" (cons layout " --no-layout")
                           " --solo" (cons solo " --no-solo"))))
       ('train
@@ -346,7 +346,7 @@ find, parse, check, train, help or license" input)))
         ;; convert format to a comma-separated string and append
         ;; it to global options
         (setq global-options
-              (orb--format "%s" global-options
+              (orb-format "%s" global-options
                            " -f %s" (funcall to-string format)))))
     ;; find, parse, check accept
     ;; finder and parser models
@@ -361,7 +361,7 @@ using the default one" fmodel)
                          "Finder model file not found: %s, \
 using the default one" pmodel)
         (setq pmodel nil))
-      (setq global-options (orb--format "%s" global-options
+      (setq global-options (orb-format "%s" global-options
                                         " -F \"%s\"" fmodel
                                         " -P \"%s\"" pmodel)))
     ;; find, train, parse and check:
@@ -374,7 +374,7 @@ using the default one" pmodel)
       (unless (and (stringp input) (f-exists? input))
         (user-error "Invalid input file or directory %s" input))
       (setq global-options
-            (orb--format
+            (orb-format
              "%s" global-options
              " --verbose" (cons verbose " --no-verbose")
              ;; this flag does nothing for check
@@ -383,7 +383,7 @@ using the default one" pmodel)
              " --overwrite" (cons overwrite " --no-overwrite"))))
     ;; Set arguments and run the program
     ;;
-    (setq anystyle (orb--format "%s" exec
+    (setq anystyle (orb-format "%s" exec
                                 "%s" global-options
                                 " %s" command
                                 "%s" command-options

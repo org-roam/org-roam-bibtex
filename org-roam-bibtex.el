@@ -66,18 +66,26 @@
 ;;
 
 ;;; Code:
-;; * Library requires
+
+;; ============================================================================
+;;;; Dependencies
+;; ============================================================================
+
 (require 'orb-core)
+
+(when (featurep 'ivy-bibtex)
+  (require 'orb-ivy))
+
+(when (featurep 'helm-bibtex)
+  (require 'orb-helm))
 
 (eval-when-compile
   (require 'subr-x)
-  (require 'cl-lib)
-  (require 'ivy-bibtex nil t)
-  (require 'helm-bibtex nil t)
-  (require 'helm-source))
+  (require 'cl-lib))
 
 ;; declare own functions and variables
-(declare-function orb-note-actions "orb-note-actions")
+(declare-function orb-helm-insert "orb-helm")
+(declare-function orb-ivy-insert "orb-ivy")
 
 ;; declare external functions and variables
 
@@ -91,12 +99,6 @@
                   "bibtex-completion" (&optional files))
 (declare-function bibtex-completion-init "bibtex-completion")
 (declare-function bibtex-completion-candidates "bibtex-completion")
-(declare-function helm-bibtex "helm-bibtex" &optional arg local-bib input)
-(declare-function ivy-bibtex "ivy-bibtex" &optional arg local-bib)
-
-(declare-function helm-make-source "helm-source" (name class &rest args))
-(declare-function helm-make-actions "helm-lib" (&rest args))
-(declare-function helm-marked-candidates (&key with-wildcard all-sources))
 
 (declare-function projectile-relevant-open-projects "projectile")
 (declare-function persp-switch "persp-mode")
@@ -105,7 +107,14 @@
 (defvar org-ref-notes-function)
 (declare-function org-ref-find-bibliography "org-ref-core")
 
-;; * Customize definitions
+(declare-function defhydra "ext:hydra")
+(declare-function org-ref-format-entry "ext:org-ref-bibtex" (key))
+
+(declare-function orb-pdf-scrapper-run "orb-pdf-scrapper" (key))
+
+;; ============================================================================
+;;;; Customize definitions
+;; ============================================================================
 
 (defcustom orb-preformat-templates t
   "Non-nil to enable template preformatting.
@@ -365,23 +374,196 @@ Possible values are `key' and `entry'."
           (const key)
           (const entry)))
 
-;; * Helper functions
-;; ** Various
+(defcustom orb-note-actions-frontend 'default
+  "Interface frontend for `orb-note-actions'.
+Supported values (frontends) are 'default, 'ido, 'hydra, 'ivy and 'helm.
 
-(defun orb--switch-perspective ()
-  "Helper function for `orb-edit-notes'."
-  (when (and (require 'projectile nil t)
-             (require 'persp-mode nil t))
-    (let ((notes-project (cdr orb-persp-project))
-          (projects (projectile-relevant-open-projects))
-          openp)
-      (dolist (project projects openp)
-        (setq openp (or (f-equal? project notes-project) openp)))
-      (when openp
-        (let ((p-names (cdr (persp-names))))
-          (dolist (p-name p-names)
-            (when (s-equals? p-name (car orb-persp-project))
-              (persp-switch p-name))))))))
+Alternatively, it can be set to a function, in which case the
+function should expect one argument CITEKEY, which is a list
+whose car is the citation key associated with the org-roam note
+the current buffer is visiting.  Also, it should ideally make use
+of `orb-note-actions-default', `orb-note-actions-extra' and
+`orb-note-actions-user' for providing an interactive interface,
+through which the combined set of note actions is presented as a
+list of candidates and the function associated with the candidate
+is executed upon selecting it."
+  :risky t
+  :type '(radio
+          (const :tag "Default" default)
+          (const :tag "Ido" ido)
+          (const :tag "Hydra" hydra)
+          (const :tag "Ivy" ivy)
+          (const :tag "Helm" helm)
+          (function :tag "Custom function"))
+  :group 'orb-note-actions)
+
+(defcustom orb-note-actions-default
+  '(("Open PDF file(s)" . bibtex-completion-open-pdf)
+    ("Add PDF to library" . bibtex-completion-add-pdf-to-library)
+    ("Open URL or DOI in browser" . bibtex-completion-open-url-or-doi)
+    ("Show record in the bibtex file" . bibtex-completion-show-entry))
+  "Default actions for `orb-note-actions'.
+Each action is a cons cell DESCRIPTION . FUNCTION."
+  :risky t
+  :type '(alist
+          :tag "Default actions for `orb-note-actions'"
+          :key-type (string :tag "Description")
+          :value-type (function :tag "Function"))
+  :group 'orb-note-actions)
+
+(defcustom orb-note-actions-extra
+  '(("Save citekey to kill-ring and clipboard" . orb-note-actions-copy-citekey)
+    ("Run Orb PDF Scrapper" . orb-note-actions-scrap-pdf))
+  "Extra actions for `orb-note-actions'.
+Each action is a cons cell DESCRIPTION . FUNCTION."
+  :risky t
+  :type '(alist
+          :tag "Extra actions for `orb-note-actions'"
+          :key-type (string :tag "Description")
+          :value-type (function :tag "Function"))
+  :group 'orb-note-actions)
+
+(defcustom orb-note-actions-user nil
+  "User actions for `orb-note-actions'.
+Each action is a cons cell DESCRIPTION . FUNCTION."
+  :risky t
+  :type '(alist
+          :tag "User actions for `orb-note-actions'"
+          :key-type (string :tag "Description")
+          :value-type (function :tag "Function"))
+  :group 'orb-note-actions)
+
+;; ============================================================================
+;;;; Orb plist
+;; ============================================================================
+
+(defvar orb-plist nil
+  "Communication channel for `orb-edit-notes' and related functions.")
+
+(defun orb-plist-put (&rest props)
+  "Add properties PROPS to `orb-plist'.
+Returns the new plist."
+  (while props
+    (setq orb-plist (plist-put orb-plist (pop props) (pop props)))))
+
+(defun orb-plist-get (prop)
+  "Get PROP from `orb-plist'."
+  (plist-get orb-plist prop))
+
+(defun orb-cleanup ()
+  "Clean up `orb-plist'."
+  (let ((keywords (-filter #'keywordp orb-plist)))
+    (dolist (keyword keywords)
+      (orb-plist-put keyword nil))))
+
+(defmacro with-orb-cleanup (&rest body)
+  "Execute BODY calling `orb-cleanup' as its last form.
+Return the result of executing BODY."
+  (declare (indent 0) (debug t))
+  `(prog1
+       ,@body
+     (orb-cleanup)))
+
+;; ============================================================================
+;;;; Managing Org-capture hooks (experimental)
+;; ============================================================================
+
+;; workflow:
+;;
+;; 1. (orb-register-hook-function func before nil (my-forms))
+;;
+;; 2. In `orb-edit-notes', if a note does not exist, an `org-capture' process is
+;; started.  Before that, the function `func' is added
+;; `org-capture-before-finalize-hook' with 0 depth by calling
+;; `orb-do-hook-functions'.  Forms (my-forms) will be run by `org-capture'
+;; within the hook.  The closure removes itself, so that it does not interfere
+;; with any subsequent `org-capture' calls.  `orb-edit-notes' also takes care
+;; to remove the function from the hook in case the `org-capture' process was
+;; aborted.
+;;
+;; 3. If the note exists, the function will not be added to the hook, but it is
+;; still possible to execute `my-forms' by calling:
+;;
+;; (orb-call-hook-function 'func)
+;;
+;; 4. The function is registered until `orb-clean' is run.
+
+(defmacro orb-register-hook-function (name target depth &rest body)
+  "Register a closure to be run in one of the `org-capture' hooks.
+NAME (unquoted) is the name of the function.  TARGET should be an
+unquoted SYMBOL, one of `prepare', `before' or `after', meaning
+the function will be registered to run with the corresponding
+`org-capture-SYMBOL-finlaize-hook'.  DEPTH is the hook depth, nil
+is internally converted to 0.
+
+BODY are forms which will be wrapped in an anonymous function
+within a `letrec' form.  Additionally, a `remove-hook' called is
+appended to BODY, making the closure self-removable:
+
+\(letrec ((NAME
+           (lambda ()
+            BODY
+           (remove-hook 'org-capture-TARGET-finalize-hook NAME)))))
+
+These hook functions are therefore meant to run only in next
+`org-capture' session.
+
+The function is not actually added to a hook but is instead
+registered on `orb-plist'.  The function `orb-edit-notes'
+installs the hooks just before starting an `org-capture' process
+by calling `orb-do-hook-functions'.  It also takes care of
+removing the hooks in case the `org-capture' process was aborted.
+
+After a function has been registered, it is possible to call it
+by passing its NAME as a quoted symbol to
+`orb-call-hook-function'.  This may be useful if the function
+should be run regardless of whether an `org-capture' process was
+initiated or not."
+  (declare (indent 3) (debug t))
+  (let ((hookvar (intern (format "org-capture-%s-finalize-hook" target)))
+        (keyword (intern (format ":%s-functions" target)))
+        (depth (or depth 0)))
+    `(letrec ((,name (lambda () ,@body (remove-hook (quote ,hookvar) ,name))))
+       (orb-plist-put ,keyword
+                      (cons (list (quote ,name) ,name ,depth)
+                            (orb-plist-get ,keyword))))))
+
+(defun orb-call-hook-function (name)
+  "Call function NAME registered by `orb-register-hook-function'."
+  (let* ((functions (append (orb-plist-get :prepare-functions)
+                            (orb-plist-get :before-functions)
+                            (orb-plist-get :after-functions)))
+         (func (alist-get name functions)))
+    (when func (funcall (car func)))))
+
+(defun orb-do-hook-functions (action &optional targets)
+  "Add or remove functions to `org-capture-...-finilize-hook's.
+ACTION should be a symbol `add' or `remove'.  If optional TARGETS
+list is provided, do only the hooks in TARGETS.  TARGETS should
+be any of symbols `prepare', `before' and `after'.  TARGETS can
+also be a single symbols.  If TARGETS is nil, a list of all three
+symbols is implied."
+  (let* ((targets (--> (if (and targets (not (listp targets)))
+                           (listp targets)
+                         targets)
+                       ;; filter irrelevant symbols,
+                       ;; or if targets were nil, make all targets
+                       (or (-intersection it '(prepare before after))
+                           '(prepare before after)))))
+    (dolist (target targets)
+      (let ((functions (sort (orb-plist-get
+                              (intern (format ":%s-functions" target)))
+                             (lambda (a b)
+                               (> (nth 2 a) (nth 2 b))))))
+        (dolist (func functions)
+          (let ((f (intern (format "%s-hook" action)))
+                (hook (intern (format "org-capture-%s-finalize-hook" target))))
+            (funcall f hook (when (eq action 'add)
+                              (nth 1 func)))))))))
+
+;; ============================================================================
+;;;; Orb edit notes
+;; ============================================================================
 
 (defvar orb--virtual-fields-alist
   '(("=type=" . "type")
@@ -411,28 +593,20 @@ The special keywords and their replacements are defined in
                          `((stringp consp) ,wrong-type)))))
             kwds)))
 
-(defun orb--get-non-ref-path-completions ()
-  "Return a list of cons for titles of non-ref notes to absolute path.
-CANDIDATES is a an alist of candidates to consider.  Defaults to
-`org-roam--get-title-path-completions' otherwise."
-  (let* ((rows (org-roam-db-query
-                [:select [titles:file titles:title tags:tags]
-                 :from titles
-                 :left :join tags
-                 :on (= titles:file tags:file)
-                 :left :join refs :on (= titles:file refs:file)
-                 :where refs:file :is :null]))
-         completions)
-    (dolist (row rows completions)
-      (pcase-let ((`(,file-path ,title ,tags) row))
-        (let ((title (or title
-                         (list (org-roam--path-to-slug file-path)))))
-          (let ((k (concat
-                    (when tags
-                      (format "(%s) " (s-join org-roam-tag-separator tags)))
-                    title))
-                (v (list :path file-path :title title)))
-            (push (cons k v) completions)))))))
+(defun orb--switch-perspective ()
+  "Helper function for `orb-edit-notes'."
+  (when (and (require 'projectile nil t)
+             (require 'persp-mode nil t))
+    (let ((notes-project (cdr orb-persp-project))
+          (projects (projectile-relevant-open-projects))
+          openp)
+      (dolist (project projects openp)
+        (setq openp (or (f-equal? project notes-project) openp)))
+      (when openp
+        (let ((p-names (cdr (persp-names))))
+          (dolist (p-name p-names)
+            (when (s-equals? p-name (car orb-persp-project))
+              (persp-switch p-name))))))))
 
 (defun orb--store-link-functions-advice (action)
   "Add or remove advice for each of `orb-ignore-bibtex-store-link-functions'.
@@ -446,8 +620,6 @@ is the function `ignore', it is added as `:override'."
                     (t (user-error "Action type not recognised: %s" action)))))
       (dolist (advisee orb-ignore-bibtex-store-link-functions)
         (apply advice-func (push advisee advice))))))
-
-;; ** Templates and edit notes
 
 (defun orb--preformat-template (template entry)
   "Helper function for `orb--preformat-templates'.
@@ -622,377 +794,6 @@ or `title' should be used for slug: %s not supported" orb-slug-source))))
           (orb--store-link-functions-advice 'remove)))
     (message "ORB: Something went wrong. Check the *Warnings* buffer")))
 
-;; ** Insert link
-
-(defvar helm-source-orb-insert nil
-  "Helm source to use with `orb-insert'.
-A copy of `helm-source-bibtex', in which \"Edit notes\" is made
-the first (default) action.  This action calls `helm-orb-insert-edit-notes'.
-Only relevant when `orb-insert-frontend' is `helm-bibtex'.")
-
-(defun orb-insert--make-helm-source ()
-  "Set the variable `helm-source-orb-insert'."
-  ;; this is done in the function so that we do not force loading `helm' unless
-  ;; it is really needed
-  (require 'helm)
-  (setq helm-source-orb-insert
-        (helm-build-sync-source "BibTeX entries"
-          :header-name (lambda (name)
-                         (format "%s: " name))
-          :candidates 'helm-bibtex-candidates
-          :filtered-candidate-transformer 'helm-bibtex-candidates-formatter
-          :action (helm-make-actions
-                   "Edit note & insert a link"  'helm-orb-insert-edit-notes
-                   "Open PDF, URL or DOI"       'helm-bibtex-open-any
-                   "Open URL or DOI in browser" 'helm-bibtex-open-url-or-doi
-                   "Insert citation"            'helm-bibtex-insert-citation
-                   "Insert reference"           'helm-bibtex-insert-reference
-                   "Insert BibTeX key"          'helm-bibtex-insert-key
-                   "Insert BibTeX entry"        'helm-bibtex-insert-bibtex
-                   "Attach PDF to email"        'helm-bibtex-add-PDF-attachment
-                   "Show entry"                 'helm-bibtex-show-entry
-                   "Add PDF to library"     'helm-bibtex-add-pdf-to-library))))
-
-(defvar orb-insert--ivy-actions
-  '(("e" ivy-orb-insert-edit-notes "Edit note & insert a link")
-    ("p" ivy-bibtex-open-pdf "Open PDF file (if present)")
-    ("u" ivy-bibtex-open-url-or-doi "Open URL or DOI in browser")
-    ("c" ivy-bibtex-insert-citation "Insert citation")
-    ("r" ivy-bibtex-insert-reference "Insert reference")
-    ("k" ivy-bibtex-insert-key "Insert BibTeX key")
-    ("b" ivy-bibtex-insert-bibtex "Insert BibTeX entry")
-    ("a" ivy-bibtex-add-PDF-attachment "Attach PDF to email")
-    ("s" ivy-bibtex-show-entry "Show entry")
-    ("l" ivy-bibtex-add-pdf-to-library "Add PDF to library")
-    ("f" (lambda (_candidate) (ivy-bibtex-fallback ivy-text)) "Fallback options"))
-  "Ivy actions to use with `orb-insert'.
-A copy of Ivy-bibtex's alist defining Ivy actions, in which
-\"Edit note & insert a link\" is made first (default) action.
-This action calls `orb-insert-edit-notes'.  Only relevant when
-`orb-insert-frontend' is `ivy-bibtex'.")
-
-(defun orb-insert--link (file citekey &optional description lowercase)
-  "Insert a link to FILE.
-If a region is active, replace the region with the link and used
-the selected text as the link's label.  If DESCRIPTION is
-provided, use it as the link's label instead.  If none of the
-above is true, insert the CITEKEY as a formatted Org-ref citation
-using `org-ref-default-citation-link' or 'cite:' if this variable
-is not bound.
-
-If LOWERCASE is non-nil, downcase the link description.
-Return the filename if it exists."
-  ;; Deactivate the mark on quit since `atomic-change-group' prevents it
-  (unwind-protect
-      ;; Group functions together to avoid inconsistent state on quit
-      (atomic-change-group
-        (let* (region-text
-               beg end
-               (_ (when (region-active-p)
-                    (setq beg (set-marker (make-marker) (region-beginning)))
-                    (setq end (set-marker (make-marker) (region-end)))
-                    (setq region-text
-                          (buffer-substring-no-properties beg end))))
-               (description (or region-text description)))
-          (when (and file (file-exists-p file))
-            (when region-text
-              (delete-region beg end)
-              (set-marker beg nil)
-              (set-marker end nil))
-            (if description
-                (let ((description (if lowercase
-                                       (downcase description)
-                                     description)))
-                  (insert (org-roam-format-link file description)))
-              (let ((cite-link (if (boundp 'org-ref-default-citation-link)
-                                   (concat org-ref-default-citation-link ":")
-                                 "cite:")))
-                (insert (concat cite-link citekey))))
-            ;; return value
-            file)))
-    (deactivate-mark)))
-
-(defvar orb-insert-lowercase nil)
-(defun orb-insert--link-h ()
-  "Prepare the environement and call `orb-insert--link'."
-  ;; insert link only when file is non-nil
-  (with-orb-cleanup
-    (when-let ((file (orb-plist-get :file)))
-      (let* ((citekey (orb-plist-get :citekey))
-             (insert-description (or (orb-plist-get :link-description)
-                                     orb-insert-link-description))
-             (lowercase (or (orb-plist-get :link-lowercase)
-                            orb-insert-lowercase))
-             (description (cl-case insert-description
-                            (title (orb-plist-get :title))
-                            (citekey citekey)
-                            (citation nil))))
-        (with-current-buffer (orb-plist-get :buffer)
-          (save-excursion
-            (orb-insert--link file citekey description lowercase)))))
-    (set-window-configuration (orb-plist-get :window-conf))
-    (when (and orb-insert-follow-link
-               (looking-at org-link-any-re))
-      (org-open-at-point))
-    ;; if any left
-    (orb-do-hook-functions 'remove)))
-
-(defun orb-note-exists-p (citekey)
-  "Check if a note exists whose citekey is CITEKEY.
-Return alist (CITEKEY :title title :file :file) if note exists or
-nil otherwise."
-  ;; NOTE: This function can be made more general.
-  (when-let ((query-data
-              (car
-               (org-roam-db-query
-                [:select [titles:title refs:file]
-                 :from titles
-                 :left :join refs :on (= titles:file refs:file)
-                 :where (like refs:ref $r1)] (format "%%\"%s\"%%" citekey)))))
-    `(,citekey :title ,(car query-data) :file ,(nth 1 query-data))))
-
-;; * API
-;; ** Hook management
-;;
-;; workflow:
-;;
-;; 1. (orb-register-hook-function func before nil (my-forms))
-;;
-;; 2. In `orb-edit-notes', if a note does not exist, an `org-capture' process is
-;; started.  Before that, the function `func' is added
-;; `org-capture-before-finalize-hook' with 0 depth by calling
-;; `orb-do-hook-functions'.  Forms (my-forms) will be run by `org-capture'
-;; within the hook.  The closure removes itself, so that it does not interfere
-;; with any subsequent `org-capture' calls.  `orb-edit-notes' also takes care
-;; to remove the function from the hook in case the `org-capture' process was
-;; aborted.
-;;
-;; 3. If the note exists, the function will not be added to the hook, but it is
-;; still possible to execute `my-forms' by calling:
-;;
-;; (orb-call-hook-function 'func)
-;;
-;; 4. The function is registered until `orb-clean' is run.
-;;
-(defmacro orb-register-hook-function (name target depth &rest body)
-  "Register a closure to be run in one of the `org-capture' hooks.
-NAME (unquoted) is the name of the function.  TARGET should be an
-unquoted SYMBOL, one of `prepare', `before' or `after', meaning
-the function will be registered to run with the corresponding
-`org-capture-SYMBOL-finlaize-hook'.  DEPTH is the hook depth, nil
-is internally converted to 0.
-
-BODY are forms which will be wrapped in an anonymous function
-within a `letrec' form.  Additionally, a `remove-hook' called is
-appended to BODY, making the closure self-removable:
-
-\(letrec ((NAME
-           (lambda ()
-            BODY
-           (remove-hook 'org-capture-TARGET-finalize-hook NAME)))))
-
-These hook functions are therefore meant to run only in next
-`org-capture' session.
-
-The function is not actually added to a hook but is instead
-registered on `orb-plist'.  The function `orb-edit-notes'
-installs the hooks just before starting an `org-capture' process
-by calling `orb-do-hook-functions'.  It also takes care of
-removing the hooks in case the `org-capture' process was aborted.
-
-After a function has been registered, it is possible to call it
-by passing its NAME as a quoted symbol to
-`orb-call-hook-function'.  This may be useful if the function
-should be run regardless of whether an `org-capture' process was
-initiated or not."
-  (declare (indent 3) (debug t))
-  (let ((hookvar (intern (format "org-capture-%s-finalize-hook" target)))
-        (keyword (intern (format ":%s-functions" target)))
-        (depth (or depth 0)))
-    `(letrec ((,name (lambda () ,@body (remove-hook (quote ,hookvar) ,name))))
-       (orb-plist-put ,keyword
-                      (cons (list (quote ,name) ,name ,depth)
-                            (orb-plist-get ,keyword))))))
-
-(defun orb-call-hook-function (name)
-  "Call function NAME registered by `orb-register-hook-function'."
-  (let* ((functions (append (orb-plist-get :prepare-functions)
-                            (orb-plist-get :before-functions)
-                            (orb-plist-get :after-functions)))
-         (func (alist-get name functions)))
-    (when func (funcall (car func)))))
-
-(defun orb-do-hook-functions (action &optional targets)
-  "Add or remove functions to `org-capture-...-finilize-hook's.
-ACTION should be a symbol `add' or `remove'.  If optional TARGETS
-list is provided, do only the hooks in TARGETS.  TARGETS should
-be any of symbols `prepare', `before' and `after'.  TARGETS can
-also be a single symbols.  If TARGETS is nil, a list of all three
-symbols is implied."
-  (let* ((targets (--> (if (and targets (not (listp targets)))
-                           (listp targets)
-                         targets)
-                       ;; filter irrelevant symbols,
-                       ;; or if targets were nil, make all targets
-                       (or (-intersection it '(prepare before after))
-                           '(prepare before after)))))
-    (dolist (target targets)
-      (let ((functions (sort (orb-plist-get
-                              (intern (format ":%s-functions" target)))
-                             (lambda (a b)
-                               (> (nth 2 a) (nth 2 b))))))
-        (dolist (func functions)
-          (let ((f (intern (format "%s-hook" action)))
-                (hook (intern (format "org-capture-%s-finalize-hook" target))))
-            (funcall f hook (when (eq action 'add)
-                              (nth 1 func)))))))))
-
-;; ** Interface functions
-;;
-
-;;;###autoload
-(defun orb-notes-fn (citekey)
-  "Open an Org-roam note associated with the CITEKEY or create a new one.
-Set `org-ref-notes-function' to this function if your
-bibliography notes are managed by Org-roam and you want some
-extra integration between the two packages.
-
-This is a wrapper function around `orb-edit-notes'
-intended for use with Org-ref."
-  (when (require 'org-ref nil t)
-    (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
-      (orb-edit-notes citekey))))
-
-;;;###autoload
-(defun orb-edit-notes-ad (keys)
-  "Open an Org-roam note associated with the first key from KEYS.
-This function replaces `bibtex-completion-edit-notes'.  Only the
-first key from KEYS will actually be used."
-  (orb-edit-notes (car keys)))
-
-;;;###autoload
-(defun orb-insert-generic (&optional arg)
-  "Present a list of BibTeX entries for completion.
-This is a generic completion function for `orb-insert', which
-runs `orb-insert-edit-notes' on the selected entry.  The list is
-made by `bibtex-completion-candidates'.
-
-The appearance of selection candidates is determined by
-`orb-insert-generic-candidates-format'.
-
-This function is not interactive, set `orb-insert-frontend' to
-`generic' and call `orb-insert' interactively instead.
-
-If ARG is non-nil, rebuild `bibtex-completion-cache'."
-  (when arg
-    (bibtex-completion-clear-cache))
-  (bibtex-completion-init)
-  (let* ((candidates (bibtex-completion-candidates))
-         (candidates2
-          (if (eq orb-insert-generic-candidates-format 'key)
-              (mapcar (lambda (item)
-                        (alist-get "=key=" (cdr item) nil nil #'equal))
-                      candidates)
-            (mapcar #'car candidates)))
-         (selection (completing-read "BibTeX entry:" candidates2 nil t))
-         (citekey (if (eq orb-insert-generic-candidates-format 'key)
-                      selection
-                    (--> (alist-get selection candidates nil nil #'equal)
-                         (cdr it)
-                         (alist-get "=key=" it  nil nil #'equal)))))
-    (orb-insert-edit-notes (list citekey))))
-
-;;;###autoload
-(defun orb-insert-edit-notes (citekey)
-  "Call `orb-edit-notes' and insert a link to a note.
-CITEKEY is a citation key and #+ROAM_KEY of the retrieved or
-newly created note."
-  (orb-plist-put :buffer (current-buffer)
-                 :window-conf (current-window-configuration)
-                 :citekey (car citekey))
-  ;; Here, we play on the specifics of a capture process.
-  ;; `org-capture-finalize' runs `prepare-hook', `before-hook' and `after-hook'
-  ;; in that order.  But, if `org-capture-finalize' was run via
-  ;; `org-capture-kill', the `before-hook' is forced to nil via a let form.
-  ;;
-  ;; 1. In an interactive session, we get the title while the capture buffer
-  ;; still exists.  But if the capture process was killed, our before hook
-  ;; function did not run and therefore title is nil on `orb-plist'.
-  (orb-register-hook-function get-title before nil
-    (orb-plist-put :title (orb-get-buffer-keyword "title")
-                   :immediate-finish
-                   (plist-get org-capture-plist :immediate-finish)))
-
-  (orb-register-hook-function get-file after -90
-    (let ((file (buffer-file-name)))
-      ;; 2. We check whether the title on `orb-plist' is nil.  When it is, we
-      ;; set file to nil to signal `org-insert--link-h' not to insert a link.
-      ;; We do this only in interactive process
-      (unless (or (orb-plist-get :immediate-finish)
-                  (orb-plist-get :title))
-        (setq file nil)
-        ;; before hook functions did not run, so they are still in
-        ;; `org-capture-before-finalize-hook'; remove them.
-        (orb-do-hook-functions 'remove 'before))
-      (orb-plist-put :file file)))
-
-  (orb-register-hook-function insert-link after 90
-    (orb-insert--link-h))
-
-  (save-excursion
-    (orb-edit-notes (car citekey)))
-  ;; when note existed, a capture process did not run.  We have all the info on
-  ;; `orb-plist', so just insert a link
-  (when (orb-plist-get :note-existed)
-    ;; we call the hook function so that the hook is removed
-    (orb-call-hook-function 'insert-link)))
-
-;; helm-bibtex and ivy-bibtex expose handy macros to convert a generic function
-;; into a function tailored to the particular frontend.
-(with-eval-after-load 'ivy-bibtex
-  (ivy-bibtex-ivify-action orb-insert-edit-notes ivy-orb-insert-edit-notes))
-(with-eval-after-load 'helm-bibtex
-  (helm-bibtex-helmify-action orb-insert-edit-notes helm-orb-insert-edit-notes))
-
-;; ** Entry functions
-
-(defvar org-roam-bibtex-mode-map
-  (make-sparse-keymap)
-  "Keymap for `org-roam-bibtex-mode'.")
-
-;;;###autoload
-(define-minor-mode org-roam-bibtex-mode
-  "Sets `orb-edit-notes' as a function for editing bibliography notes.
-Affects Org-ref and Helm-bibtex/Ivy-bibtex.
-
-When called interactively, toggle `org-roam-bibtex-mode'. with
-prefix ARG, enable `org-roam-bibtex-mode' if ARG is positive,
-otherwise disable it.
-
-When called from Lisp, enable `org-roam-mode' if ARG is omitted,
-nil, or positive.  If ARG is `toggle', toggle `org-roam-mode'.
-Otherwise, behave as if called interactively."
-  :lighter " orb"
-  :keymap  org-roam-bibtex-mode-map
-  :group 'org-roam-bibtex
-  :require 'orb
-  :global t
-  (cond (org-roam-bibtex-mode
-         (setq org-ref-notes-function 'orb-notes-fn)
-         (with-eval-after-load 'bibtex-completion
-           (add-to-list 'bibtex-completion-find-note-functions
-                        #'orb-find-note-file)
-           (advice-add 'bibtex-completion-edit-notes
-                       :override #'orb-edit-notes-ad)))
-        (t
-         (setq org-ref-notes-function 'org-ref-notes-function-one-file)
-         (with-eval-after-load 'bibtex-completion
-           (setq bibtex-completion-find-note-functions
-                 (delq #'orb-find-note-file
-                       bibtex-completion-find-note-functions))
-           (advice-remove 'bibtex-completion-edit-notes
-                          #'orb-edit-notes-ad)))))
-
 ;;;###autoload
 (defun orb-edit-notes (citekey)
   "Open an Org-roam note associated with the CITEKEY or create a new one.
@@ -1063,6 +864,175 @@ before calling any Org-roam functions."
             (orb--edit-notes citekey)
           (error
            (with-orb-cleanup (orb-do-hook-functions 'remove))))))))
+
+
+(defun orb--get-non-ref-path-completions ()
+  "Return a list of cons for titles of non-ref notes to absolute path.
+CANDIDATES is a an alist of candidates to consider.  Defaults to
+`org-roam--get-title-path-completions' otherwise."
+  (let* ((rows (org-roam-db-query
+                [:select [titles:file titles:title tags:tags]
+                 :from titles
+                 :left :join tags
+                 :on (= titles:file tags:file)
+                 :left :join refs :on (= titles:file refs:file)
+                 :where refs:file :is :null]))
+         completions)
+    (dolist (row rows completions)
+      (pcase-let ((`(,file-path ,title ,tags) row))
+        (let ((title (or title
+                         (list (org-roam--path-to-slug file-path)))))
+          (let ((k (concat
+                    (when tags
+                      (format "(%s) " (s-join org-roam-tag-separator tags)))
+                    title))
+                (v (list :path file-path :title title)))
+            (push (cons k v) completions)))))))
+
+;; ============================================================================
+;;;; Orb insert
+;; ============================================================================
+
+(defun orb-insert--link (file citekey &optional description lowercase)
+  "Insert a link to FILE.
+If a region is active, replace the region with the link and used
+the selected text as the link's label.  If DESCRIPTION is
+provided, use it as the link's label instead.  If none of the
+above is true, insert the CITEKEY as a formatted Org-ref citation
+using `org-ref-default-citation-link' or 'cite:' if this variable
+is not bound.
+
+If LOWERCASE is non-nil, downcase the link description.
+Return the filename if it exists."
+  ;; Deactivate the mark on quit since `atomic-change-group' prevents it
+  (unwind-protect
+      ;; Group functions together to avoid inconsistent state on quit
+      (atomic-change-group
+        (let* (region-text
+               beg end
+               (_ (when (region-active-p)
+                    (setq beg (set-marker (make-marker) (region-beginning)))
+                    (setq end (set-marker (make-marker) (region-end)))
+                    (setq region-text
+                          (buffer-substring-no-properties beg end))))
+               (description (or region-text description)))
+          (when (and file (file-exists-p file))
+            (when region-text
+              (delete-region beg end)
+              (set-marker beg nil)
+              (set-marker end nil))
+            (if description
+                (let ((description (if lowercase
+                                       (downcase description)
+                                     description)))
+                  (insert (org-roam-format-link file description)))
+              (let ((cite-link (if (boundp 'org-ref-default-citation-link)
+                                   (concat org-ref-default-citation-link ":")
+                                 "cite:")))
+                (insert (concat cite-link citekey))))
+            ;; return value
+            file)))
+    (deactivate-mark)))
+
+(defvar orb-insert-lowercase nil)
+(defun orb-insert--link-h ()
+  "Prepare the environement and call `orb-insert--link'."
+  ;; insert link only when file is non-nil
+  (with-orb-cleanup
+    (when-let ((file (orb-plist-get :file)))
+      (let* ((citekey (orb-plist-get :citekey))
+             (insert-description (or (orb-plist-get :link-description)
+                                     orb-insert-link-description))
+             (lowercase (or (orb-plist-get :link-lowercase)
+                            orb-insert-lowercase))
+             (description (cl-case insert-description
+                            (title (orb-plist-get :title))
+                            (citekey citekey)
+                            (citation nil))))
+        (with-current-buffer (orb-plist-get :buffer)
+          (save-excursion
+            (orb-insert--link file citekey description lowercase)))))
+    (set-window-configuration (orb-plist-get :window-conf))
+    (when (and orb-insert-follow-link
+               (looking-at org-link-any-re))
+      (org-open-at-point))
+    ;; if any left
+    (orb-do-hook-functions 'remove)))
+
+(defun orb-insert-generic (&optional arg)
+  "Present a list of BibTeX entries for completion.
+This is a generic completion function for `orb-insert', which
+runs `orb-insert-edit-notes' on the selected entry.  The list is
+made by `bibtex-completion-candidates'.
+
+The appearance of selection candidates is determined by
+`orb-insert-generic-candidates-format'.
+
+This function is not interactive, set `orb-insert-frontend' to
+`generic' and call `orb-insert' interactively instead.
+
+If ARG is non-nil, rebuild `bibtex-completion-cache'."
+  (when arg
+    (bibtex-completion-clear-cache))
+  (bibtex-completion-init)
+  (let* ((candidates (bibtex-completion-candidates))
+         (candidates2
+          (if (eq orb-insert-generic-candidates-format 'key)
+              (mapcar (lambda (item)
+                        (alist-get "=key=" (cdr item) nil nil #'equal))
+                      candidates)
+            (mapcar #'car candidates)))
+         (selection (completing-read "BibTeX entry:" candidates2 nil t))
+         (citekey (if (eq orb-insert-generic-candidates-format 'key)
+                      selection
+                    (--> (alist-get selection candidates nil nil #'equal)
+                         (cdr it)
+                         (alist-get "=key=" it  nil nil #'equal)))))
+    (orb-insert-edit-notes (list citekey))))
+
+(defun orb-insert-edit-notes (citekey)
+  "Call `orb-edit-notes' and insert a link to a note.
+CITEKEY is a citation key and #+ROAM_KEY of the retrieved or
+newly created note."
+  (orb-plist-put :buffer (current-buffer)
+                 :window-conf (current-window-configuration)
+                 :citekey (car citekey))
+  ;; Here, we play on the specifics of a capture process.
+  ;; `org-capture-finalize' runs `prepare-hook', `before-hook' and `after-hook'
+  ;; in that order.  But, if `org-capture-finalize' was run via
+  ;; `org-capture-kill', the `before-hook' is forced to nil via a let form.
+  ;;
+  ;; 1. In an interactive session, we get the title while the capture buffer
+  ;; still exists.  But if the capture process was killed, our before hook
+  ;; function did not run and therefore title is nil on `orb-plist'.
+  (orb-register-hook-function get-title before nil
+    (orb-plist-put :title (orb-get-buffer-keyword "title")
+                   :immediate-finish
+                   (plist-get org-capture-plist :immediate-finish)))
+
+  (orb-register-hook-function get-file after -90
+    (let ((file (buffer-file-name)))
+      ;; 2. We check whether the title on `orb-plist' is nil.  When it is, we
+      ;; set file to nil to signal `org-insert--link-h' not to insert a link.
+      ;; We do this only in interactive process
+      (unless (or (orb-plist-get :immediate-finish)
+                  (orb-plist-get :title))
+        (setq file nil)
+        ;; before hook functions did not run, so they are still in
+        ;; `org-capture-before-finalize-hook'; remove them.
+        (orb-do-hook-functions 'remove 'before))
+      (orb-plist-put :file file)))
+
+  (orb-register-hook-function insert-link after 90
+    (orb-insert--link-h))
+
+  (save-excursion
+    (orb-edit-notes (car citekey)))
+  ;; when note existed, a capture process did not run.  We have all the info on
+  ;; `orb-plist', so just insert a link
+  (when (orb-plist-get :note-existed)
+    ;; we call the hook function so that the hook is removed
+    (orb-call-hook-function 'insert-link)))
 
 ;;;###autoload
 (defun orb-insert (&optional arg)
@@ -1139,17 +1109,26 @@ two or three universal arguments `\\[universal-argument]' are supplied."
     ;; 5. orb-insert--link
     (cl-case orb-insert-frontend
       (helm-bibtex
-       (let ((helm-source-bibtex (or helm-source-orb-insert
-                                     (orb-insert--make-helm-source))))
-         (helm-bibtex clear-cache)))
+       (cond
+        ((featurep 'helm-bibtex)
+         (orb-helm-insert clear-cache))
+        (t
+         (orb-warning "helm-bibtex not available; using generic completion")
+         (orb-insert-generic clear-cache))))
       (ivy-bibtex
-       (let* ((ivy-actions (copy-tree ivy--actions-list))
-              (ivy--actions-list
-               (plist-put ivy-actions 'ivy-bibtex orb-insert--ivy-actions))
-              (ivy-bibtex-default-action 'ivy-orb-insert-edit-notes))
-         (ivy-bibtex clear-cache)))
+       (cond
+        ((featurep 'ivy-bibtex)
+         (require 'orb-ivy)
+         (orb-ivy-insert clear-cache))
+        (t
+         (orb-warning "ivy-bibtex not available; using generic completion")
+         (orb-insert-generic clear-cache))))
       (t
        (orb-insert-generic clear-cache)))))
+
+;; ============================================================================
+;;;; Non-ref functions
+;; ============================================================================
 
 ;;;###autoload
 (defun orb-find-non-ref-file (&optional initial-prompt)
@@ -1170,7 +1149,154 @@ details."
   (interactive "P")
   (org-roam-insert prefix (orb--get-non-ref-path-completions)))
 
-;; ** Keybindings
+;; ============================================================================
+;;;; Orb note actions
+;; ============================================================================
+
+(orb-note-actions-defun default
+  (let ((f (cdr (assoc (completing-read name candidates) candidates))))
+    (funcall f (list citekey))))
+
+(orb-note-actions-defun ido
+  (let* ((c (cl-map 'list 'car candidates))
+         (f (cdr (assoc (ido-completing-read name c) candidates))))
+    (funcall f (list citekey))))
+
+(declare-function orb-note-actions-hydra/body "org-roam-bibtex" nil t)
+(when (featurep 'hydra)
+  (require 'hydra)
+  (orb-note-actions-defun hydra
+    ;; we don't use candidates here because for a nice hydra we need each
+    ;; group of completions separately (default, extra, user), so just
+    ;; silence the compiler
+    (ignore candidates)
+    (let ((k ?a)
+          actions)
+      (dolist (type (list "Default" "Extra" "User"))
+        (let ((actions-var
+               (intern (concat "orb-note-actions-" (downcase type)))))
+          (dolist (action (symbol-value actions-var))
+            ;; this makes defhydra HEADS list of the form:
+            ;; ("a" (some-action citekey-value) "Some-action description"
+            ;;     :column "Type")
+            (cl-pushnew
+             `(,(format "%c" k) (,(cdr action) (list ,citekey))
+               ,(car action) :column ,(concat type " actions"))
+             actions)
+            ;; increment key a->b->c...
+            (setq k (1+ k)))))    ; TODO: figure out a way to supply
+                                        ; mnemonic keys
+      (setq actions (nreverse actions))
+      ;; yes, we redefine hydra on every call
+      (eval
+       `(defhydra orb-note-actions-hydra (:color blue :hint nil)
+          ;; defhydra docstring
+          ,(format  "^\n  %s \n\n^"
+                    (s-word-wrap (- (window-body-width) 2) name))
+          ;; defhydra HEADS
+          ,@actions)))
+    (orb-note-actions-hydra/body)))
+
+(defun orb-note-actions--run (frontend citekey )
+  "Run note actions on CITEKEY with FRONTEND."
+  (let ((fun (intern (concat "orb-note-actions-" (symbol-name frontend)))))
+    (if (fboundp fun)
+        (funcall fun citekey)
+      (orb-warning "Note actions frontend %s not available" frontend))))
+
+;;;###autoload
+(defun orb-note-actions ()
+  "Run an interactive prompt to offer note-related actions.
+The prompt frontend can be set in `orb-note-actions-frontend'.
+In addition to default actions, which are not supposed to be
+modified, there is a number of prefined extra actions
+`orb-note-actions-extra' that can be customized.  Additionally,
+user actions can be set in `orb-note-actions-user'."
+  (interactive)
+  (let ((non-default-frontends (list 'hydra 'ido 'ivy 'helm))
+        (citekey (cdr (org-roam--extract-ref))))
+    (if citekey
+        (cond ((member orb-note-actions-frontend non-default-frontends)
+               (orb-note-actions--run orb-note-actions-frontend citekey))
+              ((functionp orb-note-actions-frontend)
+               (funcall orb-note-actions-frontend citekey))
+              (t
+               (orb-note-actions--run 'default citekey)))
+      (user-error "No #+ROAM_KEY found in current buffer"))))
+
+;;;;;; Note actions
+
+(defun orb-note-actions-copy-citekey (citekey)
+  "Save note's citation key to `kill-ring' and copy it to clipboard.
+CITEKEY is a list whose car is a citation key."
+  (with-temp-buffer
+    (insert (car citekey))
+    (copy-region-as-kill (point-min) (point-max))))
+
+(defun orb-note-actions-scrap-pdf (citekey)
+  "Wrapper around `orb-pdf-scrapper-insert'.
+CITEKEY is a list whose car is a citation key."
+  (require 'orb-pdf-scrapper)
+  (orb-pdf-scrapper-run (car citekey)))
+
+;; ============================================================================
+;;;; Org-roam-bibtex minor mode
+;; ============================================================================
+;;
+
+(defun orb-notes-fn (citekey)
+  "Open an Org-roam note associated with the CITEKEY or create a new one.
+Set `org-ref-notes-function' to this function if your
+bibliography notes are managed by Org-roam and you want some
+extra integration between the two packages.
+
+This is a wrapper function around `orb-edit-notes'
+intended for use with Org-ref."
+  (when (require 'org-ref nil t)
+    (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
+      (orb-edit-notes citekey))))
+
+(defun orb-edit-notes-ad (keys)
+  "Open an Org-roam note associated with the first key from KEYS.
+This function replaces `bibtex-completion-edit-notes'.  Only the
+first key from KEYS will actually be used."
+  (orb-edit-notes (car keys)))
+
+(defvar org-roam-bibtex-mode-map
+  (make-sparse-keymap)
+  "Keymap for `org-roam-bibtex-mode'.")
+
+;;;###autoload
+(define-minor-mode org-roam-bibtex-mode
+  "Sets `orb-edit-notes' as a function for editing bibliography notes.
+Affects Org-ref and Helm-bibtex/Ivy-bibtex.
+
+When called interactively, toggle `org-roam-bibtex-mode'. with
+prefix ARG, enable `org-roam-bibtex-mode' if ARG is positive,
+otherwise disable it.
+
+When called from Lisp, enable `org-roam-mode' if ARG is omitted,
+nil, or positive.  If ARG is `toggle', toggle `org-roam-mode'.
+Otherwise, behave as if called interactively."
+  :lighter " orb"
+  :keymap  org-roam-bibtex-mode-map
+  :group 'org-roam-bibtex
+  :require 'orb
+  :global t
+  (require 'bibtex-completion)
+  (cond (org-roam-bibtex-mode
+         (setq org-ref-notes-function 'orb-notes-fn)
+         (add-to-list 'bibtex-completion-find-note-functions
+                      #'orb-find-note-file)
+         (advice-add 'bibtex-completion-edit-notes
+                     :override #'orb-edit-notes-ad))
+        (t
+         (setq org-ref-notes-function 'org-ref-notes-function-one-file)
+         (setq bibtex-completion-find-note-functions
+               (delq #'orb-find-note-file
+                     bibtex-completion-find-note-functions))
+         (advice-remove 'bibtex-completion-edit-notes
+                        #'orb-edit-notes-ad))))
 
 (define-key org-roam-bibtex-mode-map (kbd "C-c ) a") #'orb-note-actions)
 (define-key org-roam-bibtex-mode-map (kbd "C-c ) i") #'orb-insert)
@@ -1178,6 +1304,7 @@ details."
 (define-key org-roam-bibtex-mode-map (kbd "C-c ) C-i") #'orb-insert-non-ref)
 
 (provide 'org-roam-bibtex)
+
 ;;; org-roam-bibtex.el ends here
 ;; Local Variables:
 ;; coding: utf-8
