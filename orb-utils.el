@@ -19,10 +19,9 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 ;;
-;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-;; Boston, MA 02110-1301, USA.
+;; You should have received a copy of the GNU General Public License along with
+;; this program; see the file LICENSE.  If not, visit
+;; <https://www.gnu.org/licenses/>.
 
 ;; N.B. This file contains code snippets adopted from other
 ;; open-source projects. These snippets are explicitly marked as such
@@ -64,9 +63,9 @@ Return result of evaluating the BODY."
        (progn ,@body)
      (message "%s...done" ,message)))
 
-(defmacro orb-note-actions-defun (frontend &rest body)
-  "Return a function definition for FRONTEND.
-Function name takes a form of orb-note-actions--FRONTEND.
+(defmacro orb-note-actions-defun (interface &rest body)
+  "Return a function definition for INTERFACE.
+Function name takes a form of orb-note-actions--INTERFACE.
 A simple docstring is constructed and BODY is injected into a
 `let' form, which has two variables bound, NAME and
 CANDIDATES.  NAME is a string formatted with
@@ -74,14 +73,14 @@ CANDIDATES.  NAME is a string formatted with
 constructed from `orb-note-actions-default',
 `orb-note-actions-extra', and `orb-note-actions-user'."
   (declare (indent 1) (debug (symbolp &rest form)))
-  (let* ((frontend-name (symbol-name frontend))
-         (fun-name (intern (concat "orb-note-actions-" frontend-name))))
+  (let* ((interface-name (symbol-name interface))
+         (fun-name (intern (concat "orb-note-actions-" interface-name))))
     `(defun ,fun-name (citekey)
        ,(format "Provide note actions using %s interface.
-CITEKEY is the citekey." (capitalize frontend-name))
+CITEKEY is the citekey." (capitalize interface-name))
        (let ((name (org-ref-format-entry citekey)) ;; TODO: make a native format function
              (candidates
-              ,(unless (eq frontend 'hydra)
+              ,(unless (eq interface 'hydra)
                  '(append  orb-note-actions-default
                            orb-note-actions-extra
                            orb-note-actions-user))))

@@ -19,10 +19,9 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 ;;
-;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-;; Boston, MA 02110-1301, USA.
+;; You should have received a copy of the GNU General Public License along with
+;; this program; see the file LICENSE.  If not, visit
+;; <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -76,7 +75,7 @@
 A copy of Ivy-bibtex's alist defining Ivy actions, in which
 \"Edit note & insert a link\" is made first (default) action.
 This action calls `orb-insert-edit-notes'.  Only relevant when
-`orb-insert-frontend' is `ivy-bibtex'.")
+`orb-insert-interface' is `ivy-bibtex'.")
 
 (ivy-bibtex-ivify-action orb-insert-edit-notes ivy-orb-insert-edit-notes)
 

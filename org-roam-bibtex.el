@@ -26,10 +26,9 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 ;;
-;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-;; Boston, MA 02110-1301, USA.
+;; You should have received a copy of the GNU General Public License along with
+;; this program; see the file LICENSE.  If not, visit
+;; <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 ;;
@@ -321,8 +320,8 @@ used to store a link to the BibTeX buffer.  See
   :risky t
   :group 'org-roam-bibtex)
 
-(defcustom orb-insert-frontend 'generic
-  "Frontend to use with `orb-insert'.
+(defcustom orb-insert-interface 'generic
+  "Interface frontend to use with `orb-insert'.
 Possible values are the symbols `helm-bibtex', `ivy-bibtex' and
 `generic'.  In the first two cases the respective commands will
 be used, while in the latter case the command
@@ -367,16 +366,16 @@ information."
           (const :tag "No" nil)))
 
 (defcustom orb-insert-generic-candidates-format 'key
-  "Format of selection candidates for `orb-insert' with `generic' frontend.
+  "Format of selection candidates for `orb-insert' with `generic' interface.
 Possible values are `key' and `entry'."
   :group 'org-roam-bibtex
   :type '(choice
           (const key)
           (const entry)))
 
-(defcustom orb-note-actions-frontend 'default
+(defcustom orb-note-actions-interface 'default
   "Interface frontend for `orb-note-actions'.
-Supported values (frontends) are 'default, 'ido, 'hydra, 'ivy and 'helm.
+Supported values (interfaces) are 'default, 'ido, 'hydra, 'ivy and 'helm.
 
 Alternatively, it can be set to a function, in which case the
 function should expect one argument CITEKEY, which is a list
@@ -971,7 +970,7 @@ made by `bibtex-completion-candidates'.
 The appearance of selection candidates is determined by
 `orb-insert-generic-candidates-format'.
 
-This function is not interactive, set `orb-insert-frontend' to
+This function is not interactive, set `orb-insert-interface' to
 `generic' and call `orb-insert' interactively instead.
 
 If ARG is non-nil, rebuild `bibtex-completion-cache'."
@@ -1041,8 +1040,8 @@ newly created note."
 (defun orb-insert (&optional arg)
   "Insert a link to an Org-roam bibliography note.
 If the note does not exist, create it.
-Use candidate selection frontend specified in
-`orb-insert-frontend'.  Available frontends are `helm-bibtex',
+Use candidate selection interface specified in
+`orb-insert-interface'.  Available interfaces are `helm-bibtex',
 `ivy-bibtex' and `orb-insert-generic'.
 
 When using `helm-bibtex' or `ivy-bibtex', the action \"Edit note
@@ -1056,7 +1055,7 @@ inserted, although the session can be resumed later with
 `helm-resulme' or `ivy-resume', respectively, to select the
 \"Edit note & insert a link\" action.
 
-When using `orb-insert-generic' as frontend, a simple list of
+When using `orb-insert-generic' as interface, a simple list of
 available citation keys is presented using `completion-read' and
 after choosing a candidate the appropriate link will be inserted.
 
@@ -1104,13 +1103,13 @@ two or three universal arguments `\\[universal-argument]' are supplied."
                    (or lowercase orb-insert-lowercase))
     (unless org-roam-mode (org-roam-mode +1))
     ;; execution chain:
-    ;; 1. frontend function
+    ;; 1. interface function
     ;; 2. orb-insert-edit-notes
     ;; 3. orb-edit-notes
     ;; 4. orb-insert--link-h
     ;; if the note exists or a new note was created and capture not cancelled
     ;; 5. orb-insert--link
-    (cl-case orb-insert-frontend
+    (cl-case orb-insert-interface
       (helm-bibtex
        (cond
         ((featurep 'helm-bibtex)
@@ -1200,29 +1199,29 @@ details."
           ,@actions)))
     (orb-note-actions-hydra/body)))
 
-(defun orb-note-actions--run (frontend citekey )
-  "Run note actions on CITEKEY with FRONTEND."
-  (let ((fun (intern (concat "orb-note-actions-" (symbol-name frontend)))))
+(defun orb-note-actions--run (interface citekey )
+  "Run note actions on CITEKEY with INTERFACE."
+  (let ((fun (intern (concat "orb-note-actions-" (symbol-name interface)))))
     (if (fboundp fun)
         (funcall fun citekey)
-      (orb-warning "Note actions frontend %s not available" frontend))))
+      (orb-warning "Note actions interface %s not available" interface))))
 
 ;;;###autoload
 (defun orb-note-actions ()
   "Run an interactive prompt to offer note-related actions.
-The prompt frontend can be set in `orb-note-actions-frontend'.
+The prompt interface can be set in `orb-note-actions-interface'.
 In addition to default actions, which are not supposed to be
 modified, there is a number of prefined extra actions
 `orb-note-actions-extra' that can be customized.  Additionally,
 user actions can be set in `orb-note-actions-user'."
   (interactive)
-  (let ((non-default-frontends (list 'hydra 'ido 'ivy 'helm))
+  (let ((non-default-interfaces (list 'hydra 'ido 'ivy 'helm))
         (citekey (cdr (org-roam--extract-ref))))
     (if citekey
-        (cond ((member orb-note-actions-frontend non-default-frontends)
-               (orb-note-actions--run orb-note-actions-frontend citekey))
-              ((functionp orb-note-actions-frontend)
-               (funcall orb-note-actions-frontend citekey))
+        (cond ((member orb-note-actions-interface non-default-interfaces)
+               (orb-note-actions--run orb-note-actions-interface citekey))
+              ((functionp orb-note-actions-interface)
+               (funcall orb-note-actions-interface citekey))
               (t
                (orb-note-actions--run 'default citekey)))
       (user-error "No #+ROAM_KEY found in current buffer"))))
