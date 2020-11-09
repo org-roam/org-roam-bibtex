@@ -66,16 +66,6 @@ few things:
 3. If neither 1. nor 2. resolved your problem, read the following section on
    [how to get help](#orb-help-me).
 
-##### WARNING! 
-
-- **In version 0.2, the `org-roam-bibtex` namespace was renamed to
-  `orb`, except for `org-roam-bibtex-mode` and other definitions that
-  match the `*-mode*` pattern. The existing functions and variables
-  bearing the old prefix will be supported for a while but support
-  will be dropped eventually. All new functions and variables will
-  have the new prefix except those matching the `*-mode*` pattern,
-  which will retain the `org-roam-bibtex` namespace.**
-
 <a name="orb-help-me"></a>HELP ME!!!
 ---------------
 
@@ -371,9 +361,9 @@ Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex)
 package for additional information about BibTeX field names.
 
 #### `orb-insert` configuration
-##### `orb-insert-frontend`
+##### `orb-insert-interface`
 
-Frontend to use with `orb-insert`.  Supported frontends are `helm-bibtex`,
+Interface to use with `orb-insert`.  Supported interfaces are `helm-bibtex`,
 `ivy-bibtex`, and `generic` (`orb-insert-generic`)
 
 ##### `orb-insert-link-description`
@@ -390,7 +380,7 @@ Whether to follow a newly created link.
 
 ##### `orb-insert-generic-candidates-format`
 
-How the selection candidates should be presented when using `generic` frontend:
+How the selection candidates should be presented when using `generic` interface:
 
 * `key`   - only citation keys.  Fast and pretty, but too little contextual information
 * `entry` - formatted entry.  More information, but not particluarly
@@ -488,19 +478,19 @@ are left for user customization.
 There is a number of interfaces available for displaying the available
 note actions: `default` (using `completing-read`), `ido`, `ivy`,
 `helm` and `hydra`.  The interface can be set via the
-`orb-note-actions-frontend` user variable.
+`orb-note-actions-interface` user variable.
 
 ``` el
-(setq orb-note-actions-frontend 'hydra)
+(setq orb-note-actions-interface 'hydra)
 ```
 
-Alternatively, `orb-note-actions-frontend` can be set to a custom
+Alternatively, `orb-note-actions-interface` can be set to a custom
 function that will provide completion for available note actions. The
 function must take one argument CITEKEY, which is a list whose `car`
 is the current note's citation key:
 
 ``` el
-(setq orb-note-actions-frontend #'my-orb-note-actions-frontend)
+(setq orb-note-actions-interface #'my-orb-note-actions-interface)
 ```
 
 ``` org
@@ -508,7 +498,7 @@ is the current note's citation key:
 ```
 
 ``` el
-(defun my-orb-note-actions-frontend (citekey)
+(defun my-orb-note-actions-interface (citekey)
   ;;; For the above note, (car citekey) => "Doe2020"
   ...)
 ```

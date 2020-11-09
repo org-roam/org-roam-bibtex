@@ -19,10 +19,9 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 ;;
-;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-;; Boston, MA 02110-1301, USA.
+;; You should have received a copy of the GNU General Public License along with
+;; this program; see the file LICENSE.  If not, visit
+;; <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -80,7 +79,7 @@
   "Helm source to use with `orb-insert'.
 A copy of `helm-source-bibtex', in which \"Edit notes\" is made
 the first (default) action.  This action calls `helm-orb-insert-edit-notes'.
-Only relevant when `orb-insert-frontend' is `helm-bibtex'.")
+Only relevant when `orb-insert-interface' is `helm-bibtex'.")
 
 (helm-bibtex-helmify-action orb-insert-edit-notes helm-orb-insert-edit-notes)
 

@@ -19,10 +19,9 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 ;;
-;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-;; Boston, MA 02110-1301, USA.
+;; You should have received a copy of the GNU General Public License along with
+;; this program; see the file LICENSE.  If not, visit
+;; <https://www.gnu.org/licenses/>.
 
 ;; N.B. This file contains code snippets adopted from other
 ;; open-source projects. These snippets are explicitly marked as such
