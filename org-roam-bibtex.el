@@ -857,7 +857,7 @@ before calling any Org-roam functions."
     (cond
      (note-data
       (apply #'orb-plist-put (cdr note-data))
-      (ignore-errors (org-roam--find-file (plist-get note-data :file))))
+      (ignore-errors (org-roam--find-file (orb-plist-get :file))))
      ;; we need to clean up if the capture process was aborted signaling
      ;; user-error
      (t (condition-case nil
