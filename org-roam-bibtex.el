@@ -735,8 +735,11 @@ a capture session."
                  (orb-warning "Could not find the requested templates")))
             ;; hijack org-capture-templates
             ;; entry is our bibtex entry, it just happens that
-            ;; `org-capture' calls a single template entry "entry"
-            (template (--> (org-capture-select-template)
+            ;; `org-capture' calls a single template entry "entry";
+            (template (--> (if (null (cdr org-capture-templates))
+                               ;; if only one template is defined, use it
+                               (car org-capture-templates)
+                             (org-capture-select-template))
                            (copy-tree it)
                            ;; optionally preformat templates
                            (if orb-preformat-templates
