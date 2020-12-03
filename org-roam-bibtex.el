@@ -786,7 +786,7 @@ or `title' should be used for slug: %s not supported" orb-slug-source))))
                          (org-roam-capture--info
                           `((title . ,title)
                             (ref . ,citekey-formatted)
-                            (slug. ,(funcall
+                            (slug . ,(funcall
                                      org-roam-title-to-slug-function
                                      slug-source)))))
                     (setq org-roam-capture-additional-template-props
