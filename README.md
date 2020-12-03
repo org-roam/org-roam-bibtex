@@ -92,6 +92,35 @@ instead happens `that`.  Here is my `configuration`."
 Installation
 ---------------
 
+### Hard dependencies
+
+Org Roam BibTeX depends on [Org Roam](https://github.com/org-roam/org-roam) and
+[BibTeX Completion](https://github.com/tmalsburg/helm-bibtex).  Users cloning
+ORB directly from GitHub also need to install the above packages and to ensure
+that `bibtex-completion` is autoloaded.  When installing ORB with a package
+manager (MELPA) or from within a configuration framework (Doom, Spacemacs), no
+additional steps are required.
+
+### Soft dependencies
+
+Some parts of Org Roam BibTeX will not work without: 
+
+* [Org Ref](https://github.com/jkitchin/org-ref) — consider installing the
+package for citation links it offers and to be able to use ORB's Note Actions
+functionality.
+* [AnyStyle CLI](https://github.com/inukshuk/anystyle-cli) — ORB PDF Scrapper
+requires this external tool, see [Orb Anystyle](#orb-anystyle) for more
+details.
+
+Optionally:
+
+* ORB offers basic completion functions based on Emacs native completion
+  interfaces, but user experience can be enhanced with Helm, Ivy and Hydra
+  packages.
+* Users of Projectile and Persp-mode will be pleased to learn that ORB can
+  automatically switch perspective to the Org Roam project when creating a
+  note.
+
 ### Via MELPA
 
 The package is on [MELPA](https://github.com/melpa/melpa).  You can
@@ -108,8 +137,8 @@ If you do not know how MELPA works, check their
 
 ### Via cloning
 
-You can also clone the repository somewhere in your `load-path`.  If
-you would like to assist with development, this is the way to go.
+You can also clone the repository somewhere in your `load-path`.  If you would
+like to assist with development, this is the way to go.
 
 To do that:
 1. Create a directory where you’d like to clone the repository,
