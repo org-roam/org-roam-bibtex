@@ -1224,7 +1224,8 @@ user actions can be set in `orb-note-actions-user'."
                (funcall orb-note-actions-interface citekey))
               (t
                (orb-note-actions--run 'default citekey)))
-      (user-error "No #+ROAM_KEY found in current buffer"))))
+      (user-error "Could not retrieve the citekey.  Probably no #+ROAM_KEY: in\
+the buffer or package Org Ref not installed"))))
 
 ;;;;;; Note actions
 
