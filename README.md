@@ -91,6 +91,7 @@ instead happens `that`.  Here is my `configuration`."
 
 Installation
 ---------------
+
 ### Prerequisite
 
 Before installing `org-roam-bibtex`, you need firstly install and configure its dependencies.
