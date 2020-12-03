@@ -91,6 +91,33 @@ instead happens `that`.  Here is my `configuration`."
 
 Installation
 ---------------
+### Prerequisite
+
+Before installing `org-roam-bibtex`, you need firstly install and configure its dependencies.
+
+1. Install the two main dependencies [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex), 
+   and [`org-ref`](https://github.com/jkitchin/org-ref). 
+   In Doom Emacs, you can do
+   ```elisp
+   ;;; ORB dependencies
+   (package! org-ref)
+   (package! helm-bibtex)
+   ```
+2. Configure `helm-bibtex` and `org-ref` accordingly, an example:
+   ```elisp
+   ;;; helm-bibtex
+   (setq bibtex-completion-bibliography '("/path/to/your_first.bib"
+                                          "/path/to/2nd.bib")
+         bibtex-completion-library-path '("/path/to/pdfs"))
+
+   ;;; org-ref
+   (setq reftex-default-bibliography bibtex-completion-bibliography)
+
+   ;; see org-ref for use of these variables
+   (setq org-ref-default-bibliography bibtex-completion-bibliography
+         org-ref-pdf-directory "/path/to/pdfs")
+   ```
+
 
 ### Via MELPA
 
