@@ -651,11 +651,11 @@ Scrapper.
 Press `C-c C-r` to return to BibTeX editing mode in its last state.
 Note that all the progress in current mode will be lost.
 
-The following user variables control the appearance of the generated
-Org-mode data: `orb-pdf-scrapper-refsection-headings`,
-`orb-pdf-scrapper-export-fields`.  These variables can be set through
-the Customize interface or with `setq`.  Refer to their respective
-docstrings in Emacs for more information.
+The following user variables control the appearance of the generated Org-mode
+data: `orb-pdf-scrapper-sort-references`,
+`orb-pdf-scrapper-refsection-headings`, `orb-pdf-scrapper-export-fields`.
+These variables can be set through the Customize interface or with `setq`.
+Refer to their respective docstrings in Emacs for more information.
 
 #### Training a Parser model
 ##### <a name="parser-model-prerequisites"></a>Prerequisites
