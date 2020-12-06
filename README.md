@@ -644,6 +644,8 @@ columns corresponding to different BibTeX fields.
 * `valid` --- All other references fall into this group.  They look
   fine but are not yet in user Org-roam and BibTeX databases.
 
+Set `orb-pdf-scrapper-sort-org` to nil if you do not need reference sorting.
+
 Review and edit the generated Org-mode data, or press `C-c C-c` to
 insert the references into the note's buffer and finish the ORB PDF
 Scrapper.
