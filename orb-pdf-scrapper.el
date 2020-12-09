@@ -32,7 +32,10 @@
 ;;
 
 ;;; Code:
-;; * Library requires
+
+;; ============================================================================
+;;; Dependencies
+;; ============================================================================
 
 (require 'orb-core)
 (require 'orb-anystyle)
@@ -51,7 +54,10 @@
 
 (declare-function bibtex-set-field "org-ref" (field value &optional nodelim))
 
-;; * Customize definitions
+
+;; ============================================================================
+;;; Customize definitions
+;; ============================================================================
 
 (defcustom orb-pdf-scrapper-refsection-headings
   '((parent "References")
@@ -156,9 +162,83 @@ These groups are `in-roam', `in-bib', `valid' and `invalid'."
           (const :tag "Yes" t)
           (const :tag "No" nil)))
 
-;; * Helper functions: citekey generation
+(defcustom orb-pdf-scrapper-list-style 'unordered-hyphen
+  "Format of Org lists produced by ORB PDF Scrapper.
+Valid values are symbols:
+`ordered-point'       => 1. citation
+`ordered-parenthesis' => 1) citation
+`unordered-hyphen'    => - citation
+`unordered-plus'      => + citation
+`unordered-asterisk'  => * citation
 
-(defvar orb-pdf-scrapper--refs nil)
+This variable can also take a string value, in which case the
+string should be a valid format string containing the '%s'
+specifier, for example:
+
+\"- [%s]\"            => - [1] citation."
+  :group 'orb-pdf-scrapper
+  :type
+  '(choice
+    (const :tag "Point-terminated ordered list" ordered-point)
+    (const :tag "Parenthesis-terminated ordered list" ordered-parenthesis)
+    (const :tag "Hyphen-led unordered list" unordered-hyphen)
+    (const :tag "Plus-led unordered list" unordered-plus)
+    (const :tag "Asterisk-led unordered list" unordered-asterisk)
+    (string :tag "Custom format")))
+
+(defcustom orb-pdf-scrapper-reference-numbers 'citation-number
+  "This variable specifies the source of ordered list numbers.
+Valid values are:
+
+`citation-number' - use BibTeX field `citation-number', fall back
+to unordered hyphen-led list if this field is non-existent,
+empty, or does not contain a number.  If the field contains any
+non-numerical characters, they will be removed.
+
+`as-retrieved'  use the natural order of BibTeX entry in the buffer
+
+`mixed' - prefer `citation-number' and fall back to
+`as-retrieved' if the field `citation-number' is non-existent,
+empty, or does not contain a number.  If the field contains any
+non-numerical characters, they will be removed.
+
+If `orb-pdf-scrapper-list-style' is a custom format string, the
+following values offer additional control:
+
+`citation-number-alnum' - use BibTeX field `citation-number',
+fall back to unordered hyphen-led list if this field is
+non-existent, empty or does not contain alphanumerical characters.
+
+`mixed-raw' - prefer `citation-number-raw' and fall back to
+`as-retrieved' if the field `citation-number' is non-existent or
+empty.
+
+If the value of `orb-pdf-scrapper-list-style' is `ordered-point'
+or `ordered-parenthesis', `citation-number-raw' is equivalent to
+`citation-number' and `mixed-raw' is equivalent to `mixed'.
+
+If the value of `orb-pdf-scrapper-list-style' is one of the
+'unordered' choices, this variable will have no effect."
+  :group 'orb-pdf-scrapper
+  :type '(radio
+          (const :tag "Citation number" citation-number)
+          (const :tag "As retrieved" as-retrieved)
+          (const :tag "Mixed" mixed)
+          (const :tag "Alphanumerical citation number" citation-number-alnum)
+          (const :tag "Raw mixed" mixed-raw)))
+
+(defcustom orb-pdf-scrapper-citekey-format "cite:%s"
+  "Format of the citekey for insertion into Org mode buffer."
+  :group 'orb-pdf-scrapper
+  :type 'string)
+
+
+;; ============================================================================
+;;; Helper functions: citekey generation
+;; ============================================================================
+
+(defvar orb-pdf-scrapper--refs nil
+  "Internal list with cell format (CITEKEY ENTRY . VALIDP).")
 
 (defun orb-pdf-scrapper--invalidate-nil-value (field entry)
   "Return value of FIELD or `orb-autokey-empty-field-token' if it is nil.
@@ -181,22 +261,20 @@ where two numbers have only spaces between them."
 
 (defun orb-pdf-scrapper--get-entry-info (entry &optional collect-only)
   "Collect some information from and about the BibTeX ENTRY for further use.
-Take a bibtex entry as returned by `bibtex-completion-get-entry'\
+Take a bibtex entry as returned by `bibtex-completion-get-entry' \
 and return a plist with the following keys set:
 
 :key            |string | citekey generated with `orb-autokey-generate-key'
 :validp         |boolean| according to `orb-pdf-scrapper-invalid-key-pattern'
 :set-fields     |(cons) | as per `orb-pdf-scrapper-set-fields'
-:export-fields  |(cons) | as per `orb-pdf-scrapper-export-fields'
 
-Each element of `:set-fields' and `:export-fields' lists is a
-a cons cell (FIELD . VALUE).
+Each element of `:set-fields' list is a a cons cell (FIELD . VALUE).
 
 If optional COLLECT-ONLY is non-nil, do not generate the key,
 `:set-fields' is set to nil."
   (let ((type (bibtex-completion-get-value "=type=" entry))
         ;; return values
-        key validp set-fields export-fields
+        key validp fields-to-set
         ;; internal variable
         fields)
     ;; when requested to collect keys, just do that
@@ -205,26 +283,26 @@ If optional COLLECT-ONLY is non-nil, do not generate the key,
               fields entry)
       ;; otherwise
       ;; prepare fields for setting
-      (dolist (set-field orb-pdf-scrapper-set-fields)
-        (let ((field-name (car set-field))
-              (export-types (cddr set-field)))
+      (dolist (field-to-set orb-pdf-scrapper-set-fields)
+        (let ((field-name (car field-to-set))
+              (types-to-set (cddr field-to-set)))
           ;; push the field for setting only when entry type is one of the
           ;; specified types or nil, which means set the field regardless of
           ;; entry type
-          (when (or (not export-types)
-                    (member type export-types))
+          (when (or (not types-to-set)
+                    (member type types-to-set))
             (push (cons field-name
                         ;; call the function if provided
-                        (if-let ((fn (cadr set-field)))
+                        (if-let ((fn (cadr field-to-set)))
                             (funcall fn field-name entry)
                           ;; otherwise get the value from current entry
                           (bibtex-completion-get-value field-name entry "")))
-                  set-fields))))
-      ;; prioritize fields from set-fields over entry fields
+                  fields-to-set))))
+      ;; prioritize fields from fields-to-set over entry fields
       ;; for autokey generation
       (let ((-compare-fn (lambda (x y)
                            (string= (car x) (car y)))))
-        (setq fields (-union set-fields entry)
+        (setq fields (-union fields-to-set entry)
               key (orb-autokey-generate-key fields))))
     ;; validate the new shiny key (or the old existing one)
     ;; not sure if save-match-data is needed here
@@ -233,34 +311,21 @@ If optional COLLECT-ONLY is non-nil, do not generate the key,
       (setq validp (and (not (string-match-p
                               orb-pdf-scrapper-invalid-key-pattern key))
                         t)))
-    ;; list fields for org export
-    (dolist (field orb-pdf-scrapper-export-fields)
-      (let ((value (bibtex-completion-get-value field fields "")))
-        ;; truncate author list to first three names, append et.al instead
-        ;; of the remaining names
-        ;; This is a hard-coded "reasonable default"
-        ;; and it may be replaced with something more
-        ;; flexible in the future
-        (when (or (string= field "author")
-                  (string= field "editor"))
-          (setq value (split-string value " and " t "[ ,.;:-]+")
-                value (if (> (length value) 3)
-                          (append (-take 3 value) '("et.al."))
-                        value)
-                value (concat (mapconcat #'identity value "; "))))
-        (push (cons field value) export-fields)))
     ;; return the entry
     (list :key key
           :validp validp
-          :set-fields set-fields
-          :export-fields (nreverse export-fields))))
+          :set-fields fields-to-set)))
 
-(defun orb-pdf-scrapper--update-record-at-point (&optional collect-only)
+(defun orb-pdf-scrapper--update-record-at-point
+    (&optional collect-only natural-order)
   "Generate citation key and update the BibTeX record at point.
 Calls `orb-pdf-scrapper--get-entry-info' to get information about
 BibTeX record at point and updates it accordingly.  If optional
 COLLECT-ONLY is non-nil, do not generate the key and do not set
 the fields.
+
+If optional argument NATURAL-ORDER is non-nil, set the field
+'natural-order' of the returned entry to its value.
 
 This is an auxiliary function for command
 `orb-pdf-scrapper-generate-keys'."
@@ -268,8 +333,7 @@ This is an auxiliary function for command
          (key-plist (orb-pdf-scrapper--get-entry-info entry collect-only))
          (new-key (plist-get key-plist :key))
          (validp (plist-get key-plist :validp))
-         (fields-to-set (plist-get key-plist :set-fields))
-         (formatted-entry (plist-get key-plist :export-fields)))
+         (fields-to-set (plist-get key-plist :set-fields)))
     (unless collect-only
       (save-excursion
         ;; update citekey
@@ -286,7 +350,9 @@ This is an auxiliary function for command
             (bibtex-set-field (car field) (cdr field))))))
     ;; return the result ((NEW-KEY . ENTRY) . VALIDP)
     ;; TODO: for testing until implemented
-    (cons new-key (cons formatted-entry validp))))
+    (when natural-order
+      (cl-pushnew `("natural-order" . ,natural-order) entry))
+     (cons new-key (cons entry validp))))
 
 (defun orb-pdf-scrapper--sort-refs (refs)
   "Sort references REFS.
@@ -311,21 +377,13 @@ available in the user databases;
                                  :from refs
                                  :where (= ref $s1)]
                                 (format "%s" (car ref)))
-             (push
-              (cons (format "cite:%s" (car ref)) (cadr ref))
-              (cdr (assoc 'in-roam sorted-refs))))
+             (push ref (cdr (assoc 'in-roam sorted-refs))))
             ((bibtex-completion-get-entry (car ref))
-             (push
-              (cons (format "cite:%s" (car ref)) (cadr ref))
-              (cdr (assoc 'in-bib sorted-refs))))
+             (push ref (cdr (assoc 'in-bib sorted-refs))))
             ((cddr ref)
-             (push
-              (cons (format "cite:%s" (car ref)) (cadr ref))
-              (cdr (assoc 'valid sorted-refs))))
+             (push ref (cdr (assoc 'valid sorted-refs))))
             (t
-             (push
-              (cons (format "cite:%s" (car ref)) (cadr ref))
-              (cdr (assoc 'invalid sorted-refs))))))
+             (push ref (cdr (assoc 'invalid sorted-refs))))))
     sorted-refs))
 
 ;; * Helper functions: dispatcher
@@ -490,10 +548,88 @@ Pressing the RED button, just in case")
     (t
      (orb-pdf-scrapper-dispatcher 'error))))
 
+(defsubst orb-pdf-scrapper--get-numbering-source ()
+  "."
+  (cl-case orb-pdf-scrapper-reference-numbers
+    (citation-number-alnum
+     (if (stringp orb-pdf-scrapper-list-style)
+         'citation-number-alnum
+       'citation-number))
+    ;; (mixed-raw
+    ;;  (if (stringp orb-pdf-scrapper-list-style)
+    ;;      'mixed-raw
+    ;;    'mixed))
+    (t orb-pdf-scrapper-reference-numbers)))
+
+(defsubst orb-pdf-scrapper--get-reference-number (entry numbering-source)
+  "ENTRY NUMBERING-SOURCE."
+  (cl-case numbering-source
+    (citation-number
+     (--> (bibtex-completion-get-value "citation-number" entry nil)
+          (when (and it (string-match ".*?\\([0-9]+\\).*?" it))
+            (match-string 1 it))))
+    (citation-number-alnum
+     (--> (bibtex-completion-get-value "citation-number" entry)
+          (when (string-match "\
+[^[:alnum:]]?\\([[:digit:]]*\\)\\([^[:alnum:]]*\\)\\([[:alpha:]]*\\)" it)
+            (concat (match-string 1 it) (match-string 3 it)))))
+    (as-retrieved
+     (bibtex-completion-get-value "natural-order" entry))
+    ;; (mixed
+    ;;  (--> (bibtex-completion-get-value "citation-number" entry nil)
+    ;;       (if (and it (string-match ".*?\\([0-9]+\\).*?" it))
+    ;;           (match-string 1 it)
+    ;;         (bibtex-completion-get-value "natural-order" entry))))
+    ;; (mixed-raw
+    ;;  (or (bibtex-completion-get-value "citation-number" entry nil)
+    ;;      (bibtex-completion-get-value "natural-order" entry)))
+    (t (user-error "Unsupported reference numbers source: %s"
+                   numbering-source))))
+
 (defun orb-pdf-scrapper--insert-org-as-list (ref-alist)
   "Insert REF-ALIST as Org-mode list."
-  (dolist (ref ref-alist)
-    (insert "- " (car ref) "\n" )))
+  (let* ((numbering-source (orb-pdf-scrapper--get-numbering-source))
+         (leader
+          (cl-case orb-pdf-scrapper-list-style
+            (ordered-point "%s. ")
+            (ordered-parenthesis "%s) ")
+            (unordered-hyphen "- ")
+            (unordered-plus "+ ")
+            (unordered-asterisk "* ")
+            (t (if (stringp orb-pdf-scrapper-list-style)
+                   orb-pdf-scrapper-list-style
+                 (user-error "ORB: Unrecognized list style %s requested"
+                             orb-pdf-scrapper-list-style)))))
+         (unorderedp
+          (memq orb-pdf-scrapper-list-style
+                '(unordered-hyphen unordered-plus unordered-asterisk)))
+         (fallback (if unorderedp leader "- ")))
+    (dolist (ref ref-alist)
+      (let* ((citekey (format orb-pdf-scrapper-citekey-format (car ref)))
+             (entry (cadr ref))
+             (number (unless unorderedp
+                       (orb-pdf-scrapper--get-reference-number
+                        entry numbering-source))))
+        (insert (orb-format leader `(,number . ,fallback)) citekey "\n" )))))
+
+(defun orb-pdf-scrapper--get-export-value (field entry)
+  "Get FIELD value from ENTRY.
+Similar to `bibtex-completion-get-value' but does some rough author cleaning."
+  ;; list fields for org export
+  (let ((value (bibtex-completion-get-value field entry "")))
+    ;; truncate author list to first three names, append et.al instead
+    ;; of the remaining names
+    ;; This is a hard-coded "reasonable default"
+    ;; and it may be replaced with something more
+    ;; flexible in the future
+    (when (or (string= field "author")
+              (string= field "editor"))
+      (setq value (split-string value " and " t "[ ,.;:-]+")
+            value (if (> (length value) 3)
+                      (append (-take 3 value) '("et.al."))
+                    value)
+            value (concat (mapconcat #'identity value "; "))))
+    value))
 
 (defun orb-pdf-scrapper--insert-org-as-table (ref-alist)
   "Insert REF-ALIST as Org-mode table."
@@ -508,10 +644,11 @@ Pressing the RED button, just in case")
   (let ((table ""))
     (dolist (ref ref-alist)
       (setq table
-            (format "%s|%s|%s|\n" table (car ref)
+            (format "%s|%s|%s|\n" table
+                    (format orb-pdf-scrapper-citekey-format (car ref))
                     (mapconcat
                      (lambda (field)
-                       (bibtex-completion-get-value field (cdr ref) ""))
+                       (orb-pdf-scrapper--get-export-value field (cadr ref)))
                      orb-pdf-scrapper-export-fields "|"))))
     (insert table))
   (forward-line -1)
@@ -547,8 +684,9 @@ list otherwise."
          (orb-pdf-scrapper--insert-org-as-list refs))))))
    (t
     (insert "\n")
-    (dolist (ref (nreverse orb-pdf-scrapper--refs))
-      (insert (format  "- cite:%s\n" (car ref)))))))
+    (orb-pdf-scrapper--insert-org-as-list
+     ;; copy tree to keep orb-pdf-scrapper--refs intact for debugging purposes
+     (nreverse (copy-tree orb-pdf-scrapper--refs))))))
 
 (defun orb-pdf-scrapper--edit-org ()
   "Edit generated Org-mode data."
@@ -959,14 +1097,16 @@ for future use."
                           (cdr old-ref) (cdr new-ref))
                   (cl-pushnew new-ref orb-pdf-scrapper--refs :test 'equal))))
           ;; generate keys in the buffer otherwise
-          (let ((refs ()))
+          (let ((refs ())
+                (natural-order 1))
             (goto-char (point-min))
             (bibtex-skip-to-valid-entry)
             (while (not (eobp))
               (cl-pushnew (orb-pdf-scrapper--update-record-at-point
-                           collect-only)
+                           collect-only (format "%s" natural-order))
                           refs)
-              (bibtex-skip-to-valid-entry))
+              (bibtex-skip-to-valid-entry)
+              (setq natural-order (1+ natural-order)))
             (setq orb-pdf-scrapper--refs refs)))))
     (write-region (orb-buffer-string) nil
                   (orb-pdf-scrapper--get :temp-bib) nil -1)
