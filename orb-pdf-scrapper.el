@@ -186,46 +186,34 @@ specifier, for example:
     (const :tag "Asterisk-led unordered list" unordered-asterisk)
     (string :tag "Custom format")))
 
-(defcustom orb-pdf-scrapper-reference-numbers 'citation-number
+(defcustom orb-pdf-scrapper-list-numbers 'citation-number
   "This variable specifies the source of ordered list numbers.
 Valid values are:
 
-`citation-number' - use BibTeX field `citation-number', fall back
-to unordered hyphen-led list if this field is non-existent,
-empty, or does not contain a number.  If the field contains any
+`citation-number' - use the extracted `citation-number',
+stripping off any non-numerical characters.  Fall back to
+unordered hyphen-led list if this field is non-existent, empty,
+or does not contain a number.  If the field contains any
 non-numerical characters, they will be removed.
 
-`as-retrieved'  use the natural order of BibTeX entry in the buffer
+`citation-number-alnum' - use the extracted `citation-number',
+stripping off any non-alphanumerical characters, fall back to
+unordered hyphen-led list if this field is non-existent, empty or
+does not contain alphanumerical characters.  If the field
+contains any non-alphanumerical characters, they will be removed.
+This value will only have effect when
+`orb-pdf-scrapper-list-style' is a custom format string and
+behave as `citation-number' otherwise.
 
-`mixed' - prefer `citation-number' and fall back to
-`as-retrieved' if the field `citation-number' is non-existent,
-empty, or does not contain a number.  If the field contains any
-non-numerical characters, they will be removed.
-
-If `orb-pdf-scrapper-list-style' is a custom format string, the
-following values offer additional control:
-
-`citation-number-alnum' - use BibTeX field `citation-number',
-fall back to unordered hyphen-led list if this field is
-non-existent, empty or does not contain alphanumerical characters.
-
-`mixed-raw' - prefer `citation-number-raw' and fall back to
-`as-retrieved' if the field `citation-number' is non-existent or
-empty.
-
-If the value of `orb-pdf-scrapper-list-style' is `ordered-point'
-or `ordered-parenthesis', `citation-number-raw' is equivalent to
-`citation-number' and `mixed-raw' is equivalent to `mixed'.
+`as-retrieved' - use the natural order of BibTeX entry in the buffer
 
 If the value of `orb-pdf-scrapper-list-style' is one of the
 'unordered' choices, this variable will have no effect."
   :group 'orb-pdf-scrapper
   :type '(radio
           (const :tag "Citation number" citation-number)
-          (const :tag "As retrieved" as-retrieved)
-          (const :tag "Mixed" mixed)
           (const :tag "Alphanumerical citation number" citation-number-alnum)
-          (const :tag "Raw mixed" mixed-raw)))
+          (const :tag "As retrieved" as-retrieved)))
 
 (defcustom orb-pdf-scrapper-citekey-format "cite:%s"
   "Format of the citekey for insertion into Org mode buffer."
@@ -234,7 +222,7 @@ If the value of `orb-pdf-scrapper-list-style' is one of the
 
 
 ;; ============================================================================
-;;; Helper functions: citekey generation
+;;; Helper functions: BibTeX buffer and citekey-related routines
 ;; ============================================================================
 
 (defvar orb-pdf-scrapper--refs nil
@@ -386,7 +374,143 @@ available in the user databases;
              (push ref (cdr (assoc 'invalid sorted-refs))))))
     sorted-refs))
 
-;; * Helper functions: dispatcher
+
+;; ============================================================================
+;;; Helper functions: Org buffer-related routines
+;; ============================================================================
+
+(defsubst orb-pdf-scrapper--get-numbering-source ()
+  "."
+  )
+
+(defun orb-pdf-scrapper--get-reference-number (entry numbering-source)
+  "ENTRY NUMBERING-SOURCE."
+  (cl-case numbering-source
+    (citation-number
+     (--> (bibtex-completion-get-value "citation-number" entry nil)
+          (when (and it (string-match ".*?\\([0-9]+\\).*?" it))
+            (match-string 1 it))))
+    (citation-number-alnum
+     (--> (bibtex-completion-get-value "citation-number" entry)
+          (when (string-match "\
+[^[:alnum:]]?\\([[:digit:]]*\\)\\([^[:alnum:]]*\\)\\([[:alpha:]]*\\)" it)
+            (concat (match-string 1 it) (match-string 3 it)))))
+    (as-retrieved
+     (bibtex-completion-get-value "natural-order" entry))
+    (t (user-error "Unsupported reference numbers source: %s"
+                   numbering-source))))
+
+(defun orb-pdf-scrapper--insert-org-as-list (ref-alist)
+  "Insert REF-ALIST as Org-mode list."
+  (let* ((numbering-source
+          (if (and (eq orb-pdf-scrapper-list-numbers
+                       'citation-number-alnum)
+                   (not (stringp orb-pdf-scrapper-list-style)))
+              'citation-number
+            orb-pdf-scrapper-list-numbers))
+         (leader
+          (cl-case orb-pdf-scrapper-list-style
+            (ordered-point "%s. ")
+            (ordered-parenthesis "%s) ")
+            (unordered-hyphen "- ")
+            (unordered-plus "+ ")
+            (unordered-asterisk "* ")
+            (t (if (stringp orb-pdf-scrapper-list-style)
+                   orb-pdf-scrapper-list-style
+                 (user-error "ORB: Unrecognized list style %s requested"
+                             orb-pdf-scrapper-list-style)))))
+         (unorderedp
+          (memq orb-pdf-scrapper-list-style
+                '(unordered-hyphen unordered-plus unordered-asterisk)))
+         (fallback (if unorderedp leader "- ")))
+    (dolist (ref ref-alist)
+      (let* ((citekey (format orb-pdf-scrapper-citekey-format (car ref)))
+             (entry (cadr ref))
+             (number (unless unorderedp
+                       (orb-pdf-scrapper--get-reference-number
+                        entry numbering-source))))
+        (insert (orb-format leader `(,number . ,fallback)) citekey "\n")))))
+
+(defun orb-pdf-scrapper--get-export-value (field entry)
+  "Get FIELD value from ENTRY.
+Similar to `bibtex-completion-get-value' but does some rough author cleaning."
+  ;; list fields for org export
+  (let ((value (bibtex-completion-get-value field entry "")))
+    ;; truncate author list to first three names, append et.al instead
+    ;; of the remaining names
+    ;; This is a hard-coded "reasonable default"
+    ;; and it may be replaced with something more
+    ;; flexible in the future
+    (when (or (string= field "author")
+              (string= field "editor"))
+      (setq value (split-string value " and " t "[ ,.;:-]+")
+            value (if (> (length value) 3)
+                      (append (-take 3 value) '("et.al."))
+                    value)
+            value (concat (mapconcat #'identity value "; "))))
+    value))
+
+(defun orb-pdf-scrapper--insert-org-as-table (ref-alist)
+  "Insert REF-ALIST as Org-mode table."
+  (insert
+   (concat "|citekey|"
+           (mapconcat #'identity
+                      orb-pdf-scrapper-export-fields "|")
+           "|\n"))
+  (forward-line -1)
+  (org-table-insert-hline)
+  (forward-line 2)
+  (let ((table ""))
+    (dolist (ref ref-alist)
+      (setq table
+            (format "%s|%s|%s|\n" table
+                    (format orb-pdf-scrapper-citekey-format (car ref))
+                    (mapconcat
+                     (lambda (field)
+                       (orb-pdf-scrapper--get-export-value field (cadr ref)))
+                     orb-pdf-scrapper-export-fields "|"))))
+    (insert table))
+  (forward-line -1)
+  (org-table-align))
+
+(defun orb-pdf-scrapper--insert-refs ()
+  "Insert the references list as org structure.
+If `orb-pdf-scrapper-sort-references' is non-nil, sort the references into
+categories `in-roam', `in-bib', `valid', `invalid'.  Make a plain
+list otherwise."
+  (cond
+   (orb-pdf-scrapper-sort-references
+    (dolist (ref-group
+           (orb-pdf-scrapper--sort-refs orb-pdf-scrapper--refs))
+    (when-let* ((group (car ref-group))
+                (refs (cdr ref-group))
+                (heading
+                 (cdr (assoc group
+                             orb-pdf-scrapper-refsection-headings)))
+                (title (car heading))
+                (type (cadr heading)))
+      (org-insert-heading '(16) nil t)
+      ;; insert heading
+      (insert (format "%s\n" title))
+      (org-demote)
+      (org-end-of-subtree)
+      ;; insert references
+      (insert (format "\n#+name: %s\n" group))
+      (cl-case type
+        ('table
+         (orb-pdf-scrapper--insert-org-as-table refs))
+        (t
+         (orb-pdf-scrapper--insert-org-as-list refs))))))
+   (t
+    (insert "\n")
+    (orb-pdf-scrapper--insert-org-as-list
+     ;; copy tree to keep orb-pdf-scrapper--refs intact for debugging purposes
+     (nreverse (copy-tree orb-pdf-scrapper--refs))))))
+
+
+;; ============================================================================
+;;; Helper functions: Dispatcher
+;; ============================================================================
 
 (defvar orb-pdf-scrapper--plist nil
   "Communication channel for Orb PDF Scrapper.")
@@ -547,146 +671,6 @@ Pressing the RED button, just in case")
        (orb-pdf-scrapper-dispatcher 'error)))
     (t
      (orb-pdf-scrapper-dispatcher 'error))))
-
-(defsubst orb-pdf-scrapper--get-numbering-source ()
-  "."
-  (cl-case orb-pdf-scrapper-reference-numbers
-    (citation-number-alnum
-     (if (stringp orb-pdf-scrapper-list-style)
-         'citation-number-alnum
-       'citation-number))
-    ;; (mixed-raw
-    ;;  (if (stringp orb-pdf-scrapper-list-style)
-    ;;      'mixed-raw
-    ;;    'mixed))
-    (t orb-pdf-scrapper-reference-numbers)))
-
-(defsubst orb-pdf-scrapper--get-reference-number (entry numbering-source)
-  "ENTRY NUMBERING-SOURCE."
-  (cl-case numbering-source
-    (citation-number
-     (--> (bibtex-completion-get-value "citation-number" entry nil)
-          (when (and it (string-match ".*?\\([0-9]+\\).*?" it))
-            (match-string 1 it))))
-    (citation-number-alnum
-     (--> (bibtex-completion-get-value "citation-number" entry)
-          (when (string-match "\
-[^[:alnum:]]?\\([[:digit:]]*\\)\\([^[:alnum:]]*\\)\\([[:alpha:]]*\\)" it)
-            (concat (match-string 1 it) (match-string 3 it)))))
-    (as-retrieved
-     (bibtex-completion-get-value "natural-order" entry))
-    ;; (mixed
-    ;;  (--> (bibtex-completion-get-value "citation-number" entry nil)
-    ;;       (if (and it (string-match ".*?\\([0-9]+\\).*?" it))
-    ;;           (match-string 1 it)
-    ;;         (bibtex-completion-get-value "natural-order" entry))))
-    ;; (mixed-raw
-    ;;  (or (bibtex-completion-get-value "citation-number" entry nil)
-    ;;      (bibtex-completion-get-value "natural-order" entry)))
-    (t (user-error "Unsupported reference numbers source: %s"
-                   numbering-source))))
-
-(defun orb-pdf-scrapper--insert-org-as-list (ref-alist)
-  "Insert REF-ALIST as Org-mode list."
-  (let* ((numbering-source (orb-pdf-scrapper--get-numbering-source))
-         (leader
-          (cl-case orb-pdf-scrapper-list-style
-            (ordered-point "%s. ")
-            (ordered-parenthesis "%s) ")
-            (unordered-hyphen "- ")
-            (unordered-plus "+ ")
-            (unordered-asterisk "* ")
-            (t (if (stringp orb-pdf-scrapper-list-style)
-                   orb-pdf-scrapper-list-style
-                 (user-error "ORB: Unrecognized list style %s requested"
-                             orb-pdf-scrapper-list-style)))))
-         (unorderedp
-          (memq orb-pdf-scrapper-list-style
-                '(unordered-hyphen unordered-plus unordered-asterisk)))
-         (fallback (if unorderedp leader "- ")))
-    (dolist (ref ref-alist)
-      (let* ((citekey (format orb-pdf-scrapper-citekey-format (car ref)))
-             (entry (cadr ref))
-             (number (unless unorderedp
-                       (orb-pdf-scrapper--get-reference-number
-                        entry numbering-source))))
-        (insert (orb-format leader `(,number . ,fallback)) citekey "\n" )))))
-
-(defun orb-pdf-scrapper--get-export-value (field entry)
-  "Get FIELD value from ENTRY.
-Similar to `bibtex-completion-get-value' but does some rough author cleaning."
-  ;; list fields for org export
-  (let ((value (bibtex-completion-get-value field entry "")))
-    ;; truncate author list to first three names, append et.al instead
-    ;; of the remaining names
-    ;; This is a hard-coded "reasonable default"
-    ;; and it may be replaced with something more
-    ;; flexible in the future
-    (when (or (string= field "author")
-              (string= field "editor"))
-      (setq value (split-string value " and " t "[ ,.;:-]+")
-            value (if (> (length value) 3)
-                      (append (-take 3 value) '("et.al."))
-                    value)
-            value (concat (mapconcat #'identity value "; "))))
-    value))
-
-(defun orb-pdf-scrapper--insert-org-as-table (ref-alist)
-  "Insert REF-ALIST as Org-mode table."
-  (insert
-   (concat "|citekey|"
-           (mapconcat #'identity
-                      orb-pdf-scrapper-export-fields "|")
-           "|\n"))
-  (forward-line -1)
-  (org-table-insert-hline)
-  (forward-line 2)
-  (let ((table ""))
-    (dolist (ref ref-alist)
-      (setq table
-            (format "%s|%s|%s|\n" table
-                    (format orb-pdf-scrapper-citekey-format (car ref))
-                    (mapconcat
-                     (lambda (field)
-                       (orb-pdf-scrapper--get-export-value field (cadr ref)))
-                     orb-pdf-scrapper-export-fields "|"))))
-    (insert table))
-  (forward-line -1)
-  (org-table-align))
-
-(defun orb-pdf-scrapper--insert-refs ()
-  "Insert the references list as org structure.
-If `orb-pdf-scrapper-sort-references' is non-nil, sort the references into
-categories `in-roam', `in-bib', `valid', `invalid'.  Make a plain
-list otherwise."
-  (cond
-   (orb-pdf-scrapper-sort-references
-    (dolist (ref-group
-           (orb-pdf-scrapper--sort-refs orb-pdf-scrapper--refs))
-    (when-let* ((group (car ref-group))
-                (refs (cdr ref-group))
-                (heading
-                 (cdr (assoc group
-                             orb-pdf-scrapper-refsection-headings)))
-                (title (car heading))
-                (type (cadr heading)))
-      (org-insert-heading '(16) nil t)
-      ;; insert heading
-      (insert (format "%s\n" title))
-      (org-demote)
-      (org-end-of-subtree)
-      ;; insert references
-      (insert (format "\n#+name: %s\n" group))
-      (cl-case type
-        ('table
-         (orb-pdf-scrapper--insert-org-as-table refs))
-        (t
-         (orb-pdf-scrapper--insert-org-as-list refs))))))
-   (t
-    (insert "\n")
-    (orb-pdf-scrapper--insert-org-as-list
-     ;; copy tree to keep orb-pdf-scrapper--refs intact for debugging purposes
-     (nreverse (copy-tree orb-pdf-scrapper--refs))))))
 
 (defun orb-pdf-scrapper--edit-org ()
   "Edit generated Org-mode data."
@@ -910,13 +894,12 @@ process."
                       :training-process :window-conf :original-buffer))
     (orb-pdf-scrapper--put prop nil)))
 
-
-;; * Minor mode
+
+;; ============================================================================
+;;; Minor mode
+;; ============================================================================
 
 ;;; Code in this section was adopted from org-capture.el
-;;
-;; Copyright (C) 2010-2020 Free Software Foundation, Inc.
-;; Author: Carsten Dominik <carsten at orgmode dot org>
 (defvar orb-pdf-scrapper-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-k" #'orb-pdf-scrapper-kill)
@@ -955,6 +938,7 @@ Returns the new plist."
   (plist-get orb-pdf-scrapper--plist prop))
 ;;;
 ;;; End of code adopted from org-capture.el
+
 
 ;; TODO combine `orb-pdf-scrapper--format-header-line'
 ;; and `orb-pdf-scrapper--update-keymap' into one
@@ -1060,7 +1044,10 @@ Context is read from `orb-pdf-scrapper--plist' property `:context'."
        (define-key map "\C-c\C-t" nil)
        (define-key map "\C-c\C-r" nil)))))
 
-;; * Interactive functions
+
+;; ============================================================================
+;;; Interactive functions
+;; ============================================================================
 
 (defun orb-pdf-scrapper-generate-keys (&optional at-point collect-only)
   "Generate BibTeX citation keys in the current buffer.
@@ -1266,10 +1253,10 @@ Kill it and start a new one %s? "
     (kill-process process))
   (orb-pdf-scrapper-dispatcher 'kill))
 
-
-;; * Main functions
-
-;; entry point
+
+;; ============================================================================
+;;; Entry point
+;; ============================================================================
 
 ;;;###autoload
 (defun orb-pdf-scrapper-run (key)
