@@ -654,10 +654,12 @@ Press `C-c C-r` to return to BibTeX editing mode in its last state.
 Note that all the progress in current mode will be lost.
 
 The following user variables control the appearance of the generated Org-mode
-data: `orb-pdf-scrapper-sort-references`,
-`orb-pdf-scrapper-refsection-headings`, `orb-pdf-scrapper-export-fields`.
-These variables can be set through the Customize interface or with `setq`.
-Refer to their respective docstrings in Emacs for more information.
+data: `orb-pdf-scrapper-group-references`, `orb-pdf-scrapper-grouped-export`,
+`orb-pdf-scrapper-ungrouped-export`, `orb-pdf-scrapper-table-export-fields`,
+`orb-pdf-scrapper-list-style`, `orb-pdf-scrapper-citation-numbers`,
+`orb-pdf-scrapper-citekey-format`.  These variables can be set through the
+Customize interface or with `setq`.  Refer to their respective docstrings in
+Emacs for more information.
 
 #### Training a Parser model
 ##### <a name="parser-model-prerequisites"></a>Prerequisites

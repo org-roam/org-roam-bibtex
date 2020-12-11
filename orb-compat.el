@@ -35,6 +35,11 @@
 (define-obsolete-variable-alias
   'orb-note-actions-frontend 'orb-note-actions-interface "0.5")
 
+(define-obsolete-variable-alias
+  'orb-pdf-scrapper-refsection-headings 'orb-pdf-scrapper-grouped-export "0.5")
+(define-obsolete-variable-alias
+  'orb-pdf-scrapper-export-fields 'orb-pdf-scrapper-table-export-fields "0.5")
+
 (provide 'orb-compat)
 ;;; orb-compat.el ends here
 ;; Local Variables:
