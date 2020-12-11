@@ -568,7 +568,8 @@ symbols is implied."
   '(("=type=" . "type")
     ("=key=" . "citekey")
     ("=has-pdf=" . "pdf?")
-    ("=has-note=" . "note?"))
+    ("=has-note=" . "note?")
+    ("citation-number" . "#"))
   "Alist of '='-embraced virtual-fields with their replacements.")
 
 (defun orb--replace-virtual-fields (kwds)
