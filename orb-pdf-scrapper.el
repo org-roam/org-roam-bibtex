@@ -124,7 +124,7 @@ The order of items in this list determines the order of table
 columns.
 
 FIELD is a field to export.  Field mapping according to the value
-of `orb--virtual-fields-alist' is recognized.  The non-standard
+of `orb-bibtex-field-aliases' is recognized.  The non-standard
 BibTeX field `citation-number' created during the reference
 extraction process is treated specially according to the value of
 the variable `orb-pdf-scrapper-reference-numbers'.
@@ -469,7 +469,7 @@ available in the user databases;
   "Get FIELD value from ENTRY.
 Similar to `bibtex-completion-get-value' but does some additional cleaning."
   ;; list fields for org export
-  (let* ((field (or (car (rassoc field orb--virtual-fields-alist))
+  (let* ((field (or (car (rassoc field orb-bibtex-field-aliases))
                     field))
          (value (bibtex-completion-get-value field entry "")))
     ;; truncate author list to first three names, append et.al instead

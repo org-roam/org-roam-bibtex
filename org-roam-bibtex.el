@@ -144,73 +144,41 @@ See `orb-edit-notes' for details."
   :group 'org-roam-bibtex)
 
 (defcustom orb-preformat-keywords
-  '("citekey" "date" "type" "pdf?" "note?"
-    "author" "editor" "file"
-    "author-abbrev" "editor-abbrev" "author-or-editor-abbrev")
-  "The template prompt wildcards for preformatting.
-Only relevant when `orb-preformat-templates' is set to
-t (default).  This can be a string, a list of strings or
-a cons-cell alist, where each element is (STRING . STRING).
+  '("citekey" "entry-type" "date" "pdf?" "note?" "file"
+    "author" "editor" "author-abbrev" "editor-abbrev"
+    "author-or-editor-abbrev")
+  "A list of template prompt wildcards for preformatting.
+Any BibTeX field can be set for preformatting including
+`bibtex-completion` \"virtual\" fields such as '=key=' and
+'=type='.  BibTeX fields can be refered to by means of their
+aliases defined in `orb-bibtex-field-aliases'.
 
-Use only alphanumerical characters, dash and underscore.  See
-`orb-edit-notes' for implementation details.
+Usage example:
 
-1. If the value is a string, a single keyword, it is treated as a
-BibTeX field-name, such as =key=.  In the following example all
-the prompts with the '=key=' keyword will be preformatted, as
-well as the corresponding match group %\\1.
-
-\(setq orb-preformat-keywords \"=key=\")
-\(setq org-roam-capture-templates
+\(setq orb-preformat-keywords '(\"citekey\" \"author\" \"date\"))
+\(setq orb-templates
       '((\"r\" \"reference\" plain (function org-roam-capture--get-point)
-         \"#+ROAM_KEY: %^{=key=}%? fullcite: %\\1\"
-         :file-name \"references/${=key=}\"
+         \"#+ROAM_KEY: %^{citekey}%?
+%^{author} published %^{entry-type} in %^{date}: fullcite:%\\1.\"
+         :file-name \"references/${citekey}\"
          :head \"#+TITLE: ${title}\"
          :unnarrowed t)))
 
-2. If the value is a list of strings they are also treated as
-BibTeX field-names.  The respective prompts will be preformatted.
-
-\(setq orb-preformat-keywords '(\"=key=\" \"title\"))
-\(setq org-roam-capture-templates
-      '((\"r\" \"reference\" plain (function org-roam-capture--get-point)
-         \"#+ROAM_KEY: %^{=key=}%? fullcite: %\\1\"
-         :file-name \"references/${=key=}\"
-         :head \"#+TITLE: ${title}\"
-         :unnarrowed t)))
-
-3. If the value is a list of cons cells, then the car of the cons
-cell is treated as a prompt keyword and the cdr as a BibTeX field
-name, and the latter will be used to retrieve the relevant value
-from the BibTeX entry.  If cdr is omitted, then the car is
-treated as the field name.
-
-\(setq orb-preformat-keywords
-      '((\"citekey\" . \"=key=\")
-       (\"type\" . \"=type=\")
-       \"title\"))
-\(setq org-roam-capture-templates
-      '((\"r\" \"reference\" plain (function org-roam-capture--get-point)
-         \"#+ROAM_KEY: %^{citekey}%? fullcite: %\\1
-          #+TAGS: %^{type}
-          This %\\2 deals with ...\"
-         :file-name \"references/%<%Y-%m-%d-%H%M%S>_${title}\"
-         :head \"#+TITLE: ${title}\"
-         :unnarrowed t)))
+Special cases:
 
 The \"file\" keyword will be treated specially if the value of
-`orb-process-file-field' is non-nil.  See its docstring for
+`orb-process-file-keyword' is non-nil.  See its docstring for an
 explanation.
+
+The \"title\" keyword needs not to be set for preformatting if it
+is used only within the `:head` section of the templates.
+
+This variable takes effect when `orb-preformat-templates' is set
+to t (default). See also `orb-edit-notes' for further details.
 
 Consult bibtex-completion package for additional information
 about BibTeX field names."
-  :type '(choice
-          (string :tag "BibTeX field name")
-          (repeat :tag "BibTeX field names" string)
-          (alist
-           :tag "Template wildcard keyword/BibTeX field name pairs"
-           :key-type (string :tag "Wildcard")
-           :value-type (string :tag "Field")))
+  :type '(repeat :tag "BibTeX field names" string)
   :group 'org-roam-bibtex)
 
 (defcustom orb-process-file-keyword t
@@ -564,35 +532,6 @@ symbols is implied."
 ;;;; Orb edit notes
 ;; ============================================================================
 
-(defvar orb--virtual-fields-alist
-  '(("=type=" . "type")
-    ("=key=" . "citekey")
-    ("=has-pdf=" . "pdf?")
-    ("=has-note=" . "note?")
-    ("citation-number" . "#"))
-  "Alist of '='-embraced virtual-fields with their replacements.")
-
-(defun orb--replace-virtual-fields (kwds)
-  "Replace special keywords in KWDS with their respective virtual field.
-The special keywords and their replacements are defined in
-`orb--virtual-fields-alist'."
-  (let* ((alist orb--virtual-fields-alist)
-         (fields (mapcar #'cdr alist)))
-    (mapcar (lambda (kwd)
-              (pcase kwd
-                ((pred stringp)
-                 (if (member kwd fields)
-                     (cons kwd (car (rassoc kwd alist)))
-                   kwd))
-                (`(,kwd1 . ,kwd2)
-                 (if (member kwd2 fields)
-                     (cons kwd1 (car (rassoc kwd2 alist)))
-                   kwd))
-                (wrong-type
-                 (signal 'wrong-type-argument
-                         `((stringp consp) ,wrong-type)))))
-            kwds)))
-
 (defun orb--switch-perspective ()
   "Helper function for `orb-edit-notes'."
   (when (and (require 'projectile nil t)
@@ -626,14 +565,7 @@ is the function `ignore', it is added as `:override'."
 TEMPLATE is an element of `org-roam-capture-templates' and ENTRY
 is a BibTeX entry as returned by `bibtex-completion-get-entry'."
   ;; Handle org-roam-capture part
-  (let* ((kwds (->> ;; normalize orb-preformat-keywords
-                (if (listp orb-preformat-keywords)
-                    orb-preformat-keywords
-                  (list orb-preformat-keywords))
-                ;; Replace special keywords with their corresponding
-                ;; virtual fields
-                (orb--replace-virtual-fields)))
-         ;; Org-capture templates: handle different types of
+  (let* (;; Org-capture templates: handle different types of
          ;; org-capture-templates: string, file and function; this is
          ;; a stripped down version of `org-capture-get-template'
          (tp
@@ -661,11 +593,11 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
     ;; 1) Make a list of (rplc-s field-value match-position) for the
     ;; second run
     ;; 2) replace org-roam-capture wildcards
-    (dolist (kwd kwds)
+    (dolist (keyword orb-preformat-keywords)
       (let* (;; prompt wildcard keyword
-             (keyword (or (car-safe kwd) kwd))
              ;; bibtex field name
-             (field-name (or (cdr-safe kwd) kwd))
+             (field-name (or (car (rassoc keyword orb-bibtex-field-aliases))
+                             keyword))
              ;; get the bibtex field value
              (field-value
               ;; maybe process file keyword
@@ -827,8 +759,8 @@ run.
 
 4. Optionally, when `orb-preformat-templates' is non-nil, any
 prompt wildcards in `orb-templates' or
-`org-roam-capture-templates' associated with the bibtex record
-fields as specified in `orb-preformat-templates' will be
+`org-roam-capture-templates', associated with the bibtex record
+fields as specified in `orb-preformat-templates', will be
 preformatted.  Both `org-capture-templates' (%^{}) and
 `org-roam-capture-templates' (`s-format', ${}) prompt syntaxes
 are supported.
@@ -837,9 +769,9 @@ See `orb-preformat-keywords' for more details on how
 to properly specify prompts for replacement.
 
 Please pay attention when using this feature that by setting
-title for preformatting it will be impossible to change it in the
-`org-roam-find-file' interactive prompt since all the template
-expansions will have taken place by then.  All the title
+title for preformatting, it will be impossible to change it in
+the `org-roam-find-file' interactive prompt since all the
+template expansions will have taken place by then.  All the title
 wildcards will be replace with the BibTeX field value.
 
 5. Optionally, if you are using Projectile and Persp-mode and

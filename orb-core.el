@@ -32,9 +32,9 @@
 ;; bibtex-completion and their dependencies.
 
 ;;; Code:
-
+
 ;; ============================================================================
-;;;; Dependencies
+;;; Dependencies
 ;; ============================================================================
 
 (require 'orb-utils)
@@ -52,8 +52,9 @@
 (declare-function
  bibtex-completion-find-pdf (key-or-entry &optional find-additional))
 
+
 ;; ============================================================================
-;;;; Customize groups
+;;; Customize groups
 ;; ============================================================================
 ;;
 ;; All modules should put their `defgroup' definitions here
@@ -84,9 +85,26 @@
   :group 'org-roam-bibtex
   :prefix "orb-autokey-")
 
+
 ;; ============================================================================
-;;;; File field
+;;; BibTeX fields and their special handling
 ;; ============================================================================
+
+(defcustom orb-bibtex-field-aliases
+  '(("=type=" . "entry-type")
+    ("=key=" . "citekey")
+    ("=has-pdf=" . "pdf?")
+    ("=has-note=" . "note?")
+    ("citation-number" . "#"))
+  "Alist of ORB-specific field aliases of the form (FIELD . ALIAS).
+The ALIAS can be used instead of the FIELD anywhere in ORB's
+configuration.  This variable is useful to replace
+`bibtex-completion''s internal '='-embraced virtual fields with
+more casual alternatives."
+  :group 'org-roam-bibtex
+  :type '(repeat
+          (cons (string :tag "Field name")
+                (string :tag "Alias name"))))
 
 (defcustom orb-file-field-extensions '("pdf")
   "Extensions of file names to keep when retrieving values from the file field.
