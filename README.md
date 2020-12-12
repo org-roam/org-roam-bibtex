@@ -324,69 +324,39 @@ without prompting you.
 
 #### `orb-preformat-keywords`
 
-The template prompt wildcards for preformatting.  Only relevant when
-`orb-preformat-templates` is set to `t` (default).  This can be a
-string, a list of strings or a cons-cell alist, where each element is
-`(STRING . STRING)`.
+A list of template prompt wildcards for preformatting.  Any BibTeX field can be
+set for preformatting including `bibtex-completion`'s' "virtual" fields such as
+=key=' and '=type='.  BibTeX fields can be refered to by means of their aliases
+defined in orb-bibtex-field-aliases.
 
-Use only alphanumerical characters, dash and underscore. See
-`orb-edit-notes` for implementation details.
-
-1. If the value is a string, a single keyword, it is treated as a
-   BibTeX field name, such as `=key=`. In the following example all
-   the prompts with the `=key=` keyword will be preformatted, as well
-   as the corresponding match group `%\1`.
+Usage example:
 
 ```el
-(setq orb-preformat-keywords "=key=")
-(setq org-roam-capture-templates
-      ’(("r" "reference" plain (function org-roam-capture--get-point)
-         "#+ROAM_KEY: %^{=key=}%? fullcite: %\1"
-         :file-name "references/${=key=}"
+(setq orb-preformat-keywords '("citekey" "author" "date"))
+(setq orb-templates
+      '((\"r\" \"reference\" plain (function org-roam-capture--get-point)
+         "#+ROAM_KEY: %^{citekey}%?
+%^{author} published %^{entry-type} in %^{date}: fullcite:%\\1."
+         :file-name "references/${citekey}"
          :head "#+TITLE: ${title}"
          :unnarrowed t)))
 ```
 
-2. If the value is a list of strings they are also treated as BibTeX
-   field names. The respective prompts will be preformatted.
+By default, `org-preformat-keywords` is configured to expand the following
+BibTeX fields: "citekey", "date", "entry-type", "pdf?", "note?", "author",
+"editor", "author-abbrev", "editor-abbrev", "author-or-editor-abbrev".
 
-```el
-(setq orb-preformat-keywords ’("=key=" "title"))
-(setq org-roam-capture-templates
-      ’(("r" "reference" plain (function org-roam-capture--get-point)
-         "#+ROAM_KEY: %^{=key=}%? fullcite: %\1"
-         :file-name "references/${=key=}"
-         :head "#+TITLE: ${title}"
-         :unnarrowed t)))
-```
+Special cases:
 
-3. If the value is a list of cons cells, then the car of the cons cell
-   is treated as a prompt keyword and the cdr as a BibTeX field-name,
-   and the latter will be used to retrieve the relevant value from the
-   BibTeX entry. If cdr is omitted, then the car is treated as the
-   field-name.
+* The "file" keyword will be treated specially if the value of
+`orb-process-file-keyword' is non-nil.  See its docstring for an explanation.
+* The \"title\" keyword needs not to be set for preformatting if it is used
+only within the `:head` section of the templates.
 
-```el
-(setq orb-preformat-keywords
-      '(("citekey" . "=key=")
-        ("type" . "=type=")
-       "title"))
-(setq org-roam-capture-templates
-      '(("r" "reference" plain (function org-roam-capture--get-point)
-         "#+ROAM_KEY: %^{citekey}%? fullcite: %\1
-          #+ROAM_TAGS: %^{type}
-          This %\2 deals with ..."
-         :file-name "references/%<%Y-%m-%d-%H%M%S>_${title}"
-         :head "#+TITLE: ${title}"
-         :unnarrowed t)))
-```
+This variable takes effect when orb-preformat-templates is set to t
+(default). See also orb-edit-notes for further details.
 
-By default, `org-preformat-keywords` is configured to expand the
-following BibTeX fields: "citekey", "date", "type", "pdf?", "note?",
-"author", "editor", "author-abbrev", "editor-abbrev",
-"author-or-editor-abbrev".
-
-Consult the [`helm-bibtex`](https://github.com/tmalsburg/helm-bibtex)
+Consult the [`bibtex-completion`](https://github.com/tmalsburg/helm-bibtex)
 package for additional information about BibTeX field names.
 
 #### `orb-insert` configuration
@@ -463,8 +433,8 @@ Below shows how this can be used to integrate with
 ```el
 (setq orb-preformat-keywords
       '("citekey" "title" "url" "author-or-editor" "keywords" "file")
-      orb-process-file-field t
-      orb-file-field-extensions "pdf")
+      orb-process-file-keyword t
+      orb-file-field-extensions '("pdf"))
 
 (setq orb-templates
       '(("r" "ref" plain (function org-roam-capture--get-point)
@@ -480,8 +450,8 @@ Below shows how this can be used to integrate with
 :Custom_ID: ${citekey}
 :URL: ${url}
 :AUTHOR: ${author-or-editor}
-:NOTER_DOCUMENT: ${file}
-:NOTER_PAGE:
+:NOTER_DOCUMENT: ${file}  ; <== special file keyword: if more than one filename
+:NOTER_PAGE:              ;     is available, the user will be prompted to choose
 :END:")))
 ```
 
@@ -644,7 +614,8 @@ columns corresponding to different BibTeX fields.
 * `valid` --- All other references fall into this group.  They look
   fine but are not yet in user Org-roam and BibTeX databases.
 
-Set `orb-pdf-scrapper-sort-org` to nil if you do not need reference sorting.
+Set `orb-pdf-scrapper-group-references` to nil if you do not need reference
+grouping.
 
 Review and edit the generated Org-mode data, or press `C-c C-c` to
 insert the references into the note's buffer and finish the ORB PDF
