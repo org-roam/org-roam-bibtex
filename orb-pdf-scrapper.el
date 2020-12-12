@@ -944,6 +944,8 @@ process."
 (defvar orb-pdf-scrapper-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-k" #'orb-pdf-scrapper-kill)
+    (define-key map [remap save-buffer] #'orb-pdf-scrapper-save)
+    (define-key map [remap write-file] #'orb-pdf-scrapper-save-as)
     map)
   "Keymap for `orb-pdf-scrapper-mode' minor mode.
 The keymap is updated automatically according to the Orb PDF
@@ -1235,7 +1237,9 @@ Kill it and start a new one %s? "
               (orb--with-message! "Killing current process"
                 (orb-pdf-scrapper--cleanup))
               (orb-pdf-scrapper-run (orb-pdf-scrapper--get :new-key)))
-          ;; Do nothing
+          ;; go to the Scrapper buffer
+          (pop-to-buffer orb-pdf-scrapper--buffer)
+          ;; reset the concurring flag set by `orb-pdf-scrapper-run'
           (orb-pdf-scrapper--put :prevent-concurring nil))
       ;; Finilize the requested context otherwise
       (cl-case callee
@@ -1282,7 +1286,8 @@ Kill it and start a new one %s? "
      (orb-pdf-scrapper-dispatcher 'edit-bib 'continue))
     ('edit-xml
      (when-let ((master-backup (orb-pdf-scrapper--get :master-backup)))
-       (rename-file master-backup orb-anystyle-parser-training-set t))
+       (rename-file master-backup orb-anystyle-parser-training-set t)
+       (setq buffer-file-name nil))
      (orb-pdf-scrapper-dispatcher (orb-pdf-scrapper--get :callee) 'continue))
     (t
      (orb-pdf-scrapper-dispatcher 'error))))
@@ -1293,6 +1298,36 @@ Kill it and start a new one %s? "
   (when-let (process (orb-pdf-scrapper--get :training-process))
     (kill-process process))
   (orb-pdf-scrapper-dispatcher 'kill))
+
+(defun orb-pdf-scrapper-save ()
+  "Save current ORB PDF Scrapper buffer in the respective temp file.
+This command shadows `save-buffer' when `orb-pdf-scrapper-mode' is active."
+  (interactive)
+  (let ((temp-file
+         (cl-case (orb-pdf-scrapper--get :caller)
+           ('edit-txt (orb-pdf-scrapper--get :temp-txt))
+           ('edit-bib (orb-pdf-scrapper--get :temp-bib))
+           ('edit-org (orb-pdf-scrapper--get :temp-org))
+           ('edit-xml (orb-pdf-scrapper--get :temp-xml))
+           (t nil))))                   ; fallback flag
+    (cond
+     ;; ORB PDF Scrapper buffers do not have file names
+     ((and (not buffer-file-name) temp-file)
+      (write-region (orb-buffer-string) nil temp-file nil -1)
+      (set-buffer-modified-p nil))
+     ((save-buffer)))))
+
+(defun orb-pdf-scrapper-save-as ()
+  "Export current ORB PDF Scrapper buffer to a file.
+This command shadows `write-file' when `orb-pdf-scrapper-mode' is active."
+  (interactive)
+  ;; ORB PDF Scrapper buffers do not have file names
+  (cond
+   ((not buffer-file-name)
+    (call-interactively #'write-file)
+    (set-visited-file-name nil)
+    (rename-buffer orb-pdf-scrapper--buffer))
+   ((call-interactively #'write-file))))
 
 
 ;; ============================================================================
