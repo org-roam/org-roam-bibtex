@@ -134,19 +134,24 @@ the file paths with the respective extensions.
 \(Mendeley, Zotero, normal paths) are all supported.  If there
 are multiple files found the user is prompted to select which one
 to enter."
-  (when-let* ((entry (bibtex-completion-get-entry citekey))
-              (paths (bibtex-completion-find-pdf entry)))
-    (when-let ((extensions orb-file-field-extensions))
-      (unless (listp extensions)
-        (setq extensions (list extensions)))
-      (setq paths (--filter
-                   (member-ignore-case
-                    (file-name-extension it) extensions)
-                   paths)))
-    (when paths
-      (if (= (length paths) 1)
-          (car paths)
-        (completing-read "File to use: " paths)))))
+  (condition-case nil
+      (when-let* ((entry (bibtex-completion-get-entry citekey))
+                  (paths (bibtex-completion-find-pdf entry)))
+        (when-let ((extensions orb-file-field-extensions))
+          (unless (listp extensions)
+            (setq extensions (list extensions)))
+          (setq paths (--filter
+                       (lambda ()
+                         (when-let ((extension (file-name-extension it)))
+                           (member-ignore-case extension extensions)))
+                       paths)))
+        (when paths
+          (if (= (length paths) 1)
+              (car paths)
+            (completing-read "File to use: " paths))))
+    ;; ignore any errors that may be thrown by `bibtex-completion-find-pdf'
+    ;; don't stop the capture process
+    (error nil)))
 
 ;; ============================================================================
 ;;;; Orb autokey
