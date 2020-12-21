@@ -60,8 +60,7 @@
 ;; ============================================================================
 
 (defcustom orb-pdf-scrapper-grouped-export
-  '((parent "References")
-    (in-roam "In Org Roam database" list)
+  '((in-roam "In Org Roam database" list)
     (in-bib "In BibTeX file" list)
     (valid "Valid citation keys" table)
     (invalid "Invalid citation keys" table))
@@ -80,10 +79,7 @@ TYPE is ignored for the `parent' group and defaults to `list' for
 other groups when set to nil.
 
 Takes effect when `orb-pdf-scrapper-group-references' is t."
-  :type '(list (list :tag "Parent headline"
-                     (const :format "" parent)
-                     (string :tag "Title"))
-               (list :tag "\nIn-roam"
+  :type '(list (list :tag "\nIn-roam"
                      (const :format "" in-roam)
                      (string :tag "Title")
                      (radio :tag "Type" :value list
@@ -213,6 +209,24 @@ If the value of `orb-pdf-scrapper-list-style' is one of the
   "Format of the citekey for insertion into Org mode buffer."
   :group 'orb-pdf-scrapper
   :type 'string)
+
+(defcustom orb-pdf-scrapper-export-options
+  `((org (headline "References (extracted by ORB PDF Scrapper)"
+                   :property-drawer (("PDF_SCRAPPER_TYPE" . "org")
+                                     ("PDF_SCRAPPER_SOURCE")
+                                     ("PDF_SCRAPPER_DATE"))))
+    (txt (headline "References (extracted by ORB PDF Scrapper)"
+                   :property-drawer (("PDF_SCRAPPER_TYPE" . "text")
+                                     ("PDF_SCRAPPER_SOURCE")
+                                     ("PDF_SCRAPPER_DATE"))))
+    (bib (file ,(if (listp bibtex-completion-bibliography)
+                    (car bibtex-completion-bibliography)
+                  bibtex-completion-bibliography)
+               :placement prepend)))
+  "Description."
+  :group 'orb-pdf-scrapper
+  :risky t
+  :type '(repeat list))
 
 (defcustom orb-pdf-scrapper-set-fields
   '(("author" orb-pdf-scrapper--invalidate-nil-value)
@@ -378,13 +392,13 @@ This is an auxiliary function for command
 Auxiliary function for `orb-pdf-scrapper-generate-keys'.
 REFS should be an alist of form ((CITEKEY . FORMATTED-ENTRY) . VALIDP).
 
-References marked valid by `orb-pdf-scrapper-keygen-function' function
+References validated by `orb-pdf-scrapper-keygen-function' function
 are further sorted into four groups:
 
 'in-roam - available in the `org-roam' database;
 'in-bib  - available in `bibtex-completion-bibliography' file(s);
 'valid   - marked valid by the keygen function but are not
-available in the user databases;
+           available in user database(s);
 'invalid - marked invalid by the keygen function."
   (let* ((bibtex-completion-bibliography (orb-pdf-scrapper--get :global-bib))
          ;; When using a quoted list here, sorted-refs is not erased in
@@ -530,7 +544,6 @@ list otherwise."
       (org-insert-heading '(16) nil t)
       ;; insert heading
       (insert (format "%s\n" title))
-      (org-demote)
       (org-end-of-subtree)
       ;; insert references
       (insert (format "\n#+name: %s\n" group))
@@ -742,15 +755,6 @@ Pressing the RED button, just in case")
        (orb-pdf-scrapper--refresh-mode 'org)
        (orb--with-message! "Generating Org data"
          (erase-buffer)
-         ;; insert parent heading
-         (org-insert-heading nil nil t)
-         (insert
-          (concat
-           (cadr (assoc 'parent orb-pdf-scrapper-grouped-export))
-           " (retrieved by Orb PDF Scrapper from "
-           (f-filename (orb-pdf-scrapper--get :pdf-file)) ")"))
-         (org-end-of-subtree)
-         ;; insert child headings: in-roam, in-bib, valid, invalid
          (orb-pdf-scrapper--insert-refs)
          (write-region (orb-buffer-string) nil temp-org nil -1)
          (setq buffer-undo-list nil)
@@ -908,18 +912,188 @@ set `orb-anystyle-parser-model' variable to the above path."))
              (orb-pdf-scrapper--put :context 'error
                                     :training-process nil))))))))
 
+
+;; ============================================================================
+;;; Helper functions: Export of extracted references
+;; ============================================================================
+
+(defun orb-pdf-scrapper--export-to-headline (type target properties temp-file)
+  "Description TYPE TARGET PROPERTIES TEMP-FILE."
+  (let ((drawer-props (plist-get properties :property-drawer))
+        data)
+    ;; insert parent heading
+    (org-insert-heading nil nil t)
+    (insert target)
+    ;; insert properties
+    (dolist (prop drawer-props)
+      (let ((prop-name (car prop))
+            (value (cdr prop))
+            prop-value)
+        (cond
+         ;; call user function if provided
+         ((functionp value)
+          (setq prop-value (funcall value)))
+         ;; provide some values for select properties - if the name was
+         ;; specified but not a value;
+         ;; NOTE: rather a placeholder for future elaboration
+         ((null value)
+          (cond
+           ((string= "PDF_SCRAPPER_SOURCE" prop-name)
+            (setq prop-value
+                  (f-filename (orb-pdf-scrapper--get :pdf-file))))
+           ((string= "PDF_SCRAPPER_DATE" prop-name)
+            (setq prop-value (org-timestamp-format
+                              (org-timestamp-from-time
+                               (current-time) 'with-time)
+                              "%Y-%m-%d %a %H:%M")))))
+         ;; insert the user value
+         (t (setq prop-value value)))
+        ;; insert the property
+        (org-set-property prop-name prop-value)))
+    ;; prepare the data
+    ;; get the data from temp file and put them into the target buffer,
+    ;; which must be current when this function is called.
+    (with-temp-buffer
+      (insert-file-contents temp-file)
+      ;; do some type-specific stuff
+      (cl-case type
+        (org
+         (org-mode)                  ; not sure if this is really necessary
+         (goto-char (point-min))
+         (while (re-search-forward org-heading-regexp nil t)
+           (org-demote)))
+        (bib
+         (goto-char (point-min))
+         (insert "#+begin_src bibtex\n")
+         (goto-char (point-max))
+         (insert "#+end_src")))
+      (setq data (orb-buffer-string)))
+    ;; insert the data
+    (org-end-of-subtree)
+    (insert "\n\n" data)))
+
+(defun orb-pdf-scrapper--export-to-file (type target properties temp-file)
+  "TYPE TARGET PROPERTIES TEMP-FILE."
+  (let* ((current-dir (file-name-directory
+                       (buffer-file-name
+                        (orb-pdf-scrapper--get :original-buffer))))
+         (current-key
+          (orb-pdf-scrapper--get :current-key))
+         ;; this is a sort of cond, but execute all clauses sequentially
+         (target (--> target
+                      ;; if target is non-nil and it is a relative filename,
+                      ;; expand it within the original buffer's directory
+                      (when it
+                        (if (f-relative? it) (f-join current-dir it) it))
+                      ;; if target is nil assume current directory
+                      (if (null it) current-dir it)
+                      ;; if target is a directory, make a file with citekey as
+                      ;; the file name and type as the extension the target
+                      ;; otherwise return the target
+                      (if (f-dir? it)
+                          (f-join it (format "%s.%s" current-key type))
+                        it)))
+         (bibtex-completion-bibliography
+          (if (listp bibtex-completion-bibliography)
+              bibtex-completion-bibliography
+            (list bibtex-completion-bibliography)))
+         (placement (or (plist-get properties :placement) 'append))
+         (buffer-visited-p (find-buffer-visiting target))
+         ;; inline subroutine to insert only those entries from TEMP-FILE, that
+         ;; are not already in BUF
+         (insert-filtered-bib-entries
+          (lambda (temp-file)
+            (let (keys buf-data)
+              (save-excursion
+                (maphash (lambda (key _val)
+                           (push key keys))
+                         (car (parsebib-parse-buffer))))
+              (with-temp-buffer
+                (insert-file-contents temp-file)
+                (goto-char (point-min))
+                (let ((bibtex-sort-ignore-string-entries t))
+                  (bibtex-map-entries
+                   (lambda (key _beg _end)
+                     (when (member key keys)
+                       (bibtex-kill-entry)))))
+                (setq buf-data (orb-buffer-string)))
+              (insert buf-data))))
+         buf)
+    (save-excursion
+      (find-file target)
+      (setq buf (current-buffer))
+      (cl-case placement
+        (prepend
+         (goto-char (point-min))
+         (cl-case type
+           (bib
+            (let ((bibtex-sort-ignore-string-entries t))
+              (bibtex-beginning-of-first-entry))
+            (funcall insert-filtered-bib-entries temp-file))
+           (org
+            (orb-pdf-scrapper--export-to-headline
+             type (format "References extracted from %s" current-key)
+             nil temp-file)
+            (insert "\n"))
+           (txt
+            (insert-file-contents temp-file)
+            (insert "\n"))))
+        (append
+         (goto-char (point-max))
+         (cl-case type
+           (bib
+            (let ((bibtex-sort-ignore-string-entries t))
+              (bibtex-end-of-entry))
+            (insert "\n")
+            (funcall insert-filtered-bib-entries temp-file))
+           (org
+            (orb-pdf-scrapper--export-to-headline
+             type (format "References extracted from %s" current-key)
+             nil temp-file))
+           (txt
+            (insert "\n")
+            (insert-file-contents temp-file)))
+         t)
+        ;; (overwrite
+        ;;  t)
+        )
+      (save-buffer buf))
+    (unless buffer-visited-p
+      (kill-buffer buf))))
+
+(defun orb-pdf-scrapper--export (type)
+  "Export the extracted and/or generated data.
+TYPE is a symbol identifying type of data to be exported, one
+of `txt', `bib' or `org'."
+  (let ((temp-file (orb-pdf-scrapper--get
+                    (intern (format ":temp-%s" type)))))
+    ;; there may be several targets, export to all of them
+    (cl-loop
+     for (name target . properties)
+     in (cdr (assoc type orb-pdf-scrapper-export-options))
+     do (cl-case name
+          (headline
+           ;; (orb-pdf-scrapper--export-to-headline type target
+           ;;                                       properties temp-file)
+           t)
+          (file
+           (orb-pdf-scrapper--export-to-file type target
+                                             properties temp-file))))))
+
 (defun orb-pdf-scrapper--checkout ()
   "Finalize Orb PDF Scrapper process.
-Insert generated Org data into the note buffer that started the
-process."
+Insert the extracted and generated data according to the settings
+of `orb-pdf-scrapper-org-export', `orb-pdf-scrapper-text-export',
+and `orb-pdf-scarpper-bibtex-export'."
   (cl-case (orb-pdf-scrapper--get :context)
     ('start
      (pop-to-buffer (orb-pdf-scrapper--get :original-buffer))
      (save-restriction
        (save-excursion
          (widen)
-         (goto-char (point-max))
-         (insert-file-contents (orb-pdf-scrapper--get :temp-org))))
+         (dolist (type (mapcar #'car orb-pdf-scrapper-export-options))
+           (goto-char (point-max))
+           (orb-pdf-scrapper--export type))))
      (orb-pdf-scrapper-dispatcher 'kill))
     (t
      (orb-pdf-scrapper-dispatcher 'error))))
