@@ -1092,12 +1092,12 @@ of `txt', `bib' or `org'."
                     (intern (format ":temp-%s" type)))))
     ;; there may be several targets, export to all of them
     (cl-loop
-     for (name target . properties)
+     for (location target . properties)
      in (cdr (assoc type orb-pdf-scrapper-export-options))
-     do (cl-case name
+     do (cl-case location
           (headline
-           ;; (orb-pdf-scrapper--export-to-headline type target
-           ;;                                       properties temp-file)
+           (orb-pdf-scrapper--export-to-headline type target
+                                                 properties temp-file)
            t)
           (file
            (orb-pdf-scrapper--export-to-file type target
