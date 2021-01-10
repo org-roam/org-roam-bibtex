@@ -662,25 +662,31 @@ list otherwise."
   (cond
    (orb-pdf-scrapper-group-references
     (dolist (ref-group
-           (orb-pdf-scrapper--sort-refs orb-pdf-scrapper--refs))
-    (when-let* ((group (car ref-group))
-                (refs (cdr ref-group))
-                (heading
-                 (cdr (assoc group
-                             orb-pdf-scrapper-grouped-export)))
-                (title (car heading))
-                (type (cadr heading)))
-      (org-insert-heading '(16) nil t)
-      ;; insert heading
-      (insert (format "%s\n" title))
-      (org-end-of-subtree)
-      ;; insert references
-      (insert (format "\n#+name: %s\n" group))
-      (cl-case type
-        ('table
-         (orb-pdf-scrapper--insert-org-as-table refs))
-        (t
-         (orb-pdf-scrapper--insert-org-as-list refs))))))
+             (orb-pdf-scrapper--sort-refs orb-pdf-scrapper--refs))
+      (when-let* ((group (car ref-group))
+                  (refs (cdr ref-group))
+                  (heading
+                   (cdr (assoc group
+                               orb-pdf-scrapper-grouped-export)))
+                  (title (car heading))
+                  (type (cadr heading))
+                  (pos (make-marker)))
+        (unless (bobp)
+          (org-N-empty-lines-before-current 1))
+        (org-insert-heading '(16) nil t)
+        ;; insert heading
+        (insert (format "%s\n" title))
+        (org-N-empty-lines-before-current 1)
+        ;; insert references
+        (insert (format "#+name: %s\n" group))
+        (set-marker pos (point))
+        (set-marker-insertion-type pos t)
+        (cl-case type
+          ('table
+           (orb-pdf-scrapper--insert-org-as-table refs))
+          (t
+           (orb-pdf-scrapper--insert-org-as-list refs)))
+        (goto-char pos))))
    (t
     (insert "\n")
     (let ((refs (nreverse orb-pdf-scrapper--refs)))
@@ -688,7 +694,9 @@ list otherwise."
         ('table
          (orb-pdf-scrapper--insert-org-as-table refs))
         (t
-         (orb-pdf-scrapper--insert-org-as-list refs)))))))
+         (orb-pdf-scrapper--insert-org-as-list refs))))))
+  (goto-char (point-max))
+  (org-N-empty-lines-before-current 0))
 
 
 ;; ============================================================================
