@@ -160,7 +160,7 @@ the file manually.
 From version 0.300.0, Spacemacs offers support for `org-roam`. This means private layers are no longer necessary.
 If you have already configured `org-ref`, you can follow this [blog post](https://philipperambert.com/Installing-Org-Roam-Bibtex-In-Spacemacs).
 
-Inside the function `(defun dotspacemacs/layers () ... )` uncomment the org layer and switch on the roam-support. 
+Inside the function `(defun dotspacemacs/layers () ... )` uncomment the org layer and switch on roam-support. 
 You will also need to enable `bibtex`. 
 You should have something that looks like:
 ```el
