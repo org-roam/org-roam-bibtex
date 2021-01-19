@@ -1198,6 +1198,10 @@ This function replaces `bibtex-completion-edit-notes'.  Only the
 first key from KEYS will actually be used."
   (orb-edit-notes (car keys)))
 
+(defun orb-bibtex-completion-parse-bibliography-ad (&optional _ht-strings)
+  "Update `orb-notes-cache' before `bibtex-completion-parse-bibliography'."
+  (orb-make-notes-cache))
+
 (defvar org-roam-bibtex-mode-map
   (make-sparse-keymap)
   "Keymap for `org-roam-bibtex-mode'.")
@@ -1225,14 +1229,18 @@ Otherwise, behave as if called interactively."
          (add-to-list 'bibtex-completion-find-note-functions
                       #'orb-find-note-file)
          (advice-add 'bibtex-completion-edit-notes
-                     :override #'orb-edit-notes-ad))
+                     :override #'orb-edit-notes-ad)
+         (advice-add 'bibtex-completion-parse-bibliography
+                     :before #'orb-bibtex-completion-parse-bibliography-ad))
         (t
          (setq org-ref-notes-function 'org-ref-notes-function-one-file)
          (setq bibtex-completion-find-note-functions
                (delq #'orb-find-note-file
                      bibtex-completion-find-note-functions))
          (advice-remove 'bibtex-completion-edit-notes
-                        #'orb-edit-notes-ad))))
+                        #'orb-edit-notes-ad)
+         (advice-remove 'bibtex-completion-parse-bibliography
+                        #'orb-bibtex-completion-parse-bibliography-ad))))
 
 (define-key org-roam-bibtex-mode-map (kbd "C-c ) a") #'orb-note-actions)
 (define-key org-roam-bibtex-mode-map (kbd "C-c ) i") #'orb-insert)

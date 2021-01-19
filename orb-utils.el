@@ -232,11 +232,24 @@ the value of `orb--temp-dir'."
 ;;;; Document properties
 ;; ============================================================================
 
+(defvar orb-notes-cache nil
+  "Cache of ORB notes.")
+
+(defun orb-make-notes-cache ()
+  "Update ORB notes hash table `orb-notes-cache'."
+  (let* ((db-entries (org-roam--get-ref-path-completions nil "cite"))
+         (size (round (/ (length db-entries) 0.8125))) ;; ht oversize
+         (ht (make-hash-table :test #'equal :size size)))
+    (dolist (entry db-entries)
+      (let* ((key (car entry))
+             (value (plist-get (cdr (assoc key db-entries)) :path)))
+        (puthash key value ht)))
+    (setq orb-notes-cache ht)))
+
 (defun orb-find-note-file (citekey)
   "Find note file associated with CITEKEY.
 Returns the path to the note file, or nil if it doesn’t exist."
-  (let* ((completions (org-roam--get-ref-path-completions)))
-    (plist-get (cdr (assoc citekey completions)) :path)))
+  (gethash citekey orb-notes-cache))
 
 (defun orb-get-buffer-keyword (keyword &optional buffer)
   "Return the value of Org-mode KEYWORD in-buffer directive.
