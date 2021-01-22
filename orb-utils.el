@@ -249,8 +249,7 @@ the value of `orb--temp-dir'."
 (defun orb-find-note-file (citekey)
   "Find note file associated with CITEKEY.
 Returns the path to the note file, or nil if it doesn’t exist."
-  (gethash citekey (or orb-notes-cache
-                       (orb-make-notes-cache))))
+  (gethash citekey orb-notes-cache))
 
 (defun orb-get-buffer-keyword (keyword &optional buffer)
   "Return the value of Org-mode KEYWORD in-buffer directive.

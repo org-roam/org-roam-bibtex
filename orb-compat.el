@@ -40,6 +40,8 @@
 (define-obsolete-variable-alias
   'orb-pdf-scrapper-export-fields 'orb-pdf-scrapper-table-export-fields "0.5")
 
+(define-obsolete-function-alias 'orb-notes-fn 'orb-edit-notes-org-ref "0.5")
+
 (provide 'orb-compat)
 ;;; orb-compat.el ends here
 ;; Local Variables:

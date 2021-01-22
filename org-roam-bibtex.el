@@ -82,14 +82,18 @@
   (require 'subr-x)
   (require 'cl-lib))
 
-;; declare own functions and variables
+;; declare own functions and variables (NOTE: is it good?)
 (declare-function orb-helm-insert "orb-helm")
 (declare-function orb-ivy-insert "orb-ivy")
+(declare-function orb-pdf-scrapper-run "orb-pdf-scrapper" (key))
 
 ;; declare external functions and variables
 
+;; bibtex-completion
 (defvar bibtex-completion-bibliography)
 (defvar bibtex-completion-find-note-functions)
+(defvar bibtex-completion-edit-notes-function)
+
 (declare-function bibtex-completion-apa-get-value
                   "bibtex-completion" (field entry &optional default))
 (declare-function bibtex-completion-get-entry
@@ -98,18 +102,22 @@
                   "bibtex-completion" (&optional files))
 (declare-function bibtex-completion-init "bibtex-completion")
 (declare-function bibtex-completion-candidates "bibtex-completion")
+(declare-function bibtex-completion-edit-notes-default
+                  "bibtex-completion" (keys))
 
+;; org-ref
+(defvar org-ref-notes-function)
+
+(declare-function org-ref-find-bibliography "org-ref-core")
+(declare-function org-ref-notes-function-one-file "org-ref-core" (key))
+(declare-function org-ref-format-entry "ext:org-ref-bibtex" (key))
+
+;; other
 (declare-function projectile-relevant-open-projects "projectile")
 (declare-function persp-switch "persp-mode")
 (declare-function persp-names "persp-mode")
 
-(defvar org-ref-notes-function)
-(declare-function org-ref-find-bibliography "org-ref-core")
-
 (declare-function defhydra "ext:hydra")
-(declare-function org-ref-format-entry "ext:org-ref-bibtex" (key))
-
-(declare-function orb-pdf-scrapper-run "orb-pdf-scrapper" (key))
 
 ;; ============================================================================
 ;;;; Customize definitions
@@ -460,7 +468,7 @@ Return the result of executing BODY."
 NAME (unquoted) is the name of the function.  TARGET should be an
 unquoted SYMBOL, one of `prepare', `before' or `after', meaning
 the function will be registered to run with the corresponding
-`org-capture-SYMBOL-finlaize-hook'.  DEPTH is the hook depth, nil
+`org-capture-SYMBOL-finalize-hook'.  DEPTH is the hook depth, nil
 is internally converted to 0.
 
 BODY are forms which will be wrapped in an anonymous function
@@ -779,15 +787,21 @@ have a dedicated workspace to work with your Org-roam collection,
 you may want to set the perspective name and project path in
 `orb-persp-project' and `orb-switch-persp' to t.  In this case,
 the perspective will be switched to the Org-roam notes project
-before calling any Org-roam functions."
+before calling any Org-roam functions.
+
+For compatibility with `bibtex-completion', CITEKEY can also be a
+list of keys, however, only the first key will be used in this
+case."
   (unless org-roam-mode
     (org-roam-mode +1))
   ;; Optionally switch to the notes perspective
   (when orb-switch-persp
     (orb--switch-perspective))
+  (when (listp citekey)
+    (setq citekey (car citekey)))
   (let ((note-data (orb-note-exists-p citekey)))
-      ;; Find org-roam reference with the CITEKEY and collect data into
-      ;; `orb-plist'
+    ;; Find org-roam reference with the CITEKEY and collect data into
+    ;; `orb-plist'
     (orb-plist-put :note-existed (and note-data t))
     (cond
      (note-data
@@ -972,10 +986,10 @@ newly created note."
 ;;;###autoload
 (defun orb-insert (&optional arg)
   "Insert a link to an Org-roam bibliography note.
-If the note does not exist, create it.
-Use candidate selection interface specified in
-`orb-insert-interface'.  Available interfaces are `helm-bibtex',
-`ivy-bibtex' and `orb-insert-generic'.
+If the note does not exist, create it.  Use candidate selection
+interface specified in `orb-insert-interface'.  Available
+interfaces are `helm-bibtex', `ivy-bibtex' and
+`orb-insert-generic'.
 
 When using `helm-bibtex' or `ivy-bibtex', the action \"Edit note
 & insert a link\" should be chosen to insert the desired link.
@@ -1014,7 +1028,8 @@ is possible to force lowercase by supplying either one or three
 universal arguments `\\[universal-argument]'.
 
 Finally, `bibtex-completion-cache' will be re-populated if either
-two or three universal arguments `\\[universal-argument]' are supplied."
+two or three universal arguments `\\[universal-argument]' are
+supplied."
   (interactive "P")
   ;; parse arg
   ;; C-u or C-u C-u C-u => force lowercase
@@ -1180,7 +1195,7 @@ CITEKEY is a list whose car is a citation key."
 ;; ============================================================================
 ;;
 
-(defun orb-notes-fn (citekey)
+(defun orb-edit-notes-org-ref (citekey)
   "Open an Org-roam note associated with the CITEKEY or create a new one.
 Set `org-ref-notes-function' to this function if your
 bibliography notes are managed by Org-roam and you want some
@@ -1191,12 +1206,6 @@ intended for use with Org-ref."
   (when (require 'org-ref nil t)
     (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
       (orb-edit-notes citekey))))
-
-(defun orb-edit-notes-ad (keys)
-  "Open an Org-roam note associated with the first key from KEYS.
-This function replaces `bibtex-completion-edit-notes'.  Only the
-first key from KEYS will actually be used."
-  (orb-edit-notes (car keys)))
 
 (defun orb-bibtex-completion-parse-bibliography-ad (&optional _ht-strings)
   "Update `orb-notes-cache' before `bibtex-completion-parse-bibliography'."
@@ -1224,23 +1233,23 @@ Otherwise, behave as if called interactively."
   :require 'orb
   :global t
   (require 'bibtex-completion)
-  (cond (org-roam-bibtex-mode
-         (setq org-ref-notes-function 'orb-notes-fn)
-         (add-to-list 'bibtex-completion-find-note-functions
-                      #'orb-find-note-file)
-         (advice-add 'bibtex-completion-edit-notes
-                     :override #'orb-edit-notes-ad)
-         (advice-add 'bibtex-completion-parse-bibliography
-                     :before #'orb-bibtex-completion-parse-bibliography-ad))
-        (t
-         (setq org-ref-notes-function 'org-ref-notes-function-one-file)
-         (setq bibtex-completion-find-note-functions
-               (delq #'orb-find-note-file
-                     bibtex-completion-find-note-functions))
-         (advice-remove 'bibtex-completion-edit-notes
-                        #'orb-edit-notes-ad)
-         (advice-remove 'bibtex-completion-parse-bibliography
-                        #'orb-bibtex-completion-parse-bibliography-ad))))
+  (cond
+   (org-roam-bibtex-mode
+    (setq org-ref-notes-function #'orb-edit-notes-org-ref
+          bibtex-completion-edit-notes-function #'orb-edit-notes)
+    (add-to-list 'bibtex-completion-find-note-functions #'orb-find-note-file)
+    (advice-add 'bibtex-completion-parse-bibliography
+                :before #'orb-bibtex-completion-parse-bibliography-ad)
+    (orb-make-notes-cache))
+   (t
+    (setq org-ref-notes-function #'org-ref-notes-function-one-file
+          bibtex-completion-edit-notes-function
+          #'bibtex-completion-edit-notes-default)
+    (setq bibtex-completion-find-note-functions
+          (delq #'orb-find-note-file
+                bibtex-completion-find-note-functions))
+    (advice-remove 'bibtex-completion-parse-bibliography
+                   #'orb-bibtex-completion-parse-bibliography-ad))))
 
 (define-key org-roam-bibtex-mode-map (kbd "C-c ) a") #'orb-note-actions)
 (define-key org-roam-bibtex-mode-map (kbd "C-c ) i") #'orb-insert)
