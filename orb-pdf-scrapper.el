@@ -59,6 +59,23 @@
 ;;; Customize definitions
 ;; ============================================================================
 
+(defcustom orb-pdf-scrapper-prompt-to-generate-keys 'when-buffer-modified
+  "Prompt the user to generate keys in the BibTeX buffer?
+After having finished editing in the BibTeX buffer and before
+proceeding to Org buffer, the user will be prompted
+to (re-)generate citation keys according to the value of this
+option on these occasions:
+
+- symbol `when-buffer-modified' - only when the buffer has
+  modified and changes have not been saved
+- nil - never
+- t or any other value - always."
+  :group 'orb-pdf-scrapper
+  :type '(choice
+          (const when-buffer-modified)
+          (const :tag "Yes" t)
+          (const :tag "No" nil)))
+
 (defcustom orb-pdf-scrapper-grouped-export
   '((parent "References")
     (in-roam "In Org Roam database" list)
@@ -721,12 +738,20 @@ Pressing the RED button, just in case")
      ;; if the BibTeX buffer was modified, save it and maybe generate keys
      (orb-pdf-scrapper-generate-keys
       nil
-      (if (buffer-modified-p)
-          ;; TODO: it's clumsy
-          ;; not "yes" means generate
-          ;; not "no" means collect only
-          (not (y-or-n-p "Generate BibTeX keys? "))
-        t))
+      (cl-case orb-pdf-scrapper-prompt-to-generate-keys
+        ('when-buffer-modified
+         (if (buffer-modified-p)
+             ;; TODO: it's clumsy
+             ;; not "yes" means generate
+             ;; not "no" means collect only
+             (not (y-or-n-p "The buffer contents has changed.  \
+Generate BibTeX keys? "))
+           t))
+        ;; do not prompt
+        (nil t)
+        ;; always prompt
+        (t
+         (not (y-or-n-p "Generate BibTeX keys? ")))))
      (when (> (cl-random 100) 98)
        (orb--with-message! "Pressing the RED button"))
      (write-region (orb-buffer-string)
