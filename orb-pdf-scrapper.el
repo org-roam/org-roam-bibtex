@@ -1142,6 +1142,7 @@ TYPE is type of data.  PROPERTIES are additional export properties."
                 (insert-file-contents temp-file)
                 (goto-char (point-min))
                 (let ((bibtex-sort-ignore-string-entries t))
+                  (bibtex-set-dialect 'biblatex t)
                   (bibtex-map-entries
                    (lambda (key _beg _end)
                      (when (member key keys)
