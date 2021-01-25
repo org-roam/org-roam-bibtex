@@ -846,6 +846,3 @@ hang out with us, you can find us here:
 Changelog
 ---------------
 Changelog is being maintained [here](https://github.com/org-roam/org-roam-bibtex/blob/master/CHANGELOG.md).
-
-<a href="https://www.buymeacoffee.com/mshevchuk" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60" width="217" ></a>
-
