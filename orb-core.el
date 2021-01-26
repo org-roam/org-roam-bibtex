@@ -141,9 +141,8 @@ to enter."
           (unless (listp extensions)
             (setq extensions (list extensions)))
           (setq paths (--filter
-                       (lambda ()
-                         (when-let ((extension (file-name-extension it)))
-                           (member-ignore-case extension extensions)))
+                       (when-let ((extension (file-name-extension it)))
+                         (member-ignore-case extension extensions))
                        paths)))
         (when paths
           (if (= (length paths) 1)
