@@ -595,6 +595,13 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
     ;; 2) replace org-roam-capture wildcards
     (dolist (keyword orb-preformat-keywords)
       (let* (;; prompt wildcard keyword
+             (keyword (cond
+                       ;; for some backward compatibility with old
+                       ;; `orb-preformat-keywords'
+                       ((consp keyword) (car keyword))
+                       ((stringp keyword) keyword)
+                       (t (user-error "Error in `orb-preformat-keywords': \
+Keyword \"%s\" has invalid type (string was expected)" keyword))))
              ;; bibtex field name
              (field-name (or (car (rassoc keyword orb-bibtex-field-aliases))
                              keyword))
@@ -795,11 +802,11 @@ before calling any Org-roam functions."
       (ignore-errors (org-roam--find-file (orb-plist-get :file))))
      ;; we need to clean up if the capture process was aborted signaling
      ;; user-error
-     (t (condition-case nil
+     (t (condition-case error-msg
             (orb--edit-notes citekey)
           (error
-           (with-orb-cleanup (orb-do-hook-functions 'remove))))))))
-
+           (with-orb-cleanup (orb-do-hook-functions 'remove))
+           (signal (car error-msg) (cdr error-msg))))))))
 
 (defun orb--get-non-ref-path-completions ()
   "Return a list of cons for titles of non-ref notes to absolute path.
