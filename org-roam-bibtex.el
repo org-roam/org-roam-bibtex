@@ -1,12 +1,10 @@
 ;;; org-roam-bibtex.el --- Org Roam meets BibTeX -*- lexical-binding: t -*-
 
-;; Copyright © 2020 Jethro Kuan <jethrokuan95@gmail.com>
-;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
-;; Copyright © 2020 Leo Vivier <leo.vivier+dev@gmail.com>
+;; Copyright © 2020-2021 Mykhailo Shevchuk
+;; Copyright © 2020 Leo Vivier
 
 ;; Author: Leo Vivier <leo.vivier+dev@gmail.com>
 ;; 	Mykhailo Shevchuk <mail@mshevchuk.com>
-;; 	Jethro Kuan <jethrokuan95@gmail.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: bib, hypermedia, outlines, wp
 ;; Verstion 0.4.0
