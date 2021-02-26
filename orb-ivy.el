@@ -1,6 +1,6 @@
 ;;; orb-ivy.el --- ORB support for Ivy -*- lexical-binding: t -*-
 
-;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
+;; Copyright © 2020-2021 Mykhailo Shevchuk
 
 ;; Author: Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex

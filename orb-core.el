@@ -1,7 +1,7 @@
 ;;; orb-core.el --- Org Roam BibTeX: core library -*- lexical-binding: t -*-
 
-;; Copyright © 2020 Mykhailo Shevchuk <mail@mshevchuk.com>
-;; Copyright © 2020 Leo Vivier <leo.vivier+dev@gmail.com>
+;; Copyright © 2020-2021 Mykhailo Shevchuk
+;; Copyright © 2020 Leo Vivier
 
 ;; Author: Mykhailo Shevchuk <mail@mshevchuk.com>
 ;;         Leo Vivier <leo.vivier+dev@gmail.com>
