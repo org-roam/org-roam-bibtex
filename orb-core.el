@@ -144,10 +144,15 @@ to enter."
                        (when-let ((extension (file-name-extension it)))
                          (member-ignore-case extension extensions))
                        paths)))
-        (when paths
-          (if (= (length paths) 1)
+
+        (setq final-path
+          (when paths
+            (if (= (length paths) 1)
               (car paths)
-            (completing-read "File to use: " paths))))
+              (completing-read "File to use: " paths))))
+
+        (when final-path
+          (abbreviate-file-name final-path)))
     ;; ignore any errors that may be thrown by `bibtex-completion-find-pdf'
     ;; don't stop the capture process
     (error nil)))
