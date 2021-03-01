@@ -120,6 +120,14 @@ The name of the file field is determined by
           (string)
           (repeat :tag "List of extensions" (string))))
 
+(defcustom orb-abbreviate-file-name t
+  "Non-nil to abbreviate the file name from bibtex file."
+
+  :group 'org-roam-bibtex
+  :type '(choice
+          (const :tag "Yes" t)
+          (const :tag "No" nil)))
+
 ;;;###autoload
 (defun orb-process-file-field (citekey)
   "Process the 'file' BibTeX field and resolve if there are multiples.
@@ -152,7 +160,10 @@ to enter."
               (completing-read "File to use: " paths))))
 
         (when final-path
-          (abbreviate-file-name final-path)))
+          (if orb-abbreviate-file-name
+            (abbreviate-file-name final-path)
+            final-path)))
+
     ;; ignore any errors that may be thrown by `bibtex-completion-find-pdf'
     ;; don't stop the capture process
     (error nil)))
