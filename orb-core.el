@@ -107,22 +107,25 @@ more casual alternatives."
                 (string :tag "Alias name"))))
 
 (defcustom orb-file-field-extensions '("pdf")
-  "Extensions of file names to keep when retrieving values from the file field.
-This may be a string or a list of strings corresponding to file
-extensions without a dot.
+  "When processing the file field, keep file names only with these extensions.
+This is a list of file extensions without a dot as case-insensitive
+strings.
 
-Set it to nil to keep all file names.  You will be prompted to choose one.
+Set it to nil to keep all file names regardless of their extensions.
 
-The name of the file field is determined by
-  `bibtex-completion-pdf-field' (default \"file\")."
+The name of the BibTeX file field is determined by
+`bibtex-completion-pdf-field' and defaults to \"file\"."
   :group 'org-roam-bibtex
-  :type '(choice
-          (string)
-          (repeat :tag "List of extensions" (string))))
+  :type '(repeat :tag "List of extensions" (string)))
 
 (defcustom orb-abbreviate-file-name t
-  "Non-nil to abbreviate the file name from bibtex file."
+  "Non-nil to force abbreviation of file names by `orb-process-file-field'.
 
+When this option is set to a non-nil value, the file name
+returned by expanding the file keyword or looking up in
+`bibtex-completion-library-path' will get the home directory part
+abbreviated to '~/'.  Otherwise, the as-is value will be used,
+which may or may not be abbreviated."
   :group 'org-roam-bibtex
   :type '(choice
           (const :tag "Yes" t)
@@ -130,40 +133,36 @@ The name of the file field is determined by
 
 ;;;###autoload
 (defun orb-process-file-field (citekey)
-  "Process the 'file' BibTeX field and resolve if there are multiples.
-Search the disk for the document associated with this BibTeX
-entry.  The disk matching is based on looking in the
-`bibtex-completion-library-path' for a file with the
-CITEKEY.
+  "Look up documents associated with the BibTeX entry and choose one.
+Process the BibTeX 'file' field (`bibtex-completion-pdf-field')
+or search in the `bibtex-completion-library-path' for a file or files with
+the CITEKEY as filename sans extension.
 
-If variable `orb-file-field-extensions' is non-nil, return only
-the file paths with the respective extensions.
+If `orb-file-field-extensions' is non-nil, return only file paths
+matching the respective extensions.
 
-\(Mendeley, Zotero, normal paths) are all supported.  If there
-are multiple files found the user is prompted to select which one
-to enter."
+If `orb-abbreviate-file-name' is non-nil, force an abbreviated
+file name.
+
+Mendeley, Zotero, normal paths are all supported.  If there are
+multiple files found, the user will be prompted to select one."
   (condition-case nil
       (when-let* ((entry (bibtex-completion-get-entry citekey))
-                  (paths (bibtex-completion-find-pdf entry)))
-        (when-let ((extensions orb-file-field-extensions))
-          (unless (listp extensions)
-            (setq extensions (list extensions)))
-          (setq paths (--filter
-                       (when-let ((extension (file-name-extension it)))
-                         (member-ignore-case extension extensions))
-                       paths)))
-
-        (setq final-path
-          (when paths
-            (if (= (length paths) 1)
-              (car paths)
-              (completing-read "File to use: " paths))))
-
-        (when final-path
-          (if orb-abbreviate-file-name
-            (abbreviate-file-name final-path)
-            final-path)))
-
+                  (paths
+                   (--> (bibtex-completion-find-pdf entry)
+                     (if (not orb-file-field-extensions)
+                         it             ; do not filter by extensions
+                       ;; filter by extensions
+                       (--filter
+                        (when-let ((ext (file-name-extension it)))
+                          (member-ignore-case ext orb-file-field-extensions))
+                        it))))
+                  (path (if (cdr paths)
+                            (completing-read "File to use: " paths)
+                          (car paths))))
+        (if orb-abbreviate-file-name
+            (abbreviate-file-name path)
+          path))
     ;; ignore any errors that may be thrown by `bibtex-completion-find-pdf'
     ;; don't stop the capture process
     (error nil)))
