@@ -157,18 +157,60 @@ the file manually.
 
 ### Spacemacs
 
-Most probably you already have a private `org-roam` layer, if not, see examples
+From version 0.300.0, Spacemacs offers support for `org-roam`. This means private layers are no longer necessary.
+If you have already configured `org-ref`, you can follow this [blog post](https://philipperambert.com/Installing-Org-Roam-Bibtex-In-Spacemacs).
+
+Inside the function `(defun dotspacemacs/layers () ... )` uncomment the org layer and switch on roam-support. 
+You will also need to enable `bibtex`. 
+You should have something that looks like:
+```el
+(defun dotspacemacs/layers () 
+;;Your custom config goes here
+org
+(org :variables
+     org-enable-roam-support t)
+bibtex
+ )
+```
+
+Add `org-roam-bibtex` to `dotspacemacs-additional-packages`:
+```el
+dotspacemacs-additional-packages '(... org-roam-bibtex ...)
+```
+
+
+Inside the function `(defun dotspacemacs/user-config () ... )` set the custom variables and add a hook to org-mode so that org-roam-mode gets automatically enabled with the opening of an org file
+
+Configure `org-roam`
+```el
+(setq org-roam-directory "~/path/to/roam")
+(setq org-roam-db-location "~/path/to/roam/org-roam.db")
+(add-hook 'org-mode-hook 'org-roam-mode)
+```
+Configure `org-roam-bibtex` to enable `org-roam-bibtex-mode` when org files are loaded
+
+```el
+(use-package org-roam-bibtex
+    :after org-roam
+    :hook (org-roam-mode . org-roam-bibtex-mode))
+```    
+Configure `org-ref` to use your custom `.bib` file. 
+```el
+  (setq bibtex-completion-bibliography
+        '("~/path/to/bibfile.bib"))
+```
+
+If you are running an older version of spacemacs or don't want to stop using your private `org-roam` layer, (see examples
 [here](https://org-roam.discourse.group/t/orb-helm-bibtex-open-notes-wont-create-new-note/690)
 and
-[here](https://www.reddit.com/r/emacs/comments/f6erh0/total_noob_how_do_i_install_orgroam_in_spacemacs/).
-Add `org-roam-bibtex` to `org-roam-packages`:
+[here](https://www.reddit.com/r/emacs/comments/f6erh0/total_noob_how_do_i_install_orgroam_in_spacemacs/) ),
+add `org-roam-bibtex` to `org-roam-packages`:
 
 ``` el
 (defconst org-roam-packages
   '(org-roam org-roam-bibtex))
 
 ```
-
 add this after `org-roam/init-org-roam`:
 
 ``` el
