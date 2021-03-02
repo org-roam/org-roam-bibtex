@@ -1298,8 +1298,7 @@ export options."
 (defun orb-pdf-scrapper--checkout ()
   "Finalize Orb PDF Scrapper process.
 Insert the extracted and generated data according to the settings
-of `orb-pdf-scrapper-org-export', `orb-pdf-scrapper-text-export',
-and `orb-pdf-scarpper-bibtex-export'."
+of `orb-pdf-scrapper-export-options'."
   (cl-case (orb-pdf-scrapper--get :context)
     ('start
      (pop-to-buffer (orb-pdf-scrapper--get :original-buffer))
