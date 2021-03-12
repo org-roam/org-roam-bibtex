@@ -702,36 +702,28 @@ a capture session."
                  (orb-warning "Title not found for this entry")
                  ;; this is not critical, the user may input their own
                  ;; title
-                 "Title not found")))
-      (progn
-        ;; fix some Org-ref related stuff
-        (orb--store-link-functions-advice 'add)
-        (unwind-protect
-            ;; data collection hooks functions: remove themselves once run
-            (progn
-              ;; install capture hook functions
-              (orb-do-hook-functions 'add)
-              ;; Depending on the templates used: run
-              ;; `org-roam-capture--capture' with ORB-predefined
-              ;; settings or call vanilla `org-roam-find-file'
-              (if orb-templates
-                  (let* ((org-roam-capture--context 'ref)
-                         (slug-source (cl-case orb-slug-source
-                                        (citekey citekey)
-                                        (title title)
-                                        (t (user-error "Only `citekey' \
+                 "No title")))
+      ;; data collection hooks functions: remove themselves once run
+      ;; Depending on the templates used: run
+      ;; `org-roam-capture--capture' with ORB-predefined
+      ;; settings or call vanilla `org-roam-find-file'
+      (if orb-templates
+          (let* ((org-roam-capture--context 'ref)
+                 (slug-source (cl-case orb-slug-source
+                                (citekey citekey)
+                                (title title)
+                                (t (user-error "Only `citekey' \
 or `title' should be used for slug: %s not supported" orb-slug-source))))
-                         (org-roam-capture--info
-                          `((title . ,title)
-                            (ref . ,citekey-formatted)
-                            (slug . ,(funcall
-                                     org-roam-title-to-slug-function
-                                     slug-source)))))
-                    (setq org-roam-capture-additional-template-props
-                          (list :finalize 'find-file))
-                    (org-roam-capture--capture))
-                (org-roam-find-file title)))
-          (orb--store-link-functions-advice 'remove)))
+                 (org-roam-capture--info
+                  `((title . ,title)
+                    (ref . ,citekey-formatted)
+                    (slug . ,(funcall
+                              org-roam-title-to-slug-function
+                              slug-source)))))
+            (setq org-roam-capture-additional-template-props
+                  (list :finalize 'find-file))
+            (org-roam-capture--capture))
+        (org-roam-find-file title))
     (message "ORB: Something went wrong. Check the *Warnings* buffer")))
 
 ;;;###autoload
@@ -800,11 +792,19 @@ before calling any Org-roam functions."
       (ignore-errors (org-roam--find-file (orb-plist-get :file))))
      ;; we need to clean up if the capture process was aborted signaling
      ;; user-error
-     (t (condition-case error-msg
-            (orb--edit-notes citekey)
-          (error
-           (with-orb-cleanup (orb-do-hook-functions 'remove))
-           (signal (car error-msg) (cdr error-msg))))))))
+    (t
+      ;; fix some Org-ref related stuff
+      (orb--store-link-functions-advice 'add)
+      ;; install capture hook functions
+      (orb-do-hook-functions 'add)
+      (condition-case error-msg
+          (orb--edit-notes citekey)
+        ((debug error)
+         (with-orb-cleanup
+           (orb--store-link-functions-advice 'remove)
+           (orb-do-hook-functions 'remove))
+         (message "orb-edit-notes caught an error during capture: %s"
+                  (error-message-string error-msg))))))))
 
 (defun orb--get-non-ref-path-completions ()
   "Return a list of cons for titles of non-ref notes to absolute path.
