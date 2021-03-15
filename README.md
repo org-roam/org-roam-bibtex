@@ -6,7 +6,7 @@
 org-roam-bibtex
 ============
 
-<img alt="ORB logo" src="doc/logo-r500.png" width="150">
+<img alt="ORB logo" src="img/logo-r500.png" width="150">
 
 Description
 ---------------
@@ -27,12 +27,12 @@ Quick Demonstration 🎬
 Click the picture to go to the video:
 
 <a href="https://www.youtube.com/watch?v=Wy9WvF5gWYg">
-<img alt="Quick presentation (video)" src="doc/demo-thumbnail.jpg" width="700">
+<img alt="Quick presentation (video)" src="img/demo-thumbnail.jpg" width="700">
 </a>
 
 #### Another GIF demonstration
 
-<img alt="Demo (gif)" src="doc/demo.gif" width="700">
+<img alt="Demo (gif)" src="img/demo.gif" width="700">
 
 Articles
 ---------------
@@ -43,7 +43,6 @@ Here is a selection of articles that you may find interesting.
 
 #### Workflow
 - [An Orgmode Note Workflow](https://rgoswami.me/posts/org-note-workflow/) (by [@HaoZeke](https://github.com/HaoZeke))
-
 
 A word of warning 🚧
 ---------------
@@ -66,21 +65,15 @@ few things:
 3. If neither 1. nor 2. resolved your problem, read the following section on
    [how to get help](#orb-help-me).
 
-<a name="orb-help-me"></a>HELP ME!!!
+<a name="orb-help-me"></a>Getting help
 ---------------
 
-Please read carefully this section before installing Org Roam BibTeX.  There
-are good chances you'll experience different problems and issues when running
-or even installing Org Roam BibTeX.  These chances primarily correlate with
-your level of comfort with Emacs, Lisp, Org mode, Org Roam, BibTeX and other
-such things.  There may also be bugs that obviously do not depend on your
-skills.  We hunt them, eliminate them, then introduce new ones, and so on.  In
-any case, it's very probable that you'll need some help.  We are glad to help
-you, sure, and kindly ask you to follow these simple rules when asking for
-help:
+Please read carefully this section before installing Org Roam BibTeX.  We are
+glad to help you in case something does not work as expected.  However, we
+kindly ask you to follow these simple rules when asking for help:
 
 1. Read carefully this README file.
-2. Read it once again, please.
+2. Read it once again, please.  Consult the [extended manual](doc/orb-manual.org)
 3. Check our [community resources](#community) and describe your problem there.
 4. Open an issue on the bug tracker.
 5. Take your time to describe your problem and we'll take ours to help you solve it.
@@ -88,6 +81,12 @@ help:
 then I run `that command`, and finally `this one`.  I expect `this` to happen but
 instead happens `that`.  Here is my `configuration`."
 7. Thank you!
+
+Keep in mind that ORB is under a heavy development and the configuration
+snippets that you might have found somewhere in the Internet may be outdated
+and be the actual cause your errors.  It is therefore highly recommended to
+treat this README file, [the manual](doc/orb-manual.org) and the Emacs built-in
+docstrings as a single source of truth.
 
 Installation
 ---------------
@@ -277,7 +276,7 @@ the completion-list.  Default keybinding `C-c ) C-i`.
 Configuration
 ---------------
 
-See [the ORB Manual](doc/orb-manual.org) for configuration options and
+See [the Org Roam BibTeX Manual](doc/orb-manual.org) for configuration options and
 advanced usage.
 
 Community
@@ -292,3 +291,13 @@ hang out with us, you can find us here:
 Changelog
 ---------------
 Changelog is being maintained [here](https://github.com/org-roam/org-roam-bibtex/blob/master/CHANGELOG.md).
+
+License
+---------------
+Copyright © 2020-2021 Mykhailo Shevchuk
+
+Copyright © 2020 Leo Vivier
+
+And contributros.
+
+Distributed under the GNU General Public License , see [LICENSE](LICENSE).
