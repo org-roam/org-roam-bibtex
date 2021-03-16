@@ -226,7 +226,7 @@ If the value of `orb-pdf-scrapper-list-style' is one of the
   :type 'string)
 
 (defcustom orb-pdf-scrapper-export-options
-  '((org (headline "References (extracted by ORB PDF Scrapper)"
+  '((org (heading "References (extracted by ORB PDF Scrapper)"
                    :property-drawer (("PDF_SCRAPPER_TYPE")
                                      ("PDF_SCRAPPER_SOURCE")
                                      ("PDF_SCRAPPER_DATE")))))
@@ -568,10 +568,6 @@ are further sorted into four groups:
 ;;; Helper functions: Org buffer-related routines
 ;; ============================================================================
 
-(defsubst orb-pdf-scrapper--get-numbering-source ()
-  "."
-  )
-
 (defun orb-pdf-scrapper--get-reference-number
     (entry &optional numbering-source)
   "ENTRY NUMBERING-SOURCE."
@@ -583,12 +579,12 @@ are further sorted into four groups:
             (when (and it (string-match ".*?\\([0-9]+\\).*?" it))
               (match-string 1 it))))
       (citation-number-alnum
-       (--> (bibtex-completion-get-value "citation-number" entry)
-            (when (string-match "\
-[^[:alnum:]]?\\([[:digit:]]*\\)\\([^[:alnum:]]*\\)\\([[:alpha:]]*\\)" it)
+       (--> (bibtex-completion-get-value "citation-number" entry nil)
+         (when (and it (string-match "\
+[^[:alnum:]]?\\([[:digit:]]*\\)\\([^[:alnum:]]*\\)\\([[:alpha:]]*\\)" it))
               (concat (match-string 1 it) (match-string 3 it)))))
       (as-retrieved
-       (bibtex-completion-get-value "natural-order" entry))
+       (bibtex-completion-get-value "natural-order" entry ""))
       (t (user-error "Unsupported reference numbers source: %s"
                      numbering-source)))))
 
