@@ -8,6 +8,66 @@ Well, at least we try!
 
 ## [Unreleased]
 
+## [0.5.0] - 2021-03-17
+### Added
+- ORB PDF Scrapper export functionality was completely revisited.  It can be
+  now controlled by the user and allows for export of intermediate text and
+  BibTeX data in addition to Org data.  All the data can be exported into
+  external files.  There is also some preliminary key filtering when exporting
+  BibTeX data to an existing bib file
+- Save progress in ORB PDF Scrapper buffers using `C-x C-s` and `C-x C-w`
+- `orb-pdf-scrapper-group-references` user option to control whether the
+  references extracted by ORB PDF Scrapper should be sorted into different groups
+- ORB PDF Scrapper now supports different list styles including numbered lists
+  for Org output, see `orb-pdf-scrapper-list-style` and
+  `orb-pdf-scrapper-reference-numbers` for more details
+- `orb-pdf-scrapper-prompt-to-generate-keys` allows to suppress any (annoying)
+  prompts asking to generate citation keys before proceeding to Org mode
+- New user option `orb-abbreviate-file-name` to force abbreviated file names
+  retrieved by `orb-process-file-field`, thanks @emacsbliss
+- ORB now automatically selects a template for capture if its the only one on the list.
+- New issue and feature request templates for Github
+- A link where you can buy me a coffee :)
+
+Special thanks to @j-steinbach for the ideas of how to improve ORB PDF Scrapper
+and fruitful discussions on export, reference grouping and reference numbers!
+
+### Changed
+- `orb-preformat-keywords` now supports only a list of strings, although cons
+  cell values are supported for backward compatibility, they do not work as
+  they used to previously.  `orb-bibtex-field-aliases` user option (former
+  internal `orb--virtual-fields-alist`) now controls the mapping between BibTeX
+  (virtual) fields and ORB keywords
+- README.md was split into a short README.md and a longer `orb-manual.org`
+- The main README file was revisited to clarify installation instructions
+- Error messages in several places were improved
+- Old variable names deprecated in v0.2 were removed
+- The following symbols were marked as deprecated:
+
+| old                                    | new                                    |
+|----------------------------------------|----------------------------------------|
+| `orb-insert-frontend`                  | `orb-insert-interface`                 |
+| `orb-note-actions-frontend`            | `orb-note-actions-interface`           |
+| `orb-pdf-scrapper-refsection-headings` | `orb-pdf-scrapper-grouped-export`      |
+| `orb-pdf-scrapper-export-fields`       | `orb-pdf-scrapper-table-export-fields` |
+
+- File layout of `org-roam-bibtex` package: `orb-note-actions.el` was merged
+  with `org-roam-bibtex.el`, `ivy` and `helm`-related functions were isolated
+  into separate files
+- Updated copyright year to 2021
+- Other internal refactoring
+
+### Fixed
+- Buggy behaviour of `orb-process-file-field`, thanks @PhDyellow
+- Performance issue in `ivy-bibtex` and `helm-bibtex` caused by database
+  queries in `orb-find-note-file`, thanks to @MichielCottaar for pointing this
+  out.  Thanks to @cdlm for fixing another bug in `orb-find-note-file` that was
+  introduced when the previous bug was fixed
+- Buggy behaviour of `orb-edit-notes` in some case due to a typo, thanks
+  @brabalan
+- Consistent formatting between Org headings in ORB PDF Scrapper export
+- Maintenance badge in the README, thankgs @cdlm
+
 ## [0.4.0] - 2020-11-07
 ### Added
 - `orb-insert` user command to insert links to bibliography notes.  If a note does
@@ -182,7 +242,8 @@ Well, at least we try!
 [org-roam]: https://github.com/jethrokuan/org-roam
 [helm-bibtex/bibtex-completion]: https://github.com/tmalsburg/helm-bibtex
 
-[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.5.0...HEAD
+[0.4.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/org-roam/org-roam-bibtex/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.3...v0.3.0
