@@ -124,7 +124,7 @@ The package is on [MELPA](https://github.com/melpa/melpa).
 
     b) Alternatively, install it with `M-x package-list-packages`.
 
-2. Load and configure the packagein your
+2. Load and configure the package in your
 [init-file](https://www.gnu.org/software/emacs/manual/html_node/emacs/Init-File.html):
 
     a) with `use-package`:
@@ -198,10 +198,15 @@ If you have a private `org-roam` layer, modify it as follows:
     (require 'org-ref))
 ```
 
-If not you don't have a private `org-roam` layer, configure it first, see examples
+If you don't have a private `org-roam` layer, configure it first, see examples
 [here](https://org-roam.discourse.group/t/orb-helm-bibtex-open-notes-wont-create-new-note/690)
 and
 [here](https://www.reddit.com/r/emacs/comments/f6erh0/total_noob_how_do_i_install_orgroam_in_spacemacs/).
+
+Recent versions of Spacemacs ship with a built-in `org-roam` support, so you
+won't need a private `org-roam` layer.  You still need a private layer for
+`org-roam-bibtex`.  Consult Spacemacs documentation on how to create one, or
+use the approach described in the above mentioned resources.
 
 ### Doom Emacs
 
@@ -233,13 +238,11 @@ and
 Usage
 ---------------
 
-You can now access your bibliographical notes in your `org-roam-directory` via
-`helm-bibtex`/`ivy-bibtex` or by opening `org-ref` links.  This is done in the
-background by modifying the `Edit notes` actions used by these packages to use
-`orb-edit-notes` instead of their defaults.
-
-To revert those actions to their defaults, disable
-`org-roam-bibtex-mode`.
+You can now access your bibliographical notes in `org-roam-directory` with
+`helm-bibtex`/`ivy-bibtex` or by opening `org-ref` links.  ORB modifies the
+behaviour of the above packages to make them use `orb-edit-notes` instead of
+their default note-management commands.  To get their default behaviour back,
+disable `org-roam-bibtex-mode`.
 
 #### `orb-insert` (`C-c ) i`)
 
