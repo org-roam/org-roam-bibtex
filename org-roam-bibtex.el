@@ -1227,7 +1227,6 @@ Otherwise, behave as if called interactively."
   :keymap  org-roam-bibtex-mode-map
   :group 'org-roam-bibtex
   :require 'orb
-  :global t
   (require 'bibtex-completion)
   (cond (org-roam-bibtex-mode
          (setq org-ref-notes-function 'orb-notes-fn)

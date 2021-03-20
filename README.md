@@ -132,7 +132,7 @@ The package is on [MELPA](https://github.com/melpa/melpa).
     ``` emacs-lisp
     (use-package org-roam-bibtex
       :after org-roam
-      :hook (org-roam-mode . org-roam-bibtex-mode)
+      :hook (org-roam-file-setup . org-roam-bibtex-mode)
       :config
       (require 'org-ref)) ; optional: if Org Ref is not loaded anywhere else, load it here
     ```
@@ -141,7 +141,7 @@ The package is on [MELPA](https://github.com/melpa/melpa).
 
     ``` emacs-lisp
     (require 'org-roam-bibtex)
-    (add-hook 'org-roam-mode-hook #'org-roam-bibtex-mode)
+    (add-hook 'org-roam-file-setup-hook #'org-roam-bibtex-mode)
     (require 'org-ref) ; optional: if Org Ref is not loaded anywhere else, load it here
     ```
 
