@@ -1247,11 +1247,6 @@ Otherwise, behave as if called interactively."
          (advice-remove 'bibtex-completion-parse-bibliography
                         #'orb-bibtex-completion-parse-bibliography-ad))))
 
-(define-key org-roam-bibtex-mode-map (kbd "C-c ) a") #'orb-note-actions)
-(define-key org-roam-bibtex-mode-map (kbd "C-c ) i") #'orb-insert)
-(define-key org-roam-bibtex-mode-map (kbd "C-c ) C-f") #'orb-find-non-ref-file)
-(define-key org-roam-bibtex-mode-map (kbd "C-c ) C-i") #'orb-insert-non-ref)
-
 (provide 'org-roam-bibtex)
 
 ;;; org-roam-bibtex.el ends here

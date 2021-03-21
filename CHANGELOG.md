@@ -8,6 +8,9 @@ Well, at least we try!
 
 ## [Unreleased]
 
+### Changed
+- Remove keybindigns in `org-roam-bibtex-mode-map`.
+
 ## [0.5.0] - 2021-03-17
 ### Added
 - ORB PDF Scrapper export functionality was completely revisited.  It can be

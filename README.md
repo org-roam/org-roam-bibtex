@@ -74,9 +74,9 @@ instead happens `that`.  Here is my `configuration`."
 
 Keep in mind that ORB is under a heavy development and the configuration
 snippets that you might have found somewhere in the Internet may be outdated
-and be the actual cause your errors.  It is therefore highly recommended to
-treat this README file, [the manual](doc/orb-manual.org) and the Emacs built-in
-docstrings as a single source of truth.
+and be the actual cause your errors.  It is therefore highly recommended to use
+this README file, [the manual](doc/orb-manual.org) and the Emacs built-in
+docstrings as primary documentation sources.
 
 Installation
 ---------------
@@ -178,6 +178,7 @@ To do that:
     (add-to-list 'load-path "~/projects/org-roam-bibtex/") ; Modify with your own path where you cloned the repository
     (require 'org-roam-bibtex)
     (add-hook 'org-roam-mode-hook #'org-roam-bibtex-mode)
+    (require 'org-ref) ; optional: if Org Ref is not loaded anywhere else, load it here
     ```
 
 ### Spacemacs
@@ -195,7 +196,7 @@ If you have a private `org-roam` layer, modify it as follows:
     :after org-roam
     :hook (org-roam-mode . org-roam-bibtex-mode)
     :config
-    (require 'org-ref))
+    (require 'org-ref)) ; optional: if Org Ref is not loaded anywhere else, load it here
 ```
 
 If you don't have a private `org-roam` layer, configure it first, see examples
@@ -244,28 +245,28 @@ behaviour of the above packages to make them use `orb-edit-notes` instead of
 their default note-management commands.  To get their default behaviour back,
 disable `org-roam-bibtex-mode`.
 
-#### `orb-insert` (`C-c ) i`)
-
-Select a bibliography entry and insert a link to a note associated with it.  If
-the note does not exist yet, create it.  Similar to `org-roam-insert`, if a
-region is selected, it becomes the link description.
-
-#### `orb-note-actions` (`C-c ) a`)
+#### `orb-note-actions`
 
 Type `M-x orb-note-actions` to easily access additional commands useful in
 note's context.  These commands are run with the note's BibTeX key as an
 argument. The key is taken from the `#+ROAM_KEY:` file property.
 
-#### `orb-find-non-ref-file`
+#### `orb-insert`
 
-Similar to `org-roam-find-file`, but it excludes your bibliographical notes
-from the completion-candidates.  This is useful if you have a lot of them and
-do not want to clutter up your other notes.  Default keybinding `C-c ) C-f`.
+Select a bibliography entry and insert a link to a note associated with it.  If
+the note does not exist yet, create it.  Similar to `org-roam-insert`, if a
+region is selected, it becomes the link description.
 
 #### `orb-insert-non-ref`
 
-Similar to `org-roam-insert`, but it excludes your bibliographical notes from
-the completion-list.  Default keybinding `C-c ) C-i`.
+Similar to `orb-insert`, but excludes bibliographical notes from the
+completion-list.
+
+#### `orb-find-non-ref-file`
+
+Similar to `org-roam-find-file`, but excludes bibliographical notes from the
+completion-candidates.  This is useful if you have a lot of them and do not
+want to clutter up your other notes.
 
 Configuration
 ---------------
