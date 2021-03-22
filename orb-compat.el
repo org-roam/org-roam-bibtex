@@ -3,8 +3,8 @@
 ;; Copyright © 2020-2021 Mykhailo Shevchuk
 ;; Copyright © 2020 Leo Vivier
 
-;; Author: Leo Vivier <leo.vivier+dev@gmail.com>
-;; 	Mykhailo Shevchuk <mail@mshevchuk.com>
+;; Author: Mykhailo Shevchuk <mail@mshevchuk.com>
+;;      Leo Vivier <leo.vivier+dev@gmail.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 
 ;; This file is NOT part of GNU Emacs.

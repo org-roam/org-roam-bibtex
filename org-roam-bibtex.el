@@ -3,12 +3,12 @@
 ;; Copyright © 2020-2021 Mykhailo Shevchuk
 ;; Copyright © 2020 Leo Vivier
 
-;; Author: Leo Vivier <leo.vivier+dev@gmail.com>
-;; 	Mykhailo Shevchuk <mail@mshevchuk.com>
+;; Author: Mykhailo Shevchuk <mail@mshevchuk.com>
+;;      Leo Vivier <leo.vivier+dev@gmail.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: bib, hypermedia, outlines, wp
-;; Version 0.5.0
-;; Package-Requires: ((emacs "27.1") (org-roam "1.2.2") (bibtex-completion "2.0.0") (org-ref "1.1.1")
+;; Version: 0.5.0
+;; Package-Requires: ((emacs "27.1") (org-roam "1.2.2") (bibtex-completion "2.0.0") (org-ref "1.1.1"))
 
 ;; Soft dependencies: projectile, persp-mode, helm, ivy, hydra
 
@@ -1220,9 +1220,10 @@ When called interactively, toggle `org-roam-bibtex-mode'. with
 prefix ARG, enable `org-roam-bibtex-mode' if ARG is positive,
 otherwise disable it.
 
-When called from Lisp, enable `org-roam-mode' if ARG is omitted,
-nil, or positive.  If ARG is `toggle', toggle `org-roam-mode'.
-Otherwise, behave as if called interactively."
+When called from Lisp, enable `org-roam-bibtex-mode' if ARG is
+omitted, nil, or positive.  If ARG is `toggle', toggle
+`org-roam-bibtex-mode'.  Otherwise, behave as if called
+interactively."
   :lighter " orb"
   :keymap  org-roam-bibtex-mode-map
   :group 'org-roam-bibtex
