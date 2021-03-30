@@ -41,6 +41,7 @@ and fruitful discussions on export, reference grouping and reference numbers!
   they used to previously.  `orb-bibtex-field-aliases` user option (former
   internal `orb--virtual-fields-alist`) now controls the mapping between BibTeX
   (virtual) fields and ORB keywords
+- `orb-file-field-extensions` now supports only a list of strings
 - README.md was split into a short README.md and a longer `orb-manual.org`
 - The main README file was revisited to clarify installation instructions
 - Error messages in several places were improved
