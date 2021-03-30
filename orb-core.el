@@ -146,7 +146,7 @@ file name.
 
 Mendeley, Zotero, normal paths are all supported.  If there are
 multiple files found, the user will be prompted to select one."
-  (condition-case nil
+  (condition-case err
       (when-let* ((entry (bibtex-completion-get-entry citekey))
                   (paths
                    (--> (bibtex-completion-find-pdf entry)
@@ -165,7 +165,10 @@ multiple files found, the user will be prompted to select one."
           path))
     ;; ignore any errors that may be thrown by `bibtex-completion-find-pdf'
     ;; don't stop the capture process
-    (error nil)))
+    (error
+     (orb-warning
+      (format "error in `orb-process-file-field`: %s %s"
+              (car err) (cdr err))))))
 
 ;; ============================================================================
 ;;;; Orb autokey
