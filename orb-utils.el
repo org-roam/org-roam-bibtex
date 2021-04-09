@@ -45,6 +45,9 @@
 ;; so all these libraries are always at our disposal
 
 (require 'org-roam)
+(require 'org-roam-reflinks)
+(require 'org-roam-node)
+
 (require 'warnings)
 
 (defvar orb-citekey-format)
@@ -232,25 +235,44 @@ the value of `orb--temp-dir'."
 ;;;; Document properties
 ;; ============================================================================
 
+(defun orb-get-db-cite-refs ()
+  "Get a list of `cite` refs from Org Roam database."
+  (let* ((types "cite")
+         (refs (org-roam-db-query
+                [:select [ref nodes:file id pos title type]
+                 :from refs
+                 :left-join nodes
+                 :on (= refs:node-id nodes:id)
+                 :where (= type $s1)]
+                types))
+         result)
+    (dolist (ref refs result)
+      (push (-interleave '(:ref :file :id :pos :title :type) ref) result))))
+
 (defvar orb-notes-cache nil
   "Cache of ORB notes.")
 
 (defun orb-make-notes-cache ()
   "Update ORB notes hash table `orb-notes-cache'."
-  (let* ((db-entries (org-roam--get-ref-path-completions nil "cite"))
+  (let* ((db-entries (orb-get-db-cite-refs))
          (size (round (/ (length db-entries) 0.8125))) ;; ht oversize
          (ht (make-hash-table :test #'equal :size size)))
     (dolist (entry db-entries)
-      (let* ((key (car entry))
-             (value (plist-get (cdr (assoc key db-entries)) :path)))
-        (puthash key value ht)))
+      (puthash (plist-get entry :ref)
+               (org-roam-node-create
+                :id (plist-get entry :id)
+                :file (plist-get entry :file)
+                :title (plist-get entry :title)
+                :point (plist-get entry :pos))
+               ht))
     (setq orb-notes-cache ht)))
 
 (defun orb-find-note-file (citekey)
   "Find note file associated with CITEKEY.
 Returns the path to the note file, or nil if it doesn’t exist."
-  (gethash citekey (or orb-notes-cache
-                       (orb-make-notes-cache))))
+  (when-let ((node (gethash citekey (or orb-notes-cache
+                                        (orb-make-notes-cache)))))
+    (org-roam-node-file node)))
 
 (defun orb-get-buffer-keyword (keyword &optional buffer)
   "Return the value of Org-mode KEYWORD in-buffer directive.
@@ -270,17 +292,10 @@ instead of `current-buffer'."
 
 (defun orb-note-exists-p (citekey)
   "Check if a note exists whose citekey is CITEKEY.
-Return alist (CITEKEY :title title :file :file) if note exists or
-nil otherwise."
+Return Org Roam node or nil."
   ;; NOTE: This function can be made more general.
-  (when-let ((query-data
-              (car
-               (org-roam-db-query
-                [:select [titles:title refs:file]
-                 :from titles
-                 :left :join refs :on (= titles:file refs:file)
-                 :where (like refs:ref $r1)] (format "%%\"%s\"%%" citekey)))))
-    `(,citekey :title ,(car query-data) :file ,(nth 1 query-data))))
+  (gethash citekey (or orb-notes-cache
+                       (orb-make-notes-cache))))
 
 (provide 'orb-utils)
 ;;; orb-utils.el ends here

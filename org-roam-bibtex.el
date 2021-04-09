@@ -8,7 +8,7 @@
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: bib, hypermedia, outlines, wp
 ;; Version: 0.5.0
-;; Package-Requires: ((emacs "27.1") (org-roam "1.2.2") (bibtex-completion "2.0.0") (org-ref "1.1.1"))
+;; Package-Requires: ((emacs "27.1") (org-roam "2.0.0") (bibtex-completion "2.0.0") (org-ref "1.1.1"))
 
 ;; Soft dependencies: projectile, persp-mode, helm, ivy, hydra
 
@@ -120,13 +120,13 @@ See `orb-edit-notes' for details."
           (const :tag "Yes" t)
           (const :tag "No" nil))
   :group 'org-roam-bibtex)
-
+;; %(org-set-property \"ROAM_REFS\" \"cite:%^{citekey}\")
 (defcustom orb-templates
-  '(("r" "ref" plain
+  '(("r" "bibliography reference" plain
      (function org-roam-capture--get-point)
-     ""
+     "%?"
      :file-name "${citekey}"
-     :head "#+TITLE: ${title}\n#+ROAM_KEY: ${ref}\n"
+     :head "#+TITLE: ${title}\n#+CITEKEY: ${citekey}"
      :unnarrowed t))
   "Template to use when creating a new note.
 See `orb-edit-notes' for details."
@@ -666,7 +666,7 @@ a capture session."
                        (orb-warning
                         "Could not find the BibTeX entry" citekey)))
             ;; Depending on the templates used: run
-            ;; `org-roam-capture--capture' or call `org-roam-find-file'
+            ;; `org-roam-capture--capture' or call `org-roam-node-find'
             (org-capture-templates
              (or orb-templates org-roam-capture-templates
                  (orb-warning "Could not find the requested templates")))
@@ -706,9 +706,9 @@ a capture session."
       ;; data collection hooks functions: remove themselves once run
       ;; Depending on the templates used: run
       ;; `org-roam-capture--capture' with ORB-predefined
-      ;; settings or call vanilla `org-roam-find-file'
+      ;; settings or call vanilla `org-roam-node-find'
       (if orb-templates
-          (let* ((org-roam-capture--context 'ref)
+          (let* ((org-roam-capture--context 'title)
                  (slug-source (cl-case orb-slug-source
                                 (citekey citekey)
                                 (title title)
@@ -716,14 +716,14 @@ a capture session."
 or `title' should be used for slug: %s not supported" orb-slug-source))))
                  (org-roam-capture--info
                   `((title . ,title)
-                    (ref . ,citekey-formatted)
+                    (ref . ,(format orb-citekey-format citekey))
                     (slug . ,(funcall
                               org-roam-title-to-slug-function
                               slug-source)))))
             (setq org-roam-capture-additional-template-props
                   (list :finalize 'find-file))
             (org-roam-capture--capture))
-        (org-roam-find-file title))
+        (org-roam-node-find title))
     (message "ORB: Something went wrong. Check the *Warnings* buffer")))
 
 ;;;###autoload
@@ -741,9 +741,9 @@ the note file associated with the CITEKEY.  The Org-roam key can
 be set with '#+ROAM_KEY:' in-buffer keyword.
 
 2. If the Org-roam reference has not been found, the function
-calls `org-roam-find-file' passing to it the title associated
+calls `org-roam-node-find' passing to it the title associated
 with the CITEKEY as retrieved by `bibtex-completion-get-entry'.
-The prompt presented by `org-roam-find-file' will thus be
+The prompt presented by `org-roam-node-find' will thus be
 pre-populated with the record title.
 
 3. The template used to create the note is stored in
@@ -767,7 +767,7 @@ to properly specify prompts for replacement.
 
 Please pay attention when using this feature that by setting
 title for preformatting, it will be impossible to change it in
-the `org-roam-find-file' interactive prompt since all the
+the `org-roam-node-find' interactive prompt since all the
 template expansions will have taken place by then.  All the title
 wildcards will be replace with the BibTeX field value.
 
@@ -777,19 +777,18 @@ you may want to set the perspective name and project path in
 `orb-persp-project' and `orb-switch-persp' to t.  In this case,
 the perspective will be switched to the Org-roam notes project
 before calling any Org-roam functions."
-  (unless org-roam-mode
-    (org-roam-mode +1))
   ;; Optionally switch to the notes perspective
   (when orb-switch-persp
     (orb--switch-perspective))
-  (let ((note-data (orb-note-exists-p citekey)))
+  (let ((node (orb-note-exists-p citekey)))
       ;; Find org-roam reference with the CITEKEY and collect data into
       ;; `orb-plist'
-    (orb-plist-put :note-existed (and note-data t))
+    (orb-plist-put :note-existed (and node t))
     (cond
-     (note-data
-      (apply #'orb-plist-put (cdr note-data))
-      (ignore-errors (org-roam--find-file (orb-plist-get :file))))
+     (node
+      (orb-plist-put :title (org-roam-node-title node)
+                     :file (org-roam-node-file node))
+      (ignore-errors (org-roam-node-visit node)))
      ;; we need to clean up if the capture process was aborted signaling
      ;; user-error
     (t
@@ -806,28 +805,29 @@ before calling any Org-roam functions."
          (message "orb-edit-notes caught an error during capture: %s"
                   (error-message-string error-msg))))))))
 
-(defun orb--get-non-ref-path-completions ()
-  "Return a list of cons for titles of non-ref notes to absolute path.
-CANDIDATES is a an alist of candidates to consider.  Defaults to
-`org-roam--get-title-path-completions' otherwise."
-  (let* ((rows (org-roam-db-query
-                [:select [titles:file titles:title tags:tags]
-                 :from titles
-                 :left :join tags
-                 :on (= titles:file tags:file)
-                 :left :join refs :on (= titles:file refs:file)
-                 :where refs:file :is :null]))
-         completions)
-    (dolist (row rows completions)
-      (pcase-let ((`(,file-path ,title ,tags) row))
-        (let ((title (or title
-                         (list (org-roam--path-to-slug file-path)))))
-          (let ((k (concat
-                    (when tags
-                      (format "(%s) " (s-join org-roam-tag-separator tags)))
-                    title))
-                (v (list :path file-path :title title)))
-            (push (cons k v) completions)))))))
+;; FIXME: this does not work anymore
+;; (defun orb--get-non-ref-path-completions ()
+;;   "Return a list of cons for titles of non-ref notes to absolute path.
+;; CANDIDATES is a an alist of candidates to consider.  Defaults to
+;; `org-roam--get-title-path-completions' otherwise."
+;;   (let* ((rows (org-roam-db-query
+;;                 [:select [titles:file titles:title tags:tags]
+;;                  :from titles
+;;                  :left :join tags
+;;                  :on (= titles:file tags:file)
+;;                  :left :join refs :on (= titles:file refs:file)
+;;                  :where refs:file :is :null]))
+;;          completions)
+;;     (dolist (row rows completions)
+;;       (pcase-let ((`(,file-path ,title ,tags) row))
+;;         (let ((title (or title
+;;                          (list (org-roam--path-to-slug file-path)))))
+;;           (let ((k (concat
+;;                     (when tags
+;;                       (format "(%s) " (s-join org-roam-tag-separator tags)))
+;;                     title))
+;;                 (v (list :path file-path :title title)))
+;;             (push (cons k v) completions)))))))
 
 ;; ============================================================================
 ;;;; Orb insert
@@ -865,7 +865,9 @@ Return the filename if it exists."
                 (let ((description (if lowercase
                                        (downcase description)
                                      description)))
-                  (insert (org-roam-format-link file description)))
+                  ;; FIXME: this function does not exist anymore
+                  ;; (insert (org-roam-format-link file description))
+                  (ignore description))
               (let ((cite-link (if (boundp 'org-ref-default-citation-link)
                                    (concat org-ref-default-citation-link ":")
                                  "cite:")))
@@ -1039,7 +1041,6 @@ two or three universal arguments `\\[universal-argument]' are supplied."
                    (or description orb-insert-link-description)
                    :link-lowercase
                    (or lowercase orb-insert-lowercase))
-    (unless org-roam-mode (org-roam-mode +1))
     ;; execution chain:
     ;; 1. interface function
     ;; 2. orb-insert-edit-notes
@@ -1070,24 +1071,25 @@ two or three universal arguments `\\[universal-argument]' are supplied."
 ;;;; Non-ref functions
 ;; ============================================================================
 
-;;;###autoload
-(defun orb-find-non-ref-file (&optional initial-prompt)
-  "Find and open an Org-roam, non-ref file.
-INITIAL-PROMPT is the initial title prompt.
-See `org-roam-find-files' and
-`orb--get-non-ref-path-completions' for details."
-  (interactive)
-  (org-roam-find-file initial-prompt
-                      (orb--get-non-ref-path-completions)))
+;; ;;;###autoload
+;; (defun orb-find-non-ref-file (&optional initial-prompt)
+;;   "Find and open an Org-roam, non-ref file.
+;; INITIAL-PROMPT is the initial title prompt.
+;; See `org-roam-node-finds' and
+;; `orb--get-non-ref-path-completions' for details."
+;;   (interactive)
+;;   (org-roam-node-find initial-prompt
+;;                       (orb--get-non-ref-path-completions)))
 
-;;;###autoload
-(defun orb-insert-non-ref (prefix)
-  "Find a non-ref Org-roam file, and insert a relative org link to it at point.
-If PREFIX, downcase the title before insertion.  See
-`org-roam-insert' and `orb--get-non-ref-path-completions' for
-details."
-  (interactive "P")
-  (org-roam-insert prefix (orb--get-non-ref-path-completions)))
+;; ;;;###autoload
+;; (defun orb-insert-non-ref ()
+;;   "Find a non-ref Org-roam file, and insert a relative org link to it at point.
+;; If PREFIX, downcase the title before insertion.  See
+;; `org-roam-insert' and `orb--get-non-ref-path-completions' for
+;; details."
+;;   (interactive)
+;;   ;; FIXME: this is not correct
+;;   (org-roam-node-insert (orb--get-non-ref-path-completions)))
 
 ;; ============================================================================
 ;;;; Orb note actions
@@ -1154,7 +1156,9 @@ modified, there is a number of prefined extra actions
 user actions can be set in `orb-note-actions-user'."
   (interactive)
   (let ((non-default-interfaces (list 'hydra 'ido 'ivy 'helm))
-        (citekey (cdr (org-roam--extract-ref))))
+        ;; FIXME: this does not work anymore
+        ;; (citekey (cdr (org-roam--extract-ref)))
+        (citekey "NOT IMPLEMENTED V2"))
     (if citekey
         (cond ((member orb-note-actions-interface non-default-interfaces)
                (orb-note-actions--run orb-note-actions-interface citekey))
