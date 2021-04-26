@@ -38,28 +38,26 @@
 ;;
 ;; To use it:
 ;;
-;; call interactively `org-roam-bibtex-mode' or
-;; call (org-roam-bibtex-mode +1) from Lisp.
+;; call interactively `org-roam-bibtex-mode' or call (org-roam-bibtex-mode +1)
+;; from Lisp.
 ;;
-;; After enabling `org-roam-bibtex-mode', the function
-;; `orb-edit-notes' will shadow `bibtex-completion-edit-notes' in
-;; Helm-bibtex, Ivy-bibtex.
+;; After enabling `org-roam-bibtex-mode', the function `orb-edit-notes' will be
+;; used as `bibtex-completion-edit-notes-function' in Helm-bibtex, Ivy-bibtex.
 ;;
-;; Additionally, `orb-notes-fn', which is a simple wrapper around
-;; `orb-edit-notes', is installed as Org-ref's
-;; `org-ref-notes-function'.  See Org-ref's documentation for how to
-;; setup many-files notes.  Take a notice that because of its size,
-;; Org-ref is not a dependency of Org-roam-bibtex, so it will not be
-;; pulled automatically by your package manager and must be installed
-;; manually.
+;; Additionally, `orb-org-ref-edit-note', which is a simple wrapper around
+;; `orb-edit-note', is installed as Org-ref's `org-ref-notes-function'.  See
+;; Org-ref's documentation for how to setup many-files notes.  Take a notice
+;; that because of its size, Org-ref is not a dependency of Org Roam BibTeX, so
+;; it will not be pulled automatically by your package manager and must be
+;; installed manually.
 ;;
 ;; As a user option, `org-roam-capture-templates' can be dynamically
-;; preformatted with bibtex field values.  See
-;; `orb-preformat-keywords' for more details.
+;; pre-expanded with BibTeX field values.  See `orb-preformat-keywords' for
+;; more details.
 ;;
-;; Optionally, automatic switching to the perspective (Persp-mode)
-;; with the notes project (Projectile) is possible.  See
-;; `orb-edit-notes' for more details.
+;; Optionally, automatic switching to the perspective (Persp-mode) with the
+;; notes project (Projectile) is possible.  See `orb-edit-note' for more
+;; details.
 ;;
 
 ;;; Code:
@@ -88,6 +86,8 @@
 
 (defvar bibtex-completion-bibliography)
 (defvar bibtex-completion-find-note-functions)
+(defvar bibtex-completion-edit-notes-function)
+
 (declare-function bibtex-completion-apa-get-value
                   "bibtex-completion" (field entry &optional default))
 (declare-function bibtex-completion-get-entry
@@ -114,13 +114,13 @@
 ;; ============================================================================
 
 (defcustom orb-preformat-templates t
-  "Non-nil to enable template preformatting.
-See `orb-edit-notes' for details."
+  "Non-nil to enable template pre-expanding.
+See `orb-edit-note' for details."
   :type '(choice
           (const :tag "Yes" t)
           (const :tag "No" nil))
   :group 'org-roam-bibtex)
-;; %(org-set-property \"ROAM_REFS\" \"cite:%^{citekey}\")
+
 (defcustom orb-templates
   '(("r" "bibliography reference" plain
      (function org-roam-capture--get-point)
@@ -129,13 +129,13 @@ See `orb-edit-notes' for details."
      :head "#+TITLE: ${title}\n#+CITEKEY: ${citekey}"
      :unnarrowed t))
   "Template to use when creating a new note.
-See `orb-edit-notes' for details."
+See `orb-edit-note' for details."
   :type '(list)
   :group 'org-roam-bibtex)
 
 (defcustom orb-include-citekey-in-titles nil
   "Non-nil to include the citekey in titles.
-See `orb-edit-notes' for details."
+See `orb-edit-note' for details."
   :type '(choice
           (const :tag "Yes" t)
           (const :tag "No" nil))
@@ -145,8 +145,8 @@ See `orb-edit-notes' for details."
   '("citekey" "entry-type" "date" "pdf?" "note?" "file"
     "author" "editor" "author-abbrev" "editor-abbrev"
     "author-or-editor-abbrev")
-  "A list of template prompt wildcards for preformatting.
-Any BibTeX field can be set for preformatting including
+  "A list of template prompt wildcards for pre-expanding.
+Any BibTeX field can be set for pre-expanding including
 `bibtex-completion` \"virtual\" fields such as '=key=' and
 '=type='.  BibTeX fields can be refered to by means of their
 aliases defined in `orb-bibtex-field-aliases'.
@@ -168,11 +168,11 @@ The \"file\" keyword will be treated specially if the value of
 `orb-process-file-keyword' is non-nil.  See its docstring for an
 explanation.
 
-The \"title\" keyword needs not to be set for preformatting if it
+The \"title\" keyword needs not to be set for pre-expanding if it
 is used only within the `:head` section of the templates.
 
 This variable takes effect when `orb-preformat-templates' is set
-to t (default). See also `orb-edit-notes' for further details.
+to t (default). See also `orb-edit-note' for further details.
 
 Consult bibtex-completion package for additional information
 about BibTeX field names."
@@ -180,13 +180,13 @@ about BibTeX field names."
   :group 'org-roam-bibtex)
 
 (defcustom orb-process-file-keyword t
-  "Whether to treat the file wildcards specially during template preformatting.
+  "Whether to treat the file keyword specially during template pre-expanding.
 When this variable is non-nil, the \"%^{file}\" and \"${file}\"
 wildcards will be expanded by `org-process-file-field' rather
 than simply replaced with the field value.  This may be useful in
 situations when the file field contains several file names and
 only one file name is desirable for retrieval.  The \"file\"
-keyword must be set for preformatting in `orb-preformat-keywords'
+keyword must be set for pre-expanding in `orb-preformat-keywords'
 as usual.
 
 If this variable is `string', for example \"my-file\", use its
@@ -195,7 +195,7 @@ keyword.  Thus, it will be possible to get both the raw file
 field value by expanding the %^{file} and ${file} wildcards and a
 single file name by expanding the %^{my-file} and ${my-file}
 wildcards.  The keyword, e.g. \"my-file\", must be set for
-preformatting in `orb-preformat-keywords' as usual.
+pre-expanding in `orb-preformat-keywords' as usual.
 
 The variable `orb-file-field-extensions' controls which filtering
 of the file names based on file extensions.
@@ -242,7 +242,7 @@ Requires command `persp-mode' and command `projectile-mode'.
 PERSP-NAME should be a valid Perspective name, PROJECT-PATH should be
 an open Projectile project.
 
-See `orb-edit-notes' for details"
+See `orb-edit-note' for details"
   :type '(cons (string :tag "Perspective name")
                (directory :tag "Projectile directory"))
   :group 'org-roam-bibtex)
@@ -254,7 +254,7 @@ in `orb-persp-project' for this to take effect.
 
 Requires command `persp-mode' and command `projectile-mode'.
 
-See `orb-edit-notes' for details."
+See `orb-edit-note' for details."
   :type '(choice
           (const :tag "Yes" t)
           (const :tag "No" nil))
@@ -268,7 +268,7 @@ Org Ref defines function `org-ref-bibtex-store-link' to store
 links to a BibTeX buffer, e.g. with `org-store-link'.  At the
 same time, Org ref requires `ol-bibtex' library, which defines
 `org-bibtex-store-link' to do the same.  When creating a note
-with `orb-edit-notes' from a BibTeX buffer, for example by
+with `orb-edit-note' from a BibTeX buffer, for example by
 calling `org-ref-open-bibtex-notes', the initiated `org-capture'
 process implicitly calls `org-store-link'.  The latter loops
 through all the functions for storing links, and if more than one
@@ -403,7 +403,7 @@ Each action is a cons cell DESCRIPTION . FUNCTION."
 ;; ============================================================================
 
 (defvar orb-plist nil
-  "Communication channel for `orb-edit-notes' and related functions.")
+  "Communication channel for `orb-edit-note' and related functions.")
 
 (defun orb-plist-put (&rest props)
   "Add properties PROPS to `orb-plist'.
@@ -437,12 +437,12 @@ Return the result of executing BODY."
 ;;
 ;; 1. (orb-register-hook-function func before nil (my-forms))
 ;;
-;; 2. In `orb-edit-notes', if a note does not exist, an `org-capture' process is
+;; 2. In `orb-edit-note', if a note does not exist, an `org-capture' process is
 ;; started.  Before that, the function `func' is added
 ;; `org-capture-before-finalize-hook' with 0 depth by calling
 ;; `orb-do-hook-functions'.  Forms (my-forms) will be run by `org-capture'
 ;; within the hook.  The closure removes itself, so that it does not interfere
-;; with any subsequent `org-capture' calls.  `orb-edit-notes' also takes care
+;; with any subsequent `org-capture' calls.  `orb-edit-note' also takes care
 ;; to remove the function from the hook in case the `org-capture' process was
 ;; aborted.
 ;;
@@ -474,7 +474,7 @@ These hook functions are therefore meant to run only in next
 `org-capture' session.
 
 The function is not actually added to a hook but is instead
-registered on `orb-plist'.  The function `orb-edit-notes'
+registered on `orb-plist'.  The function `orb-edit-note'
 installs the hooks just before starting an `org-capture' process
 by calling `orb-do-hook-functions'.  It also takes care of
 removing the hooks in case the `org-capture' process was aborted.
@@ -531,7 +531,7 @@ symbols is implied."
 ;; ============================================================================
 
 (defun orb--switch-perspective ()
-  "Helper function for `orb-edit-notes'."
+  "Helper function for `orb-edit-note'."
   (when (and (require 'projectile nil t)
              (require 'persp-mode nil t))
     (let ((notes-project (cdr orb-persp-project))
@@ -558,8 +558,8 @@ is the function `ignore', it is added as `:override'."
       (dolist (advisee orb-ignore-bibtex-store-link-functions)
         (apply advice-func (push advisee advice))))))
 
-(defun orb--preformat-template (template entry)
-  "Helper function for `orb--preformat-templates'.
+(defun orb--pre-expand-template (template entry)
+  "Helper function for `orb--new-note'.
 TEMPLATE is an element of `org-roam-capture-templates' and ENTRY
 is a BibTeX entry as returned by `bibtex-completion-get-entry'."
   ;; Handle org-roam-capture part
@@ -567,7 +567,7 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
          ;; org-capture-templates: string, file and function; this is
          ;; a stripped down version of `org-capture-get-template'
          (tp
-          (pcase (nth 4 template)       ; org-capture template is here
+          (pcase (nth 3 template)       ; org-capture template is here
             (`nil 'nil)
             ((and (pred stringp) tmpl) tmpl)
             (`(file ,file)
@@ -577,9 +577,9 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
             (`(function ,fun)
              (if (functionp fun) (funcall fun)
                (format "Template function %S not found" fun)))
-            (_ "Invalid capture template")))
+            (_ (user-error "ORB: Invalid capture template"))))
          ;;  org-roam capture properties are here
-         (plst (cdr template))
+         (plst (cddddr template))
          ;; regexp for org-capture prompt wildcard
          (rx "\\(%\\^{[[:alnum:]-_]*}\\)")
          (file-keyword (when orb-process-file-keyword
@@ -623,10 +623,8 @@ Keyword \"%s\" has invalid type (string was expected)" keyword))))
              (rplc-s (concat "%^{" (or keyword "citekey") "}"))
              ;; org-roam-capture prompt wildcard
              (rplc-s2 (concat "${" (or keyword "citekey") "}"))
-             ;; org-roam-capture :head template
-             (head (plist-get plst :head))
-             ;; org-roam-capture :file-name template
-             (fl-nm (plist-get plst :file-name))
+             ;; org-roam-capture :if-new property
+             (if-new (plist-get plst :if-new))
              (i 1)                        ; match counter
              pos)
         ;; Search for rplc-s, set flag m if found
@@ -638,11 +636,12 @@ Keyword \"%s\" has invalid type (string was expected)" keyword))))
                   (cl-pushnew (list rplc-s field-value i) lst ))
               (setq pos (match-end 1)
                     i (1+ i)))))
-        ;; Replace org-roam-capture prompt wildcards
-        (when head
-          (plist-put plst :head (s-replace rplc-s2 field-value head)))
-        (when fl-nm
-          (plist-put plst :file-name (s-replace rplc-s2 field-value fl-nm)))))
+        ;; Replace placeholders in org-roam-capture-templates :if-new property
+        (when if-new
+          (let (strings)
+            (dolist (str (cdr if-new))
+              (push (s-replace rplc-s2 field-value str) strings))
+            (plist-put plst :if-new (cons (car if-new) (nreverse strings)))))))
     ;; Second run: replace prompts and prompt matches in org-capture
     ;; template string
     (dolist (l lst)
@@ -655,10 +654,10 @@ Keyword \"%s\" has invalid type (string was expected)" keyword))))
       (setf (nth 4 template) tp))
     template))
 
-(defun orb--edit-notes (citekey)
+(defun orb--new-note (citekey)
   "Process templates and run `org-roam-capture--capture'.
 CITEKEY is a citation key.
-Helper function for `orb-edit-notes', which abstracts initiating
+Helper function for `orb-edit-note', which abstracts initiating
 a capture session."
   ;; Check if the requested BibTeX entry actually exists and fail
   ;; gracefully otherwise
@@ -667,9 +666,7 @@ a capture session."
                         "Could not find the BibTeX entry" citekey)))
             ;; Depending on the templates used: run
             ;; `org-roam-capture--capture' or call `org-roam-node-find'
-            (org-capture-templates
-             (or orb-templates org-roam-capture-templates
-                 (orb-warning "Could not find the requested templates")))
+            (org-capture-templates org-roam-capture-templates)
             ;; hijack org-capture-templates
             ;; entry is our bibtex entry, it just happens that
             ;; `org-capture' calls a single template entry "entry";
@@ -677,11 +674,11 @@ a capture session."
                                ;; if only one template is defined, use it
                                (car org-capture-templates)
                              (org-capture-select-template))
-                           (copy-tree it)
-                           ;; optionally preformat templates
-                           (if orb-preformat-templates
-                               (orb--preformat-template it entry)
-                             it)))
+                        (copy-tree it)
+                        ;; optionally pre-expand templates
+                        (if orb-preformat-templates
+                            (orb--pre-expand-template it entry)
+                          it)))
             ;; pretend we had only one template
             ;; `org-roam-capture--capture' behaves specially in this case
             ;; NOTE: this circumvents using functions other than
@@ -702,32 +699,20 @@ a capture session."
                  (orb-warning "Title not found for this entry")
                  ;; this is not critical, the user may input their own
                  ;; title
-                 "No title")))
+                 "No title"))
+            (node (org-roam-node-create :title title)))
       ;; data collection hooks functions: remove themselves once run
       ;; Depending on the templates used: run
       ;; `org-roam-capture--capture' with ORB-predefined
       ;; settings or call vanilla `org-roam-node-find'
-      (if orb-templates
-          (let* ((org-roam-capture--context 'title)
-                 (slug-source (cl-case orb-slug-source
-                                (citekey citekey)
-                                (title title)
-                                (t (user-error "Only `citekey' \
-or `title' should be used for slug: %s not supported" orb-slug-source))))
-                 (org-roam-capture--info
-                  `((title . ,title)
-                    (ref . ,(format orb-citekey-format citekey))
-                    (slug . ,(funcall
-                              org-roam-title-to-slug-function
-                              slug-source)))))
-            (setq org-roam-capture-additional-template-props
-                  (list :finalize 'find-file))
-            (org-roam-capture--capture))
-        (org-roam-node-find title))
+      (org-roam-capture-
+       :node node
+       :info (list :ref citekey-formatted)
+       :props '(:finalize find-file))
     (message "ORB: Something went wrong. Check the *Warnings* buffer")))
 
 ;;;###autoload
-(defun orb-edit-notes (citekey)
+(defun orb-edit-note (citekey)
   "Open an Org-roam note associated with the CITEKEY or create a new one.
 
 This function allows to use Org-roam as a backend for managing
@@ -797,12 +782,12 @@ before calling any Org-roam functions."
       ;; install capture hook functions
       (orb-do-hook-functions 'add)
       (condition-case error-msg
-          (orb--edit-notes citekey)
+          (orb--new-note citekey)
         ((debug error)
          (with-orb-cleanup
            (orb--store-link-functions-advice 'remove)
            (orb-do-hook-functions 'remove))
-         (message "orb-edit-notes caught an error during capture: %s"
+         (message "orb-edit-note caught an error during capture: %s"
                   (error-message-string error-msg))))))))
 
 ;; FIXME: this does not work anymore
@@ -933,7 +918,7 @@ If ARG is non-nil, rebuild `bibtex-completion-cache'."
     (orb-insert-edit-notes (list citekey))))
 
 (defun orb-insert-edit-notes (citekey)
-  "Call `orb-edit-notes' and insert a link to a note.
+  "Call `orb-edit-note' and insert a link to a note.
 CITEKEY is a citation key and #+ROAM_KEY of the retrieved or
 newly created note."
   (orb-plist-put :buffer (current-buffer)
@@ -969,7 +954,7 @@ newly created note."
     (orb-insert--link-h))
 
   (save-excursion
-    (orb-edit-notes (car citekey)))
+    (orb-edit-note (car citekey)))
   ;; when note existed, a capture process did not run.  We have all the info on
   ;; `orb-plist', so just insert a link
   (when (orb-plist-get :note-existed)
@@ -1000,7 +985,7 @@ available citation keys is presented using `completion-read' and
 after choosing a candidate the appropriate link will be inserted.
 
 If the note does not exist yet, it will be created using
-`orb-edit-notes' function.
+`orb-edit-note' function.
 
 \\<universal-argument-map>\\<org-roam-bibtex-mode-map> The
 customization option `orb-insert-link-description' determines
@@ -1044,7 +1029,7 @@ two or three universal arguments `\\[universal-argument]' are supplied."
     ;; execution chain:
     ;; 1. interface function
     ;; 2. orb-insert-edit-notes
-    ;; 3. orb-edit-notes
+    ;; 3. orb-edit-note
     ;; 4. orb-insert--link-h
     ;; if the note exists or a new note was created and capture not cancelled
     ;; 5. orb-insert--link
@@ -1189,23 +1174,23 @@ CITEKEY is a list whose car is a citation key."
 ;; ============================================================================
 ;;
 
-(defun orb-notes-fn (citekey)
+(defun orb-org-ref-edit-note (citekey)
   "Open an Org-roam note associated with the CITEKEY or create a new one.
 Set `org-ref-notes-function' to this function if your
 bibliography notes are managed by Org-roam and you want some
 extra integration between the two packages.
 
-This is a wrapper function around `orb-edit-notes'
+This is a wrapper function around `orb-edit-note'
 intended for use with Org-ref."
   (when (require 'org-ref nil t)
     (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
-      (orb-edit-notes citekey))))
+      (orb-edit-note citekey))))
 
-(defun orb-edit-notes-ad (keys)
-  "Open an Org-roam note associated with the first key from KEYS.
+(defun orb-edit-notes (keys)
+  "Open or create an Org-roam note associated with the first key from KEYS.
 This function replaces `bibtex-completion-edit-notes'.  Only the
 first key from KEYS will actually be used."
-  (orb-edit-notes (car keys)))
+  (orb-edit-note (car keys)))
 
 (defun orb-bibtex-completion-parse-bibliography-ad (&optional _ht-strings)
   "Update `orb-notes-cache' before `bibtex-completion-parse-bibliography'."
@@ -1217,7 +1202,7 @@ first key from KEYS will actually be used."
 
 ;;;###autoload
 (define-minor-mode org-roam-bibtex-mode
-  "Sets `orb-edit-notes' as a function for editing bibliography notes.
+  "Sets `orb-edit-note' as a function for editing bibliography notes.
 Affects Org-ref and Helm-bibtex/Ivy-bibtex.
 
 When called interactively, toggle `org-roam-bibtex-mode'. with
@@ -1235,11 +1220,10 @@ interactively."
   :global t
   (require 'bibtex-completion)
   (cond (org-roam-bibtex-mode
-         (setq org-ref-notes-function 'orb-notes-fn)
+         (setq org-ref-notes-function 'orb-org-ref-edit-note)
          (add-to-list 'bibtex-completion-find-note-functions
                       #'orb-find-note-file)
-         (advice-add 'bibtex-completion-edit-notes
-                     :override #'orb-edit-notes-ad)
+         (setq bibtex-completion-edit-notes-function #'orb-edit-notes)
          (advice-add 'bibtex-completion-parse-bibliography
                      :before #'orb-bibtex-completion-parse-bibliography-ad))
         (t
@@ -1247,8 +1231,8 @@ interactively."
          (setq bibtex-completion-find-note-functions
                (delq #'orb-find-note-file
                      bibtex-completion-find-note-functions))
-         (advice-remove 'bibtex-completion-edit-notes
-                        #'orb-edit-notes-ad)
+         (setq bibtex-completion-edit-notes-function
+               #'bibtex-completion-edit-notes-default)
          (advice-remove 'bibtex-completion-parse-bibliography
                         #'orb-bibtex-completion-parse-bibliography-ad))))
 

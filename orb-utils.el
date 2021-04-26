@@ -45,8 +45,6 @@
 ;; so all these libraries are always at our disposal
 
 (require 'org-roam)
-(require 'org-roam-reflinks)
-(require 'org-roam-node)
 
 (require 'warnings)
 

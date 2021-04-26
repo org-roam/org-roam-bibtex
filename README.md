@@ -241,7 +241,7 @@ Usage
 
 You can now access your bibliographical notes in `org-roam-directory` with
 `helm-bibtex`/`ivy-bibtex` or by opening `org-ref` links.  ORB modifies the
-behaviour of the above packages to make them use `orb-edit-notes` instead of
+behaviour of the above packages to make them use `orb-edit-note` instead of
 their default note-management commands.  To get their default behaviour back,
 disable `org-roam-bibtex-mode`.
 
