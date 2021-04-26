@@ -25,7 +25,7 @@ bibliographical note. It builds on the syntax of
 =org-capture-templates=) by allowing you to expand predefined variables
 with values of BibTeX fields.
 
-See =orb-edit-notes= and
+See =orb-edit-note= and
 [[#orb-preformat-keywords][=orb-preformat-keywords=]] for details. (You
 can access the docstrings of any loaded function/variable from within
 Emacs with =C-h f= for functions/commands, and =C-h v= for variables.)
@@ -92,7 +92,7 @@ Special cases:
   used only within the =:head= section of the templates.
 
 This variable takes effect when orb-preformat-templates is set to t
-(default). See also orb-edit-notes for further details.
+(default). See also orb-edit-note for further details.
 
 Consult the
 [[https://github.com/tmalsburg/helm-bibtex][=bibtex-completion=]]
