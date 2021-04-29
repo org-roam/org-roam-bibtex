@@ -5,98 +5,81 @@
 This manual is work in progress and is not complete.  For basic commands see
 [[file:../README.md]].
 
-The following sections use Emacs Lisp examples to configure Org Roam BibTeX. If
-you are not comfortable with Lisp yet, remember you can always use the
-Customize interface to achieve the same, run =M-x customize= or from menu click
-=Options -> Customize Emacs -> Top Level Customization Group= and search for
-=org-roam-bibtex=.
+The following sections use Emacs Lisp examples to configure Org Roam
+BibTeX. User options can also be set via the Customize interface: run =M-x
+customize= or from menu click =Options -> Customize Emacs -> Top Level
+Customization Group= and search for =org-roam-bibtex=.
 
 * Org Roam BibTeX - BibTeX aware capture template expansion
 :PROPERTIES:
 :CUSTOM_ID: org-roam-bibtex---bibtex-aware-capture-template-expansion
 :END:
-** =orb-templates=
+** Template pre-expansion
 :PROPERTIES:
-:CUSTOM_ID: orb-templates
+:CUSTOM_ID: templates
 :END:
-This variable specifies the templates to use when creating a new
-bibliographical note. It builds on the syntax of
-=org-roam-capture-templates= (which, in turn, is powered by
-=org-capture-templates=) by allowing you to expand predefined variables
-with values of BibTeX fields.
 
-See =orb-edit-note= and
-[[#orb-preformat-keywords][=orb-preformat-keywords=]] for details. (You
-can access the docstrings of any loaded function/variable from within
-Emacs with =C-h f= for functions/commands, and =C-h v= for variables.)
+Org Roam BibTeX makes it possible to automatically pre-expand Org-capture
+=%^{...}= and Org Roam-style =${...}= template placeholders with values of
+field or fields of a BibTeX entry for which the note is being created.
 
-Here's the default value of =orb-templates=:
+Here's an example of how to add a basic template for a bibliography note to
+`org-roam-capture-templates`:
 
-#+begin_example
-  (("r" "ref" plain (function org-roam-capture--get-point) ""
-        :file-name "${citekey}"
-        :head "#+TITLE: ${title}\n#+ROAM_KEY: ${ref}\n"
-        :unnarrowed t))
-#+end_example
+#+begin_src elisp
+(setq org-roam-capture-templates
+      '(;; ... other templates
+        ;; bibliography note template
+        ("r" "bibliography reference" plain "%?"
+        :if-new
+        (file+head "references/${citekey}.org" "#+title: ${title}\n")
+        :unnarrowed t)))
+#+end_src
 
-You can modify it with =setq=. For instance, if you want to add the
-cite-key in the title of the notes, you can modify the code like this
-(pay attention to the line with =:head=):
-
-#+begin_example
-  (setq orb-templates
-        '(("r" "ref" plain (function org-roam-capture--get-point) ""
-           :file-name "${citekey}"
-           :head "#+TITLE: ${citekey}: ${title}\n#+ROAM_KEY: ${ref}\n" ; <--
-           :unnarrowed t)))
-#+end_example
-
-If you have more than one template in =orb-templates=, you will be
-prompted for the key of the template you want to use (=r= in the example
-above). If you only have one template, it will use this one without
-prompting you.
+If there are more than one template in =orb-roam-capture-templates=, you will
+be prompted for the key of the template you want to use (=r= in the example
+above).  Otherwise, the only template will be used without prompting.
 
 ** =orb-preformat-keywords=
 :PROPERTIES:
 :CUSTOM_ID: orb-preformat-keywords
 :END:
-A list of template prompt wildcards for preformatting. Any BibTeX field
-can be set for preformatting including =bibtex-completion='s' "virtual"
-fields such as =key=' and '=type='. BibTeX fields can be refered to by
-means of their aliases defined in orb-bibtex-field-aliases.
+
+A list of template placeholders for pre-expanding. Any BibTeX field can be set
+for preformatting including =bibtex-completion='s' "virtual" fields such as
+=key=' and '=type='. BibTeX fields can be refered to by means of their aliases
+defined in =orb-bibtex-field-aliases=.
 
 Usage example:
 
-#+begin_example
-  (setq orb-preformat-keywords '("citekey" "author" "date"))
-  (setq orb-templates
-        '((\"r\" \"reference\" plain (function org-roam-capture--get-point)
-           "#+ROAM_KEY: %^{citekey}%?
-  %^{author} published %^{entry-type} in %^{date}: fullcite:%\\1."
-           :file-name "references/${citekey}"
-           :head "#+TITLE: ${title}"
-           :unnarrowed t)))
-#+end_example
+#+begin_src elisp
+(setq orb-preformat-keywords '("citekey" "author" "date"))
+(setq org-roam-capture-templates
+      '(("r" "bibliography reference" plain
+         "%?
+%^{author} published %^{entry-type} in %^{date}: fullcite:%\\1."
+         :if-new
+         (file+head "references/${citekey}.org" "#+title: ${title}\n")
+         :unnarrowed t)))
+#+end_src
 
-By default, =org-preformat-keywords= is configured to expand the
-following BibTeX fields: "citekey", "date", "entry-type", "pdf?",
-"note?", "author", "editor", "author-abbrev", "editor-abbrev",
-"author-or-editor-abbrev".
+By default, =org-preformat-keywords= is configured to expand the following
+BibTeX fields: "citekey", "date", "entry-type", "pdf?", "note?", "author",
+"editor", "author-abbrev", "editor-abbrev", "author-or-editor-abbrev".
 
 Special cases:
 
 - The "file" keyword will be treated specially if the value of
   `orb-process-file-keyword' is non-nil. See its docstring for an
   explanation.
-- The "title" keyword needs not to be set for preformatting if it is
-  used only within the =:head= section of the templates.
+- The "title" keyword needs not to be set for preformatting if it is used only
+  within the =:if-new= section of a template.
 
-This variable takes effect when orb-preformat-templates is set to t
-(default). See also orb-edit-note for further details.
+This variable takes effect when =orb-preformat-templates= is set to t
+(default). See also =orb-edit-note= for further details.
 
-Consult the
-[[https://github.com/tmalsburg/helm-bibtex][=bibtex-completion=]]
-package for additional information about BibTeX field names.
+Consult the [[https://github.com/tmalsburg/helm-bibtex][=bibtex-completion=]] package for additional information about BibTeX
+field names.
 
 ** =orb-insert= configuration
 :PROPERTIES:
@@ -149,24 +132,23 @@ interface:
 Long templates can be placed in a separate file, with template expansion
 of BibTeX fields working as usual:
 
-#+begin_example
-  (setq org-roam-capture-templates
-        '(("r" "reference" plain (function org-roam-capture--get-point)
-           (file "/path/to/template.org") ; <--
-           :file-name "test/${citekey}"
-           :head "#+TITLE: ${title}\n"
-           :unnarrowed t)))
-#+end_example
+#+begin_src elisp
+(setq org-roam-capture-templates
+      '(("r" "bibliography reference" plain
+         (file "/path/to/template.org") ; <-- template store in a separate file
+         :if-new
+         (file+head "references/${citekey}.org" "#+title: ${title}\n")
+         :unnarrowed t)))
+#+end_src
 
 Content of =path/to/template.org=:
 
 #+begin_src org
-  ,#+ROAM_KEY: %^{citekey}
-,#+PROPERTY: type %^{type}
-,#+ROAM_TAGS: %^{keywords}
+,#+PROPERTY: type %^{entry-type}
+,#+FILETAGS: %^{keywords}
 ,#+PROPERTY: authors %^{author}
 
-In this %\2 %\4 concluded that %?
+In this %\1 %\3 concluded that %?
 
 fullcite:%\1
 #+end_src
@@ -178,46 +160,44 @@ You can also use a function to generate the template on the fly, see
 :PROPERTIES:
 :CUSTOM_ID: org-noter-integration.-special-treatment-of-the-file-keyword
 :END:
-If =orb-process-file-keyword= is non-nil, the "file" field will be
-treated specially. If the field contains only one file name, its value
-will be used for template expansion. If it contains several file names,
-the user will be prompted to choose one. The file names can be filtered
-based on their extensions by setting the =orb-file-field-extensions=
-variable, so that only those matching the extension or extensions will
-be considered for retrieval. The "file" keyword must be set for
-preformatting as usual. Consult the docstrings of these variables for
-additional customization options.
 
-Below shows how this can be used to integrate with
-[[https://github.com/weirdNox/org-noter][org-noter]] or
-[[https://github.com/rudolfochrist/interleave][interleave]]:
+If =orb-process-file-keyword= is non-nil, the "file" field will be treated
+specially. If the field contains only one file name, its value will be used for
+template expansion. If it contains several file names, the user will be
+prompted to choose one. The file names can be filtered based on their
+extensions by setting the =orb-file-field-extensions= variable, so that only
+those matching the extension or extensions will be considered for
+retrieval. The "file" keyword must be set for preformatting as usual. Consult
+the docstrings of these variables for additional customization options.
 
-#+begin_example
-  (setq orb-preformat-keywords
-        '("citekey" "title" "url" "author-or-editor" "keywords" "file")
-        orb-process-file-keyword t
-        orb-file-field-extensions '("pdf"))
+Below shows how this can be used to integrate with [[https://github.com/weirdNox/org-noter][org-noter]] or [[https://github.com/rudolfochrist/interleave][interleave]]:
 
-  (setq orb-templates
-        '(("r" "ref" plain (function org-roam-capture--get-point)
-           ""
-           :file-name "${citekey}"
-           :head "#+TITLE: ${citekey}: ${title}\n#+ROAM_KEY: ${ref}
+#+begin_src elisp
+(setq orb-preformat-keywords
+      '("citekey" "title" "url" "author-or-editor" "keywords" "file")
+      orb-process-file-keyword t
+      orb-file-field-extensions '("pdf"))
 
-  - tags ::
-  - keywords :: ${keywords}
+(setq org-roam-capture-templates
+      '(("r" "bibliography reference" plain
+         (file "/path/to/template")
+         :if-new
+         (file+head "references/${citekey}.org" "#+title: ${title}\n"))))
+#+end_src
 
-  * ${title}
-  :PROPERTIES:
-  :Custom_ID: ${citekey}
-  :URL: ${url}
-  :AUTHOR: ${author-or-editor}
-  :NOTER_DOCUMENT: ${file}  ; <== special file keyword: if more than one filename
-  :NOTER_PAGE:              ;     is available, the user will be prompted to choose
-  :END:")))
-#+end_example
+#+begin_src org
+- tags ::
+- keywords :: %^{keywords}
 
-Do not forget to escape the quotes inside the =%=-escapes form!
+,* %^{title}
+:PROPERTIES:
+:Custom_ID: %^{citekey}
+:URL: %^{url}
+:AUTHOR: %^{author-or-editor}
+:NOTER_DOCUMENT: %^{file}  ; <== special file keyword: if more than one filename
+:NOTER_PAGE:               ;     is available, the user will be prompted to choose
+:END:
+#+end_src
 
 * ORB Note Actions - BibTeX record-related commands
 :PROPERTIES:
@@ -227,17 +207,17 @@ Do not forget to escape the quotes inside the =%=-escapes form!
 :PROPERTIES:
 :CUSTOM_ID: overview
 :END:
-Type =M-x orb-note-actions= or bind this command to a key such as
-=C-c n a= to quickly access additional commands that take the note's
-BibTeX key as an input and process it to perform some useful actions.
 
-Note actions are divided into three groups: =default=, =extra=, and
-=user= set via =orb-note-actions-default=, =orb-note-actions-extra=,
-=orb-note-actions-user=, respectively. There is no big conceptual
-difference between the three except that the =default= note actions are
-commands provided by =bibtex-completion=, =extra= note actions are extra
-commands provided by =org-roam-bibtex=, and =user= note actions are left
-for user customization.
+Type =M-x orb-note-actions= or bind this command to a key such as =C-c n a= to
+quickly access additional commands that take the note's BibTeX key as an input
+and process it to perform some useful actions.
+
+Note actions are divided into three groups: =default=, =extra=, and =user= set
+via =orb-note-actions-default=, =orb-note-actions-extra=,
+=orb-note-actions-user=, respectively. There is no big conceptual difference
+between the three except that the =default= note actions are commands provided
+by =bibtex-completion=, =extra= note actions are extra commands provided by
+=org-roam-bibtex=, and =user= note actions are left for user customization.
 
 ** Note actions interface
 :PROPERTIES:
@@ -252,17 +232,21 @@ and =hydra=. The interface can be set via the
   (setq orb-note-actions-interface 'hydra)
 #+end_example
 
-Alternatively, =orb-note-actions-interface= can be set to a custom
-function that will provide completion for available note actions. The
-function must take one argument CITEKEY, which is a list whose =car= is
-the current note's citation key:
+Alternatively, =orb-note-actions-interface= can be set to a custom function
+that will provide completion for available note actions. The function must take
+one argument CITEKEY, which is a list whose =car= is the current note's
+citation key:
 
 #+begin_example
   (setq orb-note-actions-interface #'my-orb-note-actions-interface)
 #+end_example
 
 #+begin_src org
-  ,#+ROAM_KEY: cite:Doe2020
+:PROPERTIES:
+:ID: uuid1234-...
+:ROAM_REFS: cite:Doe2020
+:END:
+,#+title: My note
 #+end_src
 
 #+begin_example
