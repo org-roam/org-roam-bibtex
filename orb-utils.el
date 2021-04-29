@@ -48,7 +48,7 @@
 
 (require 'warnings)
 
-(defvar orb-citekey-format)
+(defvar org-ref-cite-re)
 
 ;; ============================================================================
 ;;;; Macros
@@ -59,10 +59,10 @@
 Append \"...\" to the first message and \"...done\" to the second.
 Return result of evaluating the BODY."
   (declare (indent 1) (debug (stringp &rest form)))
-  `(prog2
-       (message "%s..." ,message)
-       (progn ,@body)
-     (message "%s...done" ,message)))
+  (let ((reporter (gensym "orb")))
+    `(let ((,reporter (make-progress-reporter ,message)))
+       ,@body
+       (progress-reporter-done ,reporter))))
 
 (defmacro orb-note-actions-defun (interface &rest body)
   "Return a function definition for INTERFACE.
@@ -97,16 +97,6 @@ Include CITEKEY if it is non-nil."
   (display-warning
    :warning (concat "ORB: " (when citekey (format "%s :" citekey)) warning))
   nil)
-
-(defun orb--unformat-citekey (citekey)
-  "Remove format from CITEKEY.
-Format is `orb-citekey-format'."
-  (string-match "\\(.*\\)%s\\(.*\\)" orb-citekey-format)
-  (let ((beg (match-end 1))
-        (end (+ (length citekey)
-                (- (match-beginning 2)
-                   (length orb-citekey-format)))))
-    (substring citekey beg end)))
 
 (defun orb-buffer-string (&optional start end)
   "Retun buffer (sub)string with no text porperties.
@@ -294,6 +284,19 @@ Return Org Roam node or nil."
   ;; NOTE: This function can be made more general.
   (gethash citekey (or orb-notes-cache
                        (orb-make-notes-cache))))
+
+(defun orb-get-node-citekey (&optional node)
+  "Return citation key associated with NODE.
+If optional NODE is nil, return the citekey for node at point."
+  (let ((node (or node (org-roam-node-at-point 'assert))))
+    (save-excursion
+      (goto-char (org-roam-node-point node))
+      (let* ((prop (org-entry-get (point) "ROAM_REFS"))
+             (prop-list (when prop (split-string-and-unquote prop))))
+        (catch 'found
+          (dolist (p prop-list)
+            (when (string-match org-ref-cite-re p)
+              (throw 'found (match-string 2 p)))))))))
 
 (provide 'orb-utils)
 ;;; orb-utils.el ends here
