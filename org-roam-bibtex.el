@@ -121,18 +121,6 @@ See `orb-edit-note' for details."
           (const :tag "No" nil))
   :group 'org-roam-bibtex)
 
-(defcustom orb-templates
-  '(("r" "bibliography reference" plain
-     (function org-roam-capture--get-point)
-     "%?"
-     :file-name "${citekey}"
-     :head "#+TITLE: ${title}\n#+CITEKEY: ${citekey}"
-     :unnarrowed t))
-  "Template to use when creating a new note.
-See `orb-edit-note' for details."
-  :type '(list)
-  :group 'org-roam-bibtex)
-
 (defcustom orb-include-citekey-in-titles nil
   "Non-nil to include the citekey in titles.
 See `orb-edit-note' for details."
@@ -1143,7 +1131,7 @@ user actions can be set in `orb-note-actions-user'."
   (let ((non-default-interfaces (list 'hydra 'ido 'ivy 'helm))
         ;; FIXME: this does not work anymore
         ;; (citekey (cdr (org-roam--extract-ref)))
-        (citekey "NOT IMPLEMENTED V2"))
+        (citekey (orb-get-node-citekey)))
     (if citekey
         (cond ((member orb-note-actions-interface non-default-interfaces)
                (orb-note-actions--run orb-note-actions-interface citekey))
@@ -1151,8 +1139,8 @@ user actions can be set in `orb-note-actions-user'."
                (funcall orb-note-actions-interface citekey))
               (t
                (orb-note-actions--run 'default citekey)))
-      (user-error "Could not retrieve the citekey.  Probably no #+ROAM_KEY: in\
-the buffer or package Org Ref not installed"))))
+      (user-error "Could not retrieve the citekey.  Check ROAM_REFS property \
+of current node"))))
 
 ;;;;;; Note actions
 
