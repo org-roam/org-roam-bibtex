@@ -552,32 +552,45 @@ is the function `ignore', it is added as `:override'."
 TEMPLATE is an element of `org-roam-capture-templates' and ENTRY
 is a BibTeX entry as returned by `bibtex-completion-get-entry'."
   ;; Handle org-roam-capture part
-  (let* (;; Org-capture templates: handle different types of
-         ;; org-capture-templates: string, file and function; this is
-         ;; a stripped down version of `org-capture-get-template'
-         (tp
-          (pcase (nth 3 template)       ; org-capture template is here
-            (`nil 'nil)
-            ((and (pred stringp) tmpl) tmpl)
-            (`(file ,file)
-             (let ((flnm (expand-file-name file org-directory)))
-               (if (file-exists-p flnm) (f-read-text flnm)
-                 (format "Template file %S not found" file))))
-            (`(function ,fun)
-             (if (functionp fun) (funcall fun)
-               (format "Template function %S not found" fun)))
-            (_ (user-error "ORB: Invalid capture template"))))
-         ;;  org-roam capture properties are here
-         (plst (cddddr template))
-         ;; regexp for org-capture prompt wildcard
-         (rx "\\(%\\^{[[:alnum:]-_]*}\\)")
-         (file-keyword (when orb-process-file-keyword
-                         (or (and (stringp orb-process-file-keyword)
-                                  orb-process-file-keyword)
-                             "file")))
-         lst)
+  (letrec (;; Org-capture templates: handle different types of
+           ;; org-capture-templates: string, file and function; this is
+           ;; a stripped down version of `org-capture-get-template'
+           (org-template
+            (pcase (nth 3 template)       ; org-capture template is here
+              (`nil 'nil)
+              ((and (pred stringp) tmpl) tmpl)
+              (`(file ,file)
+               (let ((flnm (expand-file-name file org-directory)))
+                 (if (file-exists-p flnm) (f-read-text flnm)
+                   (format "Template file %S not found" file))))
+              (`(function ,fun)
+               (if (functionp fun) (funcall fun)
+                 (format "Template function %S not found" fun)))
+              (_ (user-error "ORB: Invalid capture template"))))
+           ;;  org-roam capture properties are here
+           (plst (cddddr template))
+           ;; regexp for org-capture prompt wildcard
+           (rx "\\(%\\^{[[:alnum:]-_]*}\\)")
+           (file-keyword (when orb-process-file-keyword
+                           (or (and (stringp orb-process-file-keyword)
+                                    orb-process-file-keyword)
+                               "file")))
+           ;; inline function to handle :if-new list expansion
+           (expand-roam-template
+            (lambda (roam-template-list old new)
+              (let (elements)
+                (dolist (el roam-template-list)
+                  (if (listp el)
+                      (setq elements
+                            (nreverse
+                             (append elements
+                                     (list (funcall expand-roam-template
+                                                    el old new)))))
+                    (push (s-replace old new el) elements)))
+                (nreverse elements))))
+           (lst nil))
     ;; First run:
-    ;; 1) Make a list of (rplc-s field-value match-position) for the
+    ;; 1) Make a list of (org-wildcard field-value match-position) for the
     ;; second run
     ;; 2) replace org-roam-capture wildcards
     (dolist (keyword orb-preformat-keywords)
@@ -609,38 +622,38 @@ Keyword \"%s\" has invalid type (string was expected)" keyword))))
                       (error "")))
                   ""))
              ;; org-capture prompt wildcard
-             (rplc-s (concat "%^{" (or keyword "citekey") "}"))
+             (org-wildcard (concat "%^{" (or keyword "citekey") "}"))
              ;; org-roam-capture prompt wildcard
-             (rplc-s2 (concat "${" (or keyword "citekey") "}"))
+             (roam-wildcard (concat "${" (or keyword "citekey") "}"))
              ;; org-roam-capture :if-new property
-             (if-new (plist-get plst :if-new))
-             (i 1)                        ; match counter
+             (roam-template (plist-get plst :if-new))
+             (i 1)                      ; match counter
              pos)
-        ;; Search for rplc-s, set flag m if found
-        (when tp
-          (while (string-match rx tp pos)
-            (if (string= (match-string 1 tp) rplc-s)
+        ;; Search for org-wildcard, set flag m if found
+        (when org-template
+          (while (string-match rx org-template pos)
+            (if (string= (match-string 1 org-template) org-wildcard)
                 (progn
-                  (setq pos (length tp))
-                  (cl-pushnew (list rplc-s field-value i) lst ))
+                  (setq pos (length org-template))
+                  (cl-pushnew (list org-wildcard field-value i) lst ))
               (setq pos (match-end 1)
                     i (1+ i)))))
         ;; Replace placeholders in org-roam-capture-templates :if-new property
-        (when if-new
-          (let (strings)
-            (dolist (str (cdr if-new))
-              (push (s-replace rplc-s2 field-value str) strings))
-            (plist-put plst :if-new (cons (car if-new) (nreverse strings)))))))
+        (when roam-template
+          (setcdr roam-template
+                  (funcall expand-roam-template
+                           (cdr roam-template) roam-wildcard field-value))
+          (plist-put plst :if-new roam-template))))
     ;; Second run: replace prompts and prompt matches in org-capture
     ;; template string
     (dolist (l lst)
-      (when (and tp (nth 1 l))
+      (when (and org-template (nth 1 l))
         (let ((pos (concat "%\\" (number-to-string (nth 2 l)))))
           ;; replace prompt match wildcards with prompt wildcards
           ;; replace prompt wildcards with BibTeX field value
-          (setq tp (s-replace pos (car l) tp)
-                tp (s-replace (car l) (nth 1 l) tp))))
-      (setf (nth 4 template) tp))
+          (setq org-template (s-replace pos (car l) org-template)
+                org-template (s-replace (car l) (nth 1 l) org-template))))
+      (setf (nth 4 template) org-template))
     template))
 
 (defun orb--new-note (citekey)
@@ -720,15 +733,7 @@ with the CITEKEY as retrieved by `bibtex-completion-get-entry'.
 The prompt presented by `org-roam-node-find' will thus be
 pre-populated with the record title.
 
-3. The template used to create the note is stored in
-`orb-templates'.  If the variable is not defined, revert to using
-`org-roam-capture-templates'.  In the former case, a new file
-will be created and filled according to the template, possibly
-preformatted (see below) without additional user interaction.  In
-the latter case, an interactive `org-capture' process will be
-run.
-
-4. Optionally, when `orb-preformat-templates' is non-nil, any
+3. Optionally, when `orb-preformat-templates' is non-nil, any
 prompt wildcards in `orb-templates' or
 `org-roam-capture-templates', associated with the bibtex record
 fields as specified in `orb-preformat-templates', will be
@@ -745,7 +750,7 @@ the `org-roam-node-find' interactive prompt since all the
 template expansions will have taken place by then.  All the title
 wildcards will be replace with the BibTeX field value.
 
-5. Optionally, if you are using Projectile and Persp-mode and
+4. Optionally, if you are using Projectile and Persp-mode and
 have a dedicated workspace to work with your Org-roam collection,
 you may want to set the perspective name and project path in
 `orb-persp-project' and `orb-switch-persp' to t.  In this case,
@@ -770,8 +775,9 @@ before calling any Org-roam functions."
       (orb--store-link-functions-advice 'add)
       ;; install capture hook functions
       (orb-do-hook-functions 'add)
+      (orb--new-note citekey)
       (condition-case error-msg
-          (orb--new-note citekey)
+         nil
         ((debug error)
          (with-orb-cleanup
            (orb--store-link-functions-advice 'remove)
