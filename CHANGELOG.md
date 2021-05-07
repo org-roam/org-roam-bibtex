@@ -11,6 +11,24 @@ Well, at least we try!
 ### Changed
 - Remove keybindigns in `org-roam-bibtex-mode-map`.
 
+## [0.5.1] - 2021-05-07
+### Added
+- This is the last version of ORB that works with Org-roam v1.  Future releases
+  of ORB starting with v0.6 will work only with Org-roam v2 and will not be
+  backwords compatible with ORB < v0.6.  There will be no deprecation notices
+  on functions and variables!
+- Update README with the above notice.
+- A basic setup for Eldev was added.  No tests yet.
+
+### Changed
+- Default keybindings for ORB commands were removed from `org-roam-bibtex-map`
+  because they were non-essential conflicted with some other minor modes.
+
+### Fixed
+- Added Org-ref to `Package-Requires` declaration.
+- Issue a warning in `orb-process-file-field` instead of ignoring errors
+  silently.
+
 ## [0.5.0] - 2021-03-17
 ### Added
 - ORB PDF Scrapper export functionality was completely revisited.  It can be
@@ -246,8 +264,9 @@ and fruitful discussions on export, reference grouping and reference numbers!
 [org-roam]: https://github.com/jethrokuan/org-roam
 [helm-bibtex/bibtex-completion]: https://github.com/tmalsburg/helm-bibtex
 
-[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.5.0...HEAD
-[0.4.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.4.0...v0.5.0
+[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/org-roam/org-roam-bibtex/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/org-roam/org-roam-bibtex/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.2.3...v0.3.0

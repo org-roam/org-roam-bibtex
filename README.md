@@ -13,8 +13,8 @@ Description
 
 Org Roam BibTeX (ORB) is an Org Roam extension that integrates [Org
 Roam](https://github.com/jethrokuan/org-roam) with [Helm and Ivy
-BibTeX](https://github.com/tmalsburg/helm-bibtex) and 
-[Org Ref](https://github.com/jkitchin/org-ref).
+BibTeX](https://github.com/tmalsburg/helm-bibtex) and [Org
+Ref](https://github.com/jkitchin/org-ref).
 
 It allows users to manage their bibliographical notes using Org Roam and access
 the notes in `org-roam-directory` via `helm-bibtex`, `ivy-bibtex`, or by
@@ -36,6 +36,20 @@ Here is a selection of articles that you may find interesting.
 
 #### Workflow
 - [An Orgmode Note Workflow](https://rgoswami.me/posts/org-note-workflow/) by [@HaoZeke](https://github.com/HaoZeke) (outdated).
+
+Important news 
+---------------------------------
+
+Org Roam BibTeX v0.5.1 is the last version of ORB that works with Org-roam v1.
+Future releases of ORB starting with v0.6 will work only with Org-roam v2 and
+will not be backwards compatible with ORB < v0.6.  There will be no deprecation
+notices on functions and variables!
+
+The `master` branch will be kept on v0.5.1 for a while. 
+
+The yet unreleased version compatible with Org-roam v2 can be found on the
+`org-roam-v2` branch for testing and early adoption.  It will be eventually
+merged into `master`.
 
 A word of warning 🚧
 ---------------
@@ -68,11 +82,11 @@ kindly ask you to follow these simple rules when asking for help:
 4. Open an issue on the bug tracker.
 5. Take your time to describe your problem and we'll take ours to help you solve it.
 6. Describe your problem clearly, in a procedural way: "I run `this command`,
-then I run `that command`, and finally `this one`.  I expect `this` to happen but
-instead happens `that`.  Here is my `configuration`."
+then I run `that command`, and finally `this one`.  I expect `this` to happen
+but instead happens `that`.  Here is my `configuration`."
 7. Thank you!
 
-Keep in mind that ORB is under a heavy development and the configuration
+Keep in mind that ORB is under active development and the configuration
 snippets that you might have found somewhere in the Internet may be outdated
 and be the actual cause your errors.  It is therefore highly recommended to use
 this README file, [the manual](doc/orb-manual.org) and the Emacs built-in
