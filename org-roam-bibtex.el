@@ -84,19 +84,6 @@
 
 ;; declare external functions and variables
 
-(defvar bibtex-completion-bibliography)
-(defvar bibtex-completion-find-note-functions)
-(defvar bibtex-completion-edit-notes-function)
-
-(declare-function bibtex-completion-apa-get-value
-                  "bibtex-completion" (field entry &optional default))
-(declare-function bibtex-completion-get-entry
-                  "bibtex-completion" (entry-key))
-(declare-function bibtex-completion-clear-cache
-                  "bibtex-completion" (&optional files))
-(declare-function bibtex-completion-init "bibtex-completion")
-(declare-function bibtex-completion-candidates "bibtex-completion")
-
 (declare-function projectile-relevant-open-projects "projectile")
 (declare-function persp-switch "persp-mode")
 (declare-function persp-names "persp-mode")
@@ -275,7 +262,7 @@ used to store a link to the BibTeX buffer.  See
   :group 'org-roam-bibtex)
 
 (defcustom orb-insert-interface 'generic
-  "Interface frontend to use with `orb-insert'.
+  "Interface frontend to use with `orb-insert-link'.
 Possible values are the symbols `helm-bibtex', `ivy-bibtex' and
 `generic'.  In the first two cases the respective commands will
 be used, while in the latter case the command
@@ -287,7 +274,7 @@ be used, while in the latter case the command
           (const generic)))
 
 (defcustom orb-insert-link-description 'title
-  "What should be used as link description for links created with `orb-insert'.
+  "Link description source for links created with `orb-insert-link'.
 Possible values are the symbols `title', `citekey' and
 `citation'.  When the value of this variable is `title' or
 `citekey', then the title of the note the link points to or
@@ -303,7 +290,7 @@ or \"cite:\", if the latter variable is not defined, for example
 when Org-ref is not loaded.
 
 The default value set by this variable can be overriden by
-calling `orb-insert' with an appropriated numerical prefix
+calling `orb-insert-link' with an appropriated numerical prefix
 argument.  See the docstring of the function for more
 information."
   :group 'org-roam-bibtex
@@ -320,7 +307,7 @@ information."
           (const :tag "No" nil)))
 
 (defcustom orb-insert-generic-candidates-format 'key
-  "Format of selection candidates for `orb-insert' with `generic' interface.
+  "Format of selection candidates for `orb-insert-generic' interface.
 Possible values are `key' and `entry'."
   :group 'org-roam-bibtex
   :type '(choice
@@ -385,134 +372,6 @@ Each action is a cons cell DESCRIPTION . FUNCTION."
           :key-type (string :tag "Description")
           :value-type (function :tag "Function"))
   :group 'orb-note-actions)
-
-;; ============================================================================
-;;;; Orb plist
-;; ============================================================================
-
-(defvar orb-plist nil
-  "Communication channel for `orb-edit-note' and related functions.")
-
-(defun orb-plist-put (&rest props)
-  "Add properties PROPS to `orb-plist'.
-Returns the new plist."
-  (while props
-    (setq orb-plist (plist-put orb-plist (pop props) (pop props)))))
-
-(defun orb-plist-get (prop)
-  "Get PROP from `orb-plist'."
-  (plist-get orb-plist prop))
-
-(defun orb-cleanup ()
-  "Clean up `orb-plist'."
-  (let ((keywords (-filter #'keywordp orb-plist)))
-    (dolist (keyword keywords)
-      (orb-plist-put keyword nil))))
-
-(defmacro with-orb-cleanup (&rest body)
-  "Execute BODY calling `orb-cleanup' as its last form.
-Return the result of executing BODY."
-  (declare (indent 0) (debug t))
-  `(prog1
-       ,@body
-     (orb-cleanup)))
-
-;; ============================================================================
-;;;; Managing Org-capture hooks (experimental)
-;; ============================================================================
-
-;; workflow:
-;;
-;; 1. (orb-register-hook-function func before nil (my-forms))
-;;
-;; 2. In `orb-edit-note', if a note does not exist, an `org-capture' process is
-;; started.  Before that, the function `func' is added
-;; `org-capture-before-finalize-hook' with 0 depth by calling
-;; `orb-do-hook-functions'.  Forms (my-forms) will be run by `org-capture'
-;; within the hook.  The closure removes itself, so that it does not interfere
-;; with any subsequent `org-capture' calls.  `orb-edit-note' also takes care
-;; to remove the function from the hook in case the `org-capture' process was
-;; aborted.
-;;
-;; 3. If the note exists, the function will not be added to the hook, but it is
-;; still possible to execute `my-forms' by calling:
-;;
-;; (orb-call-hook-function 'func)
-;;
-;; 4. The function is registered until `orb-clean' is run.
-
-(defmacro orb-register-hook-function (name target depth &rest body)
-  "Register a closure to be run in one of the `org-capture' hooks.
-NAME (unquoted) is the name of the function.  TARGET should be an
-unquoted SYMBOL, one of `prepare', `before' or `after', meaning
-the function will be registered to run with the corresponding
-`org-capture-SYMBOL-finlaize-hook'.  DEPTH is the hook depth, nil
-is internally converted to 0.
-
-BODY are forms which will be wrapped in an anonymous function
-within a `letrec' form.  Additionally, a `remove-hook' called is
-appended to BODY, making the closure self-removable:
-
-\(letrec ((NAME
-           (lambda ()
-            BODY
-           (remove-hook 'org-capture-TARGET-finalize-hook NAME)))))
-
-These hook functions are therefore meant to run only in next
-`org-capture' session.
-
-The function is not actually added to a hook but is instead
-registered on `orb-plist'.  The function `orb-edit-note'
-installs the hooks just before starting an `org-capture' process
-by calling `orb-do-hook-functions'.  It also takes care of
-removing the hooks in case the `org-capture' process was aborted.
-
-After a function has been registered, it is possible to call it
-by passing its NAME as a quoted symbol to
-`orb-call-hook-function'.  This may be useful if the function
-should be run regardless of whether an `org-capture' process was
-initiated or not."
-  (declare (indent 3) (debug t))
-  (let ((hookvar (intern (format "org-capture-%s-finalize-hook" target)))
-        (keyword (intern (format ":%s-functions" target)))
-        (depth (or depth 0)))
-    `(letrec ((,name (lambda () ,@body (remove-hook (quote ,hookvar) ,name))))
-       (orb-plist-put ,keyword
-                      (cons (list (quote ,name) ,name ,depth)
-                            (orb-plist-get ,keyword))))))
-
-(defun orb-call-hook-function (name)
-  "Call function NAME registered by `orb-register-hook-function'."
-  (let* ((functions (append (orb-plist-get :prepare-functions)
-                            (orb-plist-get :before-functions)
-                            (orb-plist-get :after-functions)))
-         (func (alist-get name functions)))
-    (when func (funcall (car func)))))
-
-(defun orb-do-hook-functions (action &optional targets)
-  "Add or remove functions to `org-capture-...-finilize-hook's.
-ACTION should be a symbol `add' or `remove'.  If optional TARGETS
-list is provided, do only the hooks in TARGETS.  TARGETS should
-be any of symbols `prepare', `before' and `after'.  TARGETS can
-also be a single symbols.  If TARGETS is nil, a list of all three
-symbols is implied."
-  (let* ((targets (--> (if (and targets (not (listp targets)))
-                           (listp targets)
-                         targets)
-                       ;; filter irrelevant symbols,
-                       ;; or if targets were nil, make all targets
-                       (or (-intersection it '(prepare before after))
-                           '(prepare before after)))))
-    (dolist (target targets)
-      (let ((functions (sort (orb-plist-get
-                              (intern (format ":%s-functions" target)))
-                             (lambda (a b)
-                               (> (nth 2 a) (nth 2 b))))))
-        (dolist (func functions)
-          (let ((f (intern (format "%s-hook" action)))
-                (hook (intern (format "org-capture-%s-finalize-hook" target))))
-            (funcall f hook (when (eq action 'add)
-                              (nth 1 func)))))))))
 
 ;; ============================================================================
 ;;;; Orb edit notes
@@ -655,11 +514,10 @@ Keyword \"%s\" has invalid type (string was expected)" keyword))))
       (setf (nth 4 template) org-template))
     template))
 
-(defun orb--new-note (citekey)
-  "Process templates and run `org-roam-capture--capture'.
-CITEKEY is a citation key.
-Helper function for `orb-edit-note', which abstracts initiating
-a capture session."
+(defun orb--new-note (citekey &optional props)
+  "Process templates and run `org-roam-capture-'.
+CITEKEY is the citation key of an entry for which the note is
+created.  PROPS are additional properties for `org-roam-capture-'."
   ;; Check if the requested BibTeX entry actually exists and fail
   ;; gracefully otherwise
   (if-let* ((entry (or (bibtex-completion-get-entry citekey)
@@ -692,8 +550,10 @@ a capture session."
             ;; (by setting `org-capture-entry'), and Org-roam converts the
             ;; whole template list, we must do the conversion of the entry
             ;; ourselves
+            (props (--> (or props (list :finalize 'find-file))
+                     (plist-put it :call-location (point-marker))))
             (org-capture-entry
-             (org-roam-capture--convert-template template))
+             (org-roam-capture--convert-template template props))
             (citekey-formatted (format (or orb-citekey-format "%s") citekey))
             (title
              (or (bibtex-completion-apa-get-value "title" entry)
@@ -702,14 +562,9 @@ a capture session."
                  ;; title
                  "No title"))
             (node (org-roam-node-create :title title)))
-      ;; data collection hooks functions: remove themselves once run
-      ;; Depending on the templates used: run
-      ;; `org-roam-capture--capture' with ORB-predefined
-      ;; settings or call vanilla `org-roam-node-find'
       (org-roam-capture-
        :node node
-       :info (list :ref citekey-formatted)
-       :props '(:finalize find-file))
+       :info (list :ref citekey-formatted))
     (message "ORB: Something went wrong. Check the *Warnings* buffer")))
 
 ;;;###autoload
@@ -758,31 +613,18 @@ before calling any Org-roam functions."
   ;; Optionally switch to the notes perspective
   (when orb-switch-persp
     (orb--switch-perspective))
-  (let ((node (orb-note-exists-p citekey)))
+  (if-let ((node (orb-note-exists-p citekey)))
       ;; Find org-roam reference with the CITEKEY and collect data into
       ;; `orb-plist'
-    (orb-plist-put :note-existed (and node t))
-    (cond
-     (node
-      (orb-plist-put :title (org-roam-node-title node)
-                     :file (org-roam-node-file node))
-      (ignore-errors (org-roam-node-visit node)))
-     ;; we need to clean up if the capture process was aborted signaling
-     ;; user-error
-    (t
-      ;; fix some Org-ref related stuff
-      (orb--store-link-functions-advice 'add)
-      ;; install capture hook functions
-      (orb-do-hook-functions 'add)
-      (orb--new-note citekey)
-      (condition-case error-msg
-         nil
-        ((debug error)
-         (with-orb-cleanup
-           (orb--store-link-functions-advice 'remove)
-           (orb-do-hook-functions 'remove))
-         (message "orb-edit-note caught an error during capture: %s"
-                  (error-message-string error-msg))))))))
+      (ignore-errors (org-roam-node-visit node))
+    ;; fix some Org-ref related stuff
+    (orb--store-link-functions-advice 'add)
+    (condition-case error-msg
+        (orb--new-note citekey)
+      ((debug error)
+       (orb--store-link-functions-advice 'remove)
+       (message "orb-edit-note caught an error during capture: %s"
+                (error-message-string error-msg))))))
 
 ;; FIXME: this does not work anymore
 ;; (defun orb--get-non-ref-path-completions ()
@@ -811,86 +653,112 @@ before calling any Org-roam functions."
 ;; ============================================================================
 ;;;; Orb insert
 ;; ============================================================================
+(defvar orb-plist nil
+  "Communication channel for `orb-edit-note' and related functions.")
 
-(defun orb-insert--link (file citekey &optional description lowercase)
-  "Insert a link to FILE.
-If a region is active, replace the region with the link and used
-the selected text as the link's label.  If DESCRIPTION is
-provided, use it as the link's label instead.  If none of the
-above is true, insert the CITEKEY as a formatted Org-ref citation
-using `org-ref-default-citation-link' or 'cite:' if this variable
-is not bound.
+(defun orb-plist-put (&rest props)
+  "Add properties PROPS to `orb-plist'.
+Returns the new plist."
+  (while props
+    (setq orb-plist (plist-put orb-plist (pop props) (pop props)))))
 
-If LOWERCASE is non-nil, downcase the link description.
-Return the filename if it exists."
-  ;; Deactivate the mark on quit since `atomic-change-group' prevents it
+(defun orb-plist-get (prop)
+  "Get PROP from `orb-plist'."
+  (plist-get orb-plist prop))
+
+(defun orb-insert--link (node info)
+  "Insert a link to NODE.
+INFO contains additional information."
+  ;; citekey &optional description lowercase region-text beg end
+  (-let (((&plist :region-text :beg :end :description :citekey) info))
+    (when region-text
+      (delete-region beg end)
+      (set-marker beg nil)
+      (set-marker end nil))
+    (if description
+        (insert (org-link-make-string
+                 (concat "id:" (org-roam-node-id node)) description))
+      (let ((cite-link (if (boundp 'org-ref-default-citation-link)
+                           (concat org-ref-default-citation-link ":")
+                         "cite:")))
+        (insert (concat cite-link citekey))))))
+
+(defun org-roam-capture--finalize-orb-insert-link ()
+  "Insert a link to a just captured note.
+This function is used by ORB calls to `org-roam-capture-' instead
+of `org-roam-capture--finalize-insert-link'."
+  (let* ((mkr (org-roam-capture--get :call-location))
+              (buf (marker-buffer mkr))
+              (region (org-roam-capture--get :region))
+              (node (org-roam-populate (org-roam-node-create :id (org-roam-capture--get :id)))))
+    (with-current-buffer buf
+      (org-with-point-at mkr
+        (orb-insert--link node (list
+                                :beg (car region)
+                                :end (cdr region)
+                                :citekey (org-roam-capture--get :citekey)
+                                :region-text (org-roam-capture--get :region-text)
+                                :description (org-roam-capture--get :link-description)))))))
+
+(defvar orb-insert-lowercase nil)
+
+(defun orb-insert-edit-note (citekey)
+  "Insert a link to a note with citation key CITEKEY.
+Capture a new note if it does not exist yet."
   (unwind-protect
       ;; Group functions together to avoid inconsistent state on quit
       (atomic-change-group
-        (let* (region-text
+        (let* ((title
+                (bibtex-completion-get-value
+                 "title" (bibtex-completion-get-entry citekey) ""))
+               (node (or (orb-note-exists-p citekey)
+                         (org-roam-node-create :title title)))
+               region-text
                beg end
                (_ (when (region-active-p)
                     (setq beg (set-marker (make-marker) (region-beginning)))
                     (setq end (set-marker (make-marker) (region-end)))
                     (setq region-text
                           (buffer-substring-no-properties beg end))))
-               (description (or region-text description)))
-          (when (and file (file-exists-p file))
-            (when region-text
-              (delete-region beg end)
-              (set-marker beg nil)
-              (set-marker end nil))
-            (if description
-                (let ((description (if lowercase
-                                       (downcase description)
-                                     description)))
-                  ;; FIXME: this function does not exist anymore
-                  ;; (insert (org-roam-format-link file description))
-                  (ignore description))
-              (let ((cite-link (if (boundp 'org-ref-default-citation-link)
-                                   (concat org-ref-default-citation-link ":")
-                                 "cite:")))
-                (insert (concat cite-link citekey))))
-            ;; return value
-            file)))
-    (deactivate-mark)))
-
-(defvar orb-insert-lowercase nil)
-(defun orb-insert--link-h ()
-  "Prepare the environement and call `orb-insert--link'."
-  ;; insert link only when file is non-nil
-  (with-orb-cleanup
-    (when-let ((file (orb-plist-get :file)))
-      (let* ((citekey (orb-plist-get :citekey))
-             (insert-description (or (orb-plist-get :link-description)
-                                     orb-insert-link-description))
-             (lowercase (or (orb-plist-get :link-lowercase)
-                            orb-insert-lowercase))
-             (description (cl-case insert-description
-                            (title (orb-plist-get :title))
-                            (citekey citekey)
-                            (citation nil))))
-        (with-current-buffer (orb-plist-get :buffer)
-          (save-excursion
-            (orb-insert--link file citekey description lowercase)))))
-    (set-window-configuration (orb-plist-get :window-conf))
-    (when (and orb-insert-follow-link
-               (looking-at org-link-any-re))
-      (org-open-at-point))
-    ;; if any left
-    (orb-do-hook-functions 'remove)))
+               (lowercase (or (orb-plist-get :link-lowercase)
+                              orb-insert-lowercase))
+               (description (--> (or (orb-plist-get :link-description)
+                                     orb-insert-link-description)
+                              (cl-case it
+                                (title (org-roam-node-title node))
+                                (citekey citekey)
+                                (citation nil))
+                              (or region-text it)
+                              (if (and it lowercase) (downcase it) it)))
+               (info (list :citekey citekey
+                           :description description
+                           :region-text region-text
+                           :beg beg :end end)))
+          (if (org-roam-node-id node)
+              (orb-insert--link node info)
+            (orb--new-note citekey
+                           (list :region (when (and beg end)
+                                           (cons beg end))
+                                 :link-description description
+                                 :region-text region-text
+                                 :citekey citekey
+                                 :finalize 'orb-insert-link))))
+        (deactivate-mark)))
+  (when (and orb-insert-follow-link
+             (looking-at org-link-any-re))
+    (org-open-at-point)))
 
 (defun orb-insert-generic (&optional arg)
   "Present a list of BibTeX entries for completion.
-This is a generic completion function for `orb-insert', which
-runs `orb-insert-edit-notes' on the selected entry.  The list is
+This is a generic completion function for `orb-insert-link', which
+runs `orb-insert-edit-note' on the selected entry.  The list is
 made by `bibtex-completion-candidates'.
 
 The appearance of selection candidates is determined by
 `orb-insert-generic-candidates-format'.
 
 This function is not interactive, set `orb-insert-interface' to
-`generic' and call `orb-insert' interactively instead.
+`generic' and call `orb-insert-link' interactively instead.
 
 If ARG is non-nil, rebuild `bibtex-completion-cache'."
   (when arg
@@ -909,75 +777,11 @@ If ARG is non-nil, rebuild `bibtex-completion-cache'."
                     (--> (alist-get selection candidates nil nil #'equal)
                          (cdr it)
                          (alist-get "=key=" it  nil nil #'equal)))))
-    (orb-insert-edit-notes (list citekey))))
-
-(defun orb-insert-edit-notes (citekey)
-  "Call `orb-edit-note' and insert a link to a note.
-CITEKEY is a citation key and #+ROAM_KEY of the retrieved or
-newly created note."
-  (orb-plist-put :buffer (current-buffer)
-                 :window-conf (current-window-configuration)
-                 :citekey (car citekey))
-  ;; Here, we play on the specifics of a capture process.
-  ;; `org-capture-finalize' runs `prepare-hook', `before-hook' and `after-hook'
-  ;; in that order.  But, if `org-capture-finalize' was run via
-  ;; `org-capture-kill', the `before-hook' is forced to nil via a let form.
-  ;;
-  ;; 1. In an interactive session, we get the title while the capture buffer
-  ;; still exists.  But if the capture process was killed, our before hook
-  ;; function did not run and therefore title is nil on `orb-plist'.
-  (orb-register-hook-function get-title before nil
-    (orb-plist-put :title (orb-get-buffer-keyword "title")
-                   :immediate-finish
-                   (plist-get org-capture-plist :immediate-finish)))
-
-  (orb-register-hook-function get-file after -90
-    (let ((file (buffer-file-name)))
-      ;; 2. We check whether the title on `orb-plist' is nil.  When it is, we
-      ;; set file to nil to signal `org-insert--link-h' not to insert a link.
-      ;; We do this only in interactive process
-      (unless (or (orb-plist-get :immediate-finish)
-                  (orb-plist-get :title))
-        (setq file nil)
-        ;; before hook functions did not run, so they are still in
-        ;; `org-capture-before-finalize-hook'; remove them.
-        (orb-do-hook-functions 'remove 'before))
-      (orb-plist-put :file file)))
-
-  (orb-register-hook-function insert-link after 90
-    (orb-insert--link-h))
-
-  (save-excursion
-    (orb-edit-note (car citekey)))
-  ;; when note existed, a capture process did not run.  We have all the info on
-  ;; `orb-plist', so just insert a link
-  (when (orb-plist-get :note-existed)
-    ;; we call the hook function so that the hook is removed
-    (orb-call-hook-function 'insert-link)))
+    (orb-insert-edit-note citekey)))
 
 ;;;###autoload
-(defun orb-insert (&optional arg)
+(defun orb-insert-link (&optional arg)
   "Insert a link to an Org-roam bibliography note.
-If the note does not exist, create it.
-Use candidate selection interface specified in
-`orb-insert-interface'.  Available interfaces are `helm-bibtex',
-`ivy-bibtex' and `orb-insert-generic'.
-
-When using `helm-bibtex' or `ivy-bibtex', the action \"Edit note
-& insert a link\" should be chosen to insert the desired link.
-For convenience, this action is made default for the duration of
-an `orb-insert' session.  It will not persist when `helm-bibtex'
-or `ivy-bibtex' proper are run.  It is absolutely possible to run
-other `helm-bibtex' or `ivy-bibtex' actions.  When action another
-than \"Edit note & insert a link\" is run, no link will be
-inserted, although the session can be resumed later with
-`helm-resulme' or `ivy-resume', respectively, to select the
-\"Edit note & insert a link\" action.
-
-When using `orb-insert-generic' as interface, a simple list of
-available citation keys is presented using `completion-read' and
-after choosing a candidate the appropriate link will be inserted.
-
 If the note does not exist yet, it will be created using
 `orb-edit-note' function.
 
@@ -986,11 +790,11 @@ customization option `orb-insert-link-description' determines
 what will be used as the link's description.  It is possible to
 override the default value with numerical prefix ARG:
 
-`C-1' \\[orb-insert] will force `title'
-`C-2' \\[orb-insert] will force `citekey'
-`C-0' \\[orb-insert] will force `citation'
+`C-1' \\[orb-insert-link] will force `title'
+`C-2' \\[orb-insert-link] will force `citekey'
+`C-0' \\[orb-insert-link] will force `citation'
 
-If a region of text is active (selected) when calling `orb-insert',
+If a region of text is active (selected) when calling `orb-insert-link',
 the text in the region will be replaced with the link and the
 text string will be used as the link's description — similar to
 `org-roam-insert'.
@@ -1000,7 +804,26 @@ is possible to force lowercase by supplying either one or three
 universal arguments `\\[universal-argument]'.
 
 Finally, `bibtex-completion-cache' will be re-populated if either
-two or three universal arguments `\\[universal-argument]' are supplied."
+two or three universal arguments `\\[universal-argument]' are supplied.
+
+The customization option `orb-insert-interface' allows to set the
+completion interface backend for the candidates list.  Available
+interfaces are `helm-bibtex', `ivy-bibtex' and `orb-insert-generic'.
+
+With `helm-bibtex' or `ivy-bibtex', choosing the action \"Edit
+note & insert a link\" will insert the desired link.  For
+convenience, this action is made default for the duration of an
+`orb-insert-link' session.  It will not persist when `helm-bibtex' or
+`ivy-bibtex' proper are run.  It is possible to run other
+`helm-bibtex' or `ivy-bibtex' actions.  When action other than
+\"Edit note & insert a link\" is run, no link will be inserted,
+although the session can be resumed later with `helm-resume' or
+`ivy-resume', respectively, where it will be possible to select
+the \"Edit note & insert a link\" action.
+
+When using `orb-insert-generic', a simple list of available
+citation keys is presented using `completion-read' and after
+choosing a candidate the appropriate link will be inserted."
   (interactive "P")
   ;; parse arg
   ;; C-u or C-u C-u C-u => force lowercase
@@ -1020,13 +843,6 @@ two or three universal arguments `\\[universal-argument]' are supplied."
                    (or description orb-insert-link-description)
                    :link-lowercase
                    (or lowercase orb-insert-lowercase))
-    ;; execution chain:
-    ;; 1. interface function
-    ;; 2. orb-insert-edit-notes
-    ;; 3. orb-edit-note
-    ;; 4. orb-insert--link-h
-    ;; if the note exists or a new note was created and capture not cancelled
-    ;; 5. orb-insert--link
     (cl-case orb-insert-interface
       (helm-bibtex
        (cond
@@ -1212,7 +1028,6 @@ interactively."
   :group 'org-roam-bibtex
   :require 'orb
   :global t
-  (require 'bibtex-completion)
   (cond (org-roam-bibtex-mode
          (setq org-ref-notes-function 'orb-org-ref-edit-note)
          (add-to-list 'bibtex-completion-find-note-functions
