@@ -45,6 +45,7 @@
 ;; so all these libraries are always at our disposal
 
 (require 'org-roam)
+(require 'bibtex-completion)
 
 (require 'warnings)
 
