@@ -146,7 +146,6 @@ The package is on [MELPA](https://github.com/melpa/melpa).
     ``` emacs-lisp
     (use-package org-roam-bibtex
       :after org-roam
-      :hook (org-roam-mode . org-roam-bibtex-mode)
       :config
       (require 'org-ref)) ; optional: if Org Ref is not loaded anywhere else, load it here
     ```
@@ -154,9 +153,8 @@ The package is on [MELPA](https://github.com/melpa/melpa).
     b) Alternatively, require the package if you don't use `use-package`:
 
     ``` emacs-lisp
-    (require 'org-roam-bibtex)
-    (add-hook 'org-roam-mode-hook #'org-roam-bibtex-mode)
     (require 'org-ref) ; optional: if Org Ref is not loaded anywhere else, load it here
+    (require 'org-roam-bibtex)
     ```
 
 ### Via cloning
@@ -181,7 +179,6 @@ To do that:
     (use-package org-roam-bibtex
       :after org-roam
       :load-path "~/projects/org-roam-bibtex/" ; Modify with your own path where you cloned the repository
-      :hook (org-roam-mode . org-roam-bibtex-mode)
       :config
       (require 'org-ref)) ; optional: if Org Ref is not loaded anywhere else, load it here
     ```
@@ -189,10 +186,9 @@ To do that:
     b) Alternatively, if you don't use `use-package`: 
 
     ```emacs-lisp
+    (require 'org-ref) ; optional: if Org Ref is not loaded anywhere else, load it here
     (add-to-list 'load-path "~/projects/org-roam-bibtex/") ; Modify with your own path where you cloned the repository
     (require 'org-roam-bibtex)
-    (add-hook 'org-roam-mode-hook #'org-roam-bibtex-mode)
-    (require 'org-ref) ; optional: if Org Ref is not loaded anywhere else, load it here
     ```
 
 ### Spacemacs
@@ -208,7 +204,6 @@ If you have a private `org-roam` layer, modify it as follows:
 (defun org-roam/init-org-roam-bibtex ()
   (use-package org-roam-bibtex
     :after org-roam
-    :hook (org-roam-mode . org-roam-bibtex-mode)
     :config
     (require 'org-ref)) ; optional: if Org Ref is not loaded anywhere else, load it here
 ```
@@ -243,7 +238,6 @@ use the approach described in the above mentioned resources.
 ``` emacs-lisp
 (use-package! org-roam-bibtex
   :after org-roam
-  :hook (org-roam-mode . org-roam-bibtex-mode)
   :config
   (require 'org-ref)) ; optional: if Org Ref is not loaded anywhere else, load it here
 ```
@@ -252,6 +246,11 @@ use the approach described in the above mentioned resources.
 
 Usage
 ---------------
+
+#### `org-roam-bibtex-mode`
+
+Call interactively `org-roam-bibtex-mode` or arrange your init file to perform
+this automatically.
 
 You can now access your bibliographical notes in `org-roam-directory` with
 `helm-bibtex`/`ivy-bibtex` or by opening `org-ref` links.  ORB modifies the
