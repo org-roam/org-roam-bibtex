@@ -951,6 +951,7 @@ CITEKEY is a list whose car is a citation key."
 ;; ============================================================================
 ;;
 
+;;;###autoload
 (defun orb-org-ref-edit-note (citekey)
   "Open an Org-roam note associated with the CITEKEY or create a new one.
 Set `org-ref-notes-function' to this function if your
@@ -963,6 +964,7 @@ intended for use with Org-ref."
     (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
       (orb-edit-note citekey))))
 
+;;;###autoload
 (defun orb-edit-notes (keys)
   "Open or create an Org-roam note associated with the first key from KEYS.
 This function replaces `bibtex-completion-edit-notes'.  Only the
