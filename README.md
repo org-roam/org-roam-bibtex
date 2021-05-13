@@ -256,24 +256,13 @@ disable `org-roam-bibtex-mode`.
 
 Type `M-x orb-note-actions` to easily access additional commands useful in
 note's context.  These commands are run with the note's BibTeX key as an
-argument. The key is taken from the `#+ROAM_KEY:` file property.
+argument. The key is taken from the `:ROAM_REFS:` file or heading property.
 
-#### `orb-insert`
+#### `orb-insert-link`
 
 Select a bibliography entry and insert a link to a note associated with it.  If
-the note does not exist yet, create it.  Similar to `org-roam-insert`, if a
+the note does not exist yet, create it.  Similar to `org-roam-node-insert`, if a
 region is selected, it becomes the link description.
-
-#### `orb-insert-non-ref`
-
-Similar to `orb-insert`, but excludes bibliographical notes from the
-completion-list.
-
-#### `orb-find-non-ref-file`
-
-Similar to `org-roam-find-file`, but excludes bibliographical notes from the
-completion-candidates.  This is useful if you have a lot of them and do not
-want to clutter up your other notes.
 
 Configuration
 ---------------

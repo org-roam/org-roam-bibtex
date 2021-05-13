@@ -40,15 +40,15 @@ If there are more than one template in =orb-roam-capture-templates=, you will
 be prompted for the key of the template you want to use (=r= in the example
 above).  Otherwise, the only template will be used without prompting.
 
-** =orb-preformat-keywords=
+** User option =orb-preformat-keywords=
 :PROPERTIES:
 :CUSTOM_ID: orb-preformat-keywords
 :END:
 
 A list of template placeholders for pre-expanding. Any BibTeX field can be set
-for preformatting including =bibtex-completion='s' "virtual" fields such as
-=key=' and '=type='. BibTeX fields can be refered to by means of their aliases
-defined in =orb-bibtex-field-aliases=.
+for preformatting including Bibtex-completion virtual fields such as =key=' and
+'=type='. BibTeX fields can be referred by their aliases defined in
+[[#orb-bibtex-field-aliases][=orb-bibtex-field-aliases=]].
 
 Usage example:
 
@@ -63,7 +63,7 @@ Usage example:
          :unnarrowed t)))
 #+end_src
 
-By default, =org-preformat-keywords= is configured to expand the following
+By default, =orb-preformat-keywords= is configured to expand the following
 BibTeX fields: "citekey", "date", "entry-type", "pdf?", "note?", "author",
 "editor", "author-abbrev", "editor-abbrev", "author-or-editor-abbrev".
 
@@ -81,35 +81,46 @@ This variable takes effect when =orb-preformat-templates= is set to t
 Consult the [[https://github.com/tmalsburg/helm-bibtex][=bibtex-completion=]] package for additional information about BibTeX
 field names.
 
+** User option =orb-bibtex-field-aliases=
+:PROPERTIES:
+:CUSTOM_ID: orb-bibtex-field-aliases
+:END:
+
+** Command =orb-insert-link=
+
 ** =orb-insert= configuration
 :PROPERTIES:
 :CUSTOM_ID: orb-insert-configuration
 :END:
-*** =orb-insert-interface=
+** User option =orb-insert-interface=
 :PROPERTIES:
 :CUSTOM_ID: orb-insert-interface
 :END:
-Interface to use with =orb-insert=. Supported interfaces are
-=helm-bibtex=, =ivy-bibtex=, and =generic= (=orb-insert-generic=)
 
-*** =orb-insert-link-description=
+Interface to use with =orb-insert=. Supported interfaces are =helm-bibtex=,
+=ivy-bibtex=, and =generic= (=orb-insert-generic=)
+
+** User option =orb-insert-link-description=
 :PROPERTIES:
 :CUSTOM_ID: orb-insert-link-description
 :END:
-What piece of information should be used as the link description:
+What piece of information should be used as link description by default:
 
 - =title= - entry's title
 - =citekey= - entry's citation key
-- =citation= - insert Org-ref citation (default "cite:") instead of a
-  file link.
+- =citation= - insert Org-ref citation (default "cite:") instead of a file
+  link.
 
-*** =orb-insert-follow-link=
+This setting can be overriden for a single invocation of =orb-insert-link= with
+a numerical prefix.
+
+** User option =orb-insert-follow-link=
 :PROPERTIES:
 :CUSTOM_ID: orb-insert-follow-link
 :END:
 Whether to follow a newly created link.
 
-*** =orb-insert-generic-candidates-format=
+** User option =orb-insert-generic-candidates-format=
 :PROPERTIES:
 :CUSTOM_ID: orb-insert-generic-candidates-format
 :END:

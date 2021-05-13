@@ -109,33 +109,25 @@ See `orb-edit-note' for details."
           (const :tag "No" nil))
   :group 'org-roam-bibtex)
 
-(defcustom orb-include-citekey-in-titles nil
-  "Non-nil to include the citekey in titles.
-See `orb-edit-note' for details."
-  :type '(choice
-          (const :tag "Yes" t)
-          (const :tag "No" nil))
-  :group 'org-roam-bibtex)
-
 (defcustom orb-preformat-keywords
   '("citekey" "entry-type" "date" "pdf?" "note?" "file"
     "author" "editor" "author-abbrev" "editor-abbrev"
     "author-or-editor-abbrev")
-  "A list of template prompt wildcards for pre-expanding.
+  "A list of template placeholders for pre-expanding.
 Any BibTeX field can be set for pre-expanding including
-`bibtex-completion` \"virtual\" fields such as '=key=' and
-'=type='.  BibTeX fields can be refered to by means of their
-aliases defined in `orb-bibtex-field-aliases'.
+Bibtex-completion virtual fields such as '=key=' and '=type='.
+BibTeX fields can be referred to by means of their aliases
+defined in `orb-bibtex-field-aliases'.
 
 Usage example:
 
 \(setq orb-preformat-keywords '(\"citekey\" \"author\" \"date\"))
 \(setq orb-templates
-      '((\"r\" \"reference\" plain (function org-roam-capture--get-point)
+      '((\"r\" \"reference\" plain
          \"#+ROAM_KEY: %^{citekey}%?
 %^{author} published %^{entry-type} in %^{date}: fullcite:%\\1.\"
-         :file-name \"references/${citekey}\"
-         :head \"#+TITLE: ${title}\"
+         :if-new
+         (file+head \"references/${citekey.org}\" \"#+title: ${title}\n\")
          :unnarrowed t)))
 
 Special cases:
@@ -144,21 +136,18 @@ The \"file\" keyword will be treated specially if the value of
 `orb-process-file-keyword' is non-nil.  See its docstring for an
 explanation.
 
-The \"title\" keyword needs not to be set for pre-expanding if it
-is used only within the `:head` section of the templates.
-
 This variable takes effect when `orb-preformat-templates' is set
 to t (default). See also `orb-edit-note' for further details.
 
-Consult bibtex-completion package for additional information
-about BibTeX field names."
+Consult Bibtex-completion documentation for additional
+information on BibTeX field names."
   :type '(repeat :tag "BibTeX field names" string)
   :group 'org-roam-bibtex)
 
 (defcustom orb-process-file-keyword t
   "Whether to treat the file keyword specially during template pre-expanding.
 When this variable is non-nil, the \"%^{file}\" and \"${file}\"
-wildcards will be expanded by `org-process-file-field' rather
+wildcards will be processed by `org-process-file-field' rather
 than simply replaced with the field value.  This may be useful in
 situations when the file field contains several file names and
 only one file name is desirable for retrieval.  The \"file\"
@@ -173,11 +162,9 @@ single file name by expanding the %^{my-file} and ${my-file}
 wildcards.  The keyword, e.g. \"my-file\", must be set for
 pre-expanding in `orb-preformat-keywords' as usual.
 
-The variable `orb-file-field-extensions' controls which filtering
-of the file names based on file extensions.
-
-See also `orb-file-field-extensions' for filtering file names
-based on their extension."
+The variable `orb-file-field-extensions' controls filtering of
+file names based on file extensions."
+  ;; TODO: check if a custom string is really working as described
   :group 'org-roam-bibtex
   :type '(choice
           (const :tag "Yes" t)
@@ -185,35 +172,16 @@ based on their extension."
           (string :tag "Custom wildcard keyword")))
 
 (defcustom orb-citekey-format "cite:%s"
-  "Format string for the citekey.
-The citekey obtained from Helm-bibtex/Ivy-bibtex/Org-ref
-will be formatted as specified here."
+  "Format string for the citation key.
+This string will be prepended to the citation key to obtained an
+Org-ref citation, which will be then set in :ROAM_REFS: property."
   :type 'string
-  :group 'org-roam-bibtex)
-
-(defcustom orb-slug-source 'citekey
-  "What should be used as a source for creating the note's slug.
-Supported values are symbols `citekey' and `title'.
-
-A special variable `${slug}` in `orb-templates' (and
-`org-roam-capture-templates') is used as a placeholder for an
-automatically generated string which is meant to be used in
-filenames.  Org Roam uses the note's title to create a slug.  ORB
-also allows for the citekey.  The function specified in
-`org-roam-title-to-slug-function' is used to create the slug.
-This operation typilcally involves removing whitespace and
-converting words to lowercase, among possibly other things."
-  :type '(choice
-          (const citekey)
-          (const title))
   :group 'org-roam-bibtex)
 
 (defcustom orb-persp-project `("notes" . ,org-roam-directory)
   "Perspective name and path to the project with bibliography notes.
 A cons cell (PERSP-NAME . PROJECT-PATH).  Only relevant when
 `orb-switch-persp' is set to t.
-
-Requires command `persp-mode' and command `projectile-mode'.
 
 PERSP-NAME should be a valid Perspective name, PROJECT-PATH should be
 an open Projectile project.
@@ -228,9 +196,7 @@ See `orb-edit-note' for details"
 Set the name of the perspective and the path to the notes project
 in `orb-persp-project' for this to take effect.
 
-Requires command `persp-mode' and command `projectile-mode'.
-
-See `orb-edit-note' for details."
+Perspective switching works with Pers-mode and Projectile."
   :type '(choice
           (const :tag "Yes" t)
           (const :tag "No" nil))
@@ -244,15 +210,15 @@ Org Ref defines function `org-ref-bibtex-store-link' to store
 links to a BibTeX buffer, e.g. with `org-store-link'.  At the
 same time, Org ref requires `ol-bibtex' library, which defines
 `org-bibtex-store-link' to do the same.  When creating a note
-with `orb-edit-note' from a BibTeX buffer, for example by
-calling `org-ref-open-bibtex-notes', the initiated `org-capture'
-process implicitly calls `org-store-link'.  The latter loops
-through all the functions for storing links, and if more than one
-function can store links to the location, the BibTeX buffer in
-this particular case, the user will be prompted to choose one.
-This is definitely annoying, hence ORB will advise all functions
-in this list to return nil to trick `org-capture' and get rid of
-the prompt.
+with `orb-edit-note' from a BibTeX buffer, for example by calling
+`org-ref-open-bibtex-notes', the initiated `org-capture' process
+implicitly calls `org-store-link'.  The latter loops through all
+the functions for storing links, and if more than one function
+can store links to the location, the BibTeX buffer in this
+particular case, the user will be prompted to choose one.  This
+is definitely annoying, hence ORB will advise all functions in
+this list to return nil to trick `org-capture' and get rid of the
+prompt.
 
 The default value is `(org-bibtex-store-link)', which means this
 function will be ignored and `org-ref-bibtex-store-link' will be
