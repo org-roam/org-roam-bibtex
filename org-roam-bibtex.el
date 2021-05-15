@@ -499,9 +499,10 @@ created.  PROPS are additional properties for `org-roam-capture-'."
                                ;; if only one template is defined, use it
                                (car org-capture-templates)
                              (org-capture-select-template))
-                        (copy-tree it)
+                        (when (listp it)
+                          (copy-tree it))
                         ;; optionally pre-expand templates
-                        (if orb-preformat-templates
+                        (if (and it orb-preformat-templates)
                             (orb--pre-expand-template it entry)
                           it)))
             ;; pretend we had only one template
@@ -531,7 +532,7 @@ created.  PROPS are additional properties for `org-roam-capture-'."
       (org-roam-capture-
        :node node
        :info (list :ref citekey-formatted))
-    (message "ORB: Something went wrong. Check the *Warnings* buffer")))
+    (user-error "Abort")))
 
 ;;;###autoload
 (defun orb-edit-note (citekey)
@@ -585,12 +586,15 @@ before calling any Org-roam functions."
       (ignore-errors (org-roam-node-visit node))
     ;; fix some Org-ref related stuff
     (orb--store-link-functions-advice 'add)
+    ;; TODO: consider using unwind-protect and let the errors through
     (condition-case error-msg
         (orb--new-note citekey)
       ((debug error)
        (orb--store-link-functions-advice 'remove)
-       (message "orb-edit-note caught an error during capture: %s"
-                (error-message-string error-msg))))))
+       (message "%s"
+                (concat (and (eq (car error-msg) 'error)
+                             "orb-edit-note caught an error during capture: ")
+                        (error-message-string error-msg)))))))
 
 ;; FIXME: this does not work anymore
 ;; (defun orb--get-non-ref-path-completions ()
