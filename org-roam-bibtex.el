@@ -68,19 +68,16 @@
 
 (require 'orb-core)
 
-(when (featurep 'ivy-bibtex)
-  (require 'orb-ivy))
-
-(when (featurep 'helm-bibtex)
-  (require 'orb-helm))
-
 (eval-when-compile
   (require 'subr-x)
-  (require 'cl-lib))
+  (require 'cl-lib)
+  (require 'cl-macs))
 
 ;; declare own functions and variables
 (declare-function orb-helm-insert "orb-helm")
+(declare-function orb-note-actions-helm "orb-helm")
 (declare-function orb-ivy-insert "orb-ivy")
+(declare-function orb-note-actions-ivy "orb-ivy")
 
 ;; declare external functions and variables
 
@@ -301,6 +298,15 @@ is executed upon selecting it."
           (const :tag "Ivy" ivy)
           (const :tag "Helm" helm)
           (function :tag "Custom function"))
+  :set (lambda (var value)
+         (cond
+          ((eq value 'ivy)
+           (require 'orb-ivy))
+          ((eq value 'helm)
+           (require 'orb-helm))
+          ((eq value 'hydra)
+           (require 'hydra)))
+         (set-default var value))
   :group 'orb-note-actions)
 
 (defcustom orb-note-actions-default
@@ -869,46 +875,47 @@ choosing a candidate the appropriate link will be inserted."
     (funcall f (list citekey))))
 
 (declare-function orb-note-actions-hydra/body "org-roam-bibtex" nil t)
-(when (featurep 'hydra)
-  (require 'hydra)
-  (orb-note-actions-defun hydra
-    ;; we don't use candidates here because for a nice hydra we need each
-    ;; group of completions separately (default, extra, user), so just
-    ;; silence the compiler
-    (ignore candidates)
-    (let ((k ?a)
-          actions)
-      (dolist (type (list "Default" "Extra" "User"))
-        (let ((actions-var
-               (intern (concat "orb-note-actions-" (downcase type)))))
-          (dolist (action (symbol-value actions-var))
-            ;; this makes defhydra HEADS list of the form:
-            ;; ("a" (some-action citekey-value) "Some-action description"
-            ;;     :column "Type")
-            (cl-pushnew
-             `(,(format "%c" k) (,(cdr action) (list ,citekey))
-               ,(car action) :column ,(concat type " actions"))
-             actions)
-            ;; increment key a->b->c...
-            (setq k (1+ k)))))    ; TODO: figure out a way to supply
+(orb-note-actions-defun hydra
+  ;; we don't use candidates here because for a nice hydra we need each
+  ;; group of completions separately (default, extra, user), so just
+  ;; silence the compiler
+  (ignore candidates)
+  (let ((k ?a)
+        actions)
+    (dolist (type (list "Default" "Extra" "User"))
+      (let ((actions-var
+             (intern (concat "orb-note-actions-" (downcase type)))))
+        (dolist (action (symbol-value actions-var))
+          ;; this makes defhydra HEADS list of the form:
+          ;; ("a" (some-action citekey-value) "Some-action description"
+          ;;     :column "Type")
+          (cl-pushnew
+           `(,(format "%c" k) (,(cdr action) (list ,citekey))
+             ,(car action) :column ,(concat type " actions"))
+           actions)
+          ;; increment key a->b->c...
+          (setq k (1+ k)))))        ; TODO: figure out a way to supply
                                         ; mnemonic keys
-      (setq actions (nreverse actions))
-      ;; yes, we redefine hydra on every call
-      (eval
-       `(defhydra orb-note-actions-hydra (:color blue :hint nil)
-          ;; defhydra docstring
-          ,(format  "^\n  %s \n\n^"
-                    (s-word-wrap (- (window-body-width) 2) name))
-          ;; defhydra HEADS
-          ,@actions)))
-    (orb-note-actions-hydra/body)))
+    (setq actions (nreverse actions))
+    ;; yes, we redefine hydra on every call
+    (eval
+     `(defhydra orb-note-actions-hydra (:color blue :hint nil)
+        ;; defhydra docstring
+        ,(format  "^\n  %s \n\n^"
+                  (s-word-wrap (- (window-body-width) 2) name))
+        ;; defhydra HEADS
+        ,@actions)))
+  (orb-note-actions-hydra/body))
 
 (defun orb-note-actions--run (interface citekey )
   "Run note actions on CITEKEY with INTERFACE."
-  (let ((fun (intern (concat "orb-note-actions-" (symbol-name interface)))))
-    (if (fboundp fun)
-        (funcall fun citekey)
-      (orb-warning "Note actions interface %s not available" interface))))
+  (when (and (memq interface '(ivy helm hydra))
+             (not (featurep interface)))
+    (orb-warning
+     (format "Feature `%s' not available, using default interface" interface))
+    (setq interface 'default))
+  (funcall (intern (concat "orb-note-actions-" (symbol-name interface)))
+           citekey))
 
 ;;;###autoload
 (defun orb-note-actions ()
@@ -919,19 +926,22 @@ modified, there is a number of prefined extra actions
 `orb-note-actions-extra' that can be customized.  Additionally,
 user actions can be set in `orb-note-actions-user'."
   (interactive)
-  (let ((non-default-interfaces (list 'hydra 'ido 'ivy 'helm))
-        ;; FIXME: this does not work anymore
-        ;; (citekey (cdr (org-roam--extract-ref)))
-        (citekey (orb-get-node-citekey)))
-    (if citekey
-        (cond ((member orb-note-actions-interface non-default-interfaces)
-               (orb-note-actions--run orb-note-actions-interface citekey))
-              ((functionp orb-note-actions-interface)
-               (funcall orb-note-actions-interface citekey))
-              (t
-               (orb-note-actions--run 'default citekey)))
-      (user-error "Could not retrieve the citekey.  Check ROAM_REFS property \
-of current node"))))
+  (if-let ((non-default-interfaces (list 'hydra 'ido 'ivy 'helm))
+           ;; FIXME: this does not work anymore
+           ;; (citekey (cdr (org-roam--extract-ref)))
+           (citekey (orb-get-node-citekey)))
+      (cond ((memq orb-note-actions-interface non-default-interfaces)
+             (orb-note-actions--run orb-note-actions-interface citekey))
+            ((functionp orb-note-actions-interface)
+             (funcall orb-note-actions-interface citekey))
+            (t
+             (unless (eq orb-note-actions-interface 'default)
+               (orb-warning
+                (format "Feature `%s' not available, using default interface"
+                        orb-note-actions-interface)))
+             (orb-note-actions--run 'default citekey)))
+    (user-error "Could not retrieve the citekey.  Check ROAM_REFS property \
+of current node")))
 
 ;;;;;; Note actions
 
