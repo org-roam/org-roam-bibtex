@@ -466,8 +466,7 @@ Keyword \"%s\" has invalid type (string was expected)" keyword))))
         (when roam-template
           (setcdr roam-template
                   (funcall expand-roam-template
-                           (cdr roam-template) roam-wildcard field-value))
-          (plist-put plst :if-new roam-template))))
+                           (cdr roam-template) roam-wildcard field-value)))))
     ;; Second run: replace prompts and prompt matches in org-capture
     ;; template string
     (dolist (l lst)
@@ -477,7 +476,7 @@ Keyword \"%s\" has invalid type (string was expected)" keyword))))
           ;; replace prompt wildcards with BibTeX field value
           (setq org-template (s-replace pos (car l) org-template)
                 org-template (s-replace (car l) (nth 1 l) org-template))))
-      (setf (nth 4 template) org-template))
+      (setf (nth 3 template) org-template))
     template))
 
 (defun orb--new-note (citekey &optional props)
