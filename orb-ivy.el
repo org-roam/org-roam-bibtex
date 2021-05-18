@@ -37,7 +37,7 @@
 
 (declare-function org-ref-format-entry "ext:org-ref-bibtex" (key))
 
-(declare-function orb-insert-edit-notes "org-roam-bibtex" (citekey))
+(declare-function orb-insert-edit-note "org-roam-bibtex" (citekey))
 
 (defvar orb-note-actions-default)
 (defvar orb-note-actions-extra)
@@ -60,7 +60,7 @@
 ;; ============================================================================
 
 (defvar orb-insert--ivy-actions
-  '(("e" ivy-orb-insert-edit-notes "Edit note & insert a link")
+  '(("e" ivy-orb-insert-edit-note "Edit note & insert a link")
     ("p" ivy-bibtex-open-pdf "Open PDF file (if present)")
     ("u" ivy-bibtex-open-url-or-doi "Open URL or DOI in browser")
     ("c" ivy-bibtex-insert-citation "Insert citation")
@@ -74,10 +74,10 @@
   "Ivy actions to use with `orb-insert'.
 A copy of Ivy-bibtex's alist defining Ivy actions, in which
 \"Edit note & insert a link\" is made first (default) action.
-This action calls `orb-insert-edit-notes'.  Only relevant when
+This action calls `orb-insert-edit-note'.  Only relevant when
 `orb-insert-interface' is `ivy-bibtex'.")
 
-(ivy-bibtex-ivify-action orb-insert-edit-notes ivy-orb-insert-edit-notes)
+(ivy-bibtex-ivify-action orb-insert-edit-note ivy-orb-insert-edit-note)
 
 (defun orb-ivy-insert (&optional clear-cache)
   "Run `ivy-bibtex'.
@@ -87,7 +87,7 @@ This is a simple wrapper to be run from `orb-insert'."
   (let* ((ivy-actions (copy-tree ivy--actions-list))
          (ivy--actions-list
           (plist-put ivy-actions 'ivy-bibtex orb-insert--ivy-actions))
-         (ivy-bibtex-default-action 'ivy-orb-insert-edit-notes))
+         (ivy-bibtex-default-action 'ivy-orb-insert-edit-note))
     (ivy-bibtex clear-cache)))
 
 (provide 'orb-ivy)

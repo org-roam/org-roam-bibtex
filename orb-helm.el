@@ -38,7 +38,7 @@
 
 (declare-function org-ref-format-entry "ext:org-ref-bibtex" (key))
 
-(declare-function orb-insert-edit-notes "org-roam-bibtex" (citekey))
+(declare-function orb-insert-edit-note "org-roam-bibtex" (citekey))
 
 (defvar orb-note-actions-default)
 (defvar orb-note-actions-extra)
@@ -66,7 +66,7 @@
     :candidates 'helm-bibtex-candidates
     :filtered-candidate-transformer 'helm-bibtex-candidates-formatter
     :action (helm-make-actions
-             "Edit note & insert a link"  'helm-orb-insert-edit-notes
+             "Edit note & insert a link"  'helm-orb-insert-edit-note
              "Open PDF, URL or DOI"       'helm-bibtex-open-any
              "Open URL or DOI in browser" 'helm-bibtex-open-url-or-doi
              "Insert citation"            'helm-bibtex-insert-citation
@@ -78,10 +78,10 @@
              "Add PDF to library"     'helm-bibtex-add-pdf-to-library))
   "Helm source to use with `orb-insert'.
 A copy of `helm-source-bibtex', in which \"Edit notes\" is made
-the first (default) action.  This action calls `helm-orb-insert-edit-notes'.
+the first (default) action.  This action calls `helm-orb-insert-edit-note'.
 Only relevant when `orb-insert-interface' is `helm-bibtex'.")
 
-(helm-bibtex-helmify-action orb-insert-edit-notes helm-orb-insert-edit-notes)
+(helm-bibtex-helmify-action orb-insert-edit-note helm-orb-insert-edit-note)
 
 (defun orb-helm-insert (&optional clear-cache)
   "Run `helm-bibtex'.
