@@ -7,9 +7,8 @@
 ;;      Leo Vivier <leo.vivier+dev@gmail.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: bib, hypermedia, outlines, wp
-;;
-;; Version: 0.5.2
-;; Package-Requires: ((emacs "27.2") (org-roam "1.2.3") (bibtex-completion "2.0.0") (org-ref "1.1.1"))
+;; Version: 0.6.0
+;; Package-Requires: ((emacs "27.2") (org-roam "2.0.0") (bibtex-completion "2.0.0") (org-ref "1.1.1"))
 
 ;; Soft dependencies: projectile, persp-mode, helm, ivy, hydra
 
