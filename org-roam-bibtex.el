@@ -585,6 +585,7 @@ before calling any Org-roam functions."
   ;; Optionally switch to the notes perspective
   (when orb-switch-persp
     (orb--switch-perspective))
+  (orb-make-notes-cache)
   (if-let ((node (orb-note-exists-p citekey)))
       ;; Find org-roam reference with the CITEKEY and collect data into
       ;; `orb-plist'
@@ -818,6 +819,7 @@ choosing a candidate the appropriate link will be inserted."
                    (or description orb-insert-link-description)
                    :link-lowercase
                    (or lowercase orb-insert-lowercase))
+    (orb-make-notes-cache)
     (cl-case orb-insert-interface
       (helm-bibtex
        (cond
@@ -983,10 +985,6 @@ This function replaces `bibtex-completion-edit-notes'.  Only the
 first key from KEYS will actually be used."
   (orb-edit-note (car keys)))
 
-(defun orb-bibtex-completion-parse-bibliography-ad (&optional _ht-strings)
-  "Update `orb-notes-cache' before `bibtex-completion-parse-bibliography'."
-  (orb-make-notes-cache))
-
 (defvar org-roam-bibtex-mode-map
   (make-sparse-keymap)
   "Keymap for `org-roam-bibtex-mode'.")
@@ -1014,8 +1012,8 @@ interactively."
          (add-to-list 'bibtex-completion-find-note-functions
                       #'orb-find-note-file)
          (setq bibtex-completion-edit-notes-function #'orb-edit-notes)
-         (advice-add 'bibtex-completion-parse-bibliography
-                     :before #'orb-bibtex-completion-parse-bibliography-ad))
+         (add-hook 'org-capture-after-finalize-hook #'orb-make-notes-cache)
+         (orb-make-notes-cache))
         (t
          (setq org-ref-notes-function 'org-ref-notes-function-one-file)
          (setq bibtex-completion-find-note-functions
@@ -1023,8 +1021,8 @@ interactively."
                      bibtex-completion-find-note-functions))
          (setq bibtex-completion-edit-notes-function
                #'bibtex-completion-edit-notes-default)
-         (advice-remove 'bibtex-completion-parse-bibliography
-                        #'orb-bibtex-completion-parse-bibliography-ad))))
+         (remove-hook 'org-capture-after-finalize-hook
+                        #'orb-make-notes-cache))))
 
 (provide 'org-roam-bibtex)
 
