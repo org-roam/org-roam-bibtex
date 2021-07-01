@@ -8,6 +8,18 @@ org-roam-bibtex
 
 <img alt="ORB logo" src="img/logo-r500.png" width="150">
 
+BREAKING NEWS*
+---------------
+
+**Org Roam BibTeX will be upgraded to v0.6 on the upcoming Saturday, *July 3rd,
+2021, 00:00 CEST***, following (or preceding?) the Org-roam upgrade to v2! Once
+again, on **Friday the 2nd of July at 23:00 in London**, and at **6 pm in New York** as
+well as on **Saturday, July 3rd, at 6 am in Hong Kong** and at **7 am in Tokyo**, ORB
+will be upgraded to v0.6, which is uncompatible with the current v0.5.1
+configuration.
+
+\* As in your config will break up
+
 Description
 ---------------
 
@@ -45,11 +57,16 @@ Future releases of ORB starting with v0.6 will work only with Org-roam v2 and
 will not be backwards compatible with ORB < v0.6.  There will be no deprecation
 notices on functions and variables!
 
-The `master` branch will be kept on v0.5.1 for a while. 
-
 The yet unreleased version compatible with Org-roam v2 can be found on the
-`org-roam-v2` branch for testing and early adoption.  It will be eventually
-merged into `master`.
+`org-roam-v2` branch for testing and early adoption.  ~~It will be eventually
+merged into `master`.~~
+
+**Org Roam BibTeX will be upgraded to v0.6 on the upcoming Saturday, July 3rd,
+2021, 00:00 CEST, following (or preceding?) the Org-roam upgrade to v2! Once
+again, on Friday the 2nd of July at 23:00 in London, and at 6 pm in New York as
+well as on Saturday, July 3rd, at 6 am in Hong Kong and at 7 am in Tokyo, ORB
+will be upgraded to v0.6, which is uncompatible with current v0.5.1
+configuration.**
 
 A word of warning 🚧
 ---------------
