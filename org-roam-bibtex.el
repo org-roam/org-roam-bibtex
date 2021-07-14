@@ -485,6 +485,16 @@ Keyword \"%s\" has invalid type (string was expected)" keyword))))
       (setf (nth 3 template) org-template))
     template))
 
+(defvar orb--current-citekey nil
+  "Internal variable.
+The value of the current citekey for `orb--add-ref'.")
+
+(defun orb--add-ref ()
+  "Add citeky as Org-roam ref to the current buffer.
+To be used in `org-roam-capture-new-node-hook'."
+  (save-excursion
+    (org-roam-add-property orb--current-citekey "ROAM_REFS")))
+
 (defun orb--new-note (citekey &optional props)
   "Process templates and run `org-roam-capture-'.
 CITEKEY is the citation key of an entry for which the note is
@@ -504,12 +514,12 @@ created.  PROPS are additional properties for `org-roam-capture-'."
                                ;; if only one template is defined, use it
                                (car org-capture-templates)
                              (org-capture-select-template))
-                        (when (listp it)
-                          (copy-tree it))
-                        ;; optionally pre-expand templates
-                        (if (and it orb-preformat-templates)
-                            (orb--pre-expand-template it entry)
-                          it)))
+                           (when (listp it)
+                             (copy-tree it))
+                           ;; optionally pre-expand templates
+                           (if (and it orb-preformat-templates)
+                               (orb--pre-expand-template it entry)
+                             it)))
             ;; pretend we had only one template
             ;; `org-roam-capture--capture' behaves specially in this case
             ;; NOTE: this circumvents using functions other than
@@ -523,7 +533,7 @@ created.  PROPS are additional properties for `org-roam-capture-'."
             ;; whole template list, we must do the conversion of the entry
             ;; ourselves
             (props (--> (or props (list :finalize 'find-file))
-                     (plist-put it :call-location (point-marker))))
+                        (plist-put it :call-location (point-marker))))
             (org-capture-entry
              (org-roam-capture--convert-template template props))
             (citekey-formatted (format (or orb-citekey-format "%s") citekey))
@@ -533,10 +543,9 @@ created.  PROPS are additional properties for `org-roam-capture-'."
                  ;; this is not critical, the user may input their own
                  ;; title
                  "No title"))
-            (node (org-roam-node-create :title title)))
-      (org-roam-capture-
-       :node node
-       :info (list :ref citekey-formatted))
+            (node (org-roam-node-create :title title))
+            (orb--current-citekey citekey-formatted))
+      (org-roam-capture- :node node)
     (user-error "Abort")))
 
 ;;;###autoload
@@ -1008,6 +1017,7 @@ interactively."
   :require 'orb
   :global t
   (cond (org-roam-bibtex-mode
+         (add-hook 'org-roam-capture-new-node-hook #'orb--add-ref)
          (setq org-ref-notes-function 'orb-org-ref-edit-note)
          (add-to-list 'bibtex-completion-find-note-functions
                       #'orb-find-note-file)
@@ -1015,6 +1025,7 @@ interactively."
          (add-hook 'org-capture-after-finalize-hook #'orb-make-notes-cache)
          (orb-make-notes-cache))
         (t
+         (remove-hook 'org-roam-capture-new-node-hook #'orb--add-ref)
          (setq org-ref-notes-function 'org-ref-notes-function-one-file)
          (setq bibtex-completion-find-note-functions
                (delq #'orb-find-note-file
@@ -1022,7 +1033,7 @@ interactively."
          (setq bibtex-completion-edit-notes-function
                #'bibtex-completion-edit-notes-default)
          (remove-hook 'org-capture-after-finalize-hook
-                        #'orb-make-notes-cache))))
+                      #'orb-make-notes-cache))))
 
 (provide 'org-roam-bibtex)
 
