@@ -493,7 +493,8 @@ The value of the current citekey for `orb--add-ref'.")
   "Add citeky as Org-roam ref to the current buffer.
 To be used in `org-roam-capture-new-node-hook'."
   (save-excursion
-    (org-roam-add-property orb--current-citekey "ROAM_REFS")))
+    (if orb--current-citekey
+        (org-roam-add-property orb--current-citekey "ROAM_REFS"))))
 
 (defun orb--new-note (citekey &optional props)
   "Process templates and run `org-roam-capture-'.
