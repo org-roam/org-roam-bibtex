@@ -680,11 +680,20 @@ of `org-roam-capture--finalize-insert-link'."
 
 (defun orb-insert-edit-note (citekey)
   "Insert a link to a note with citation key CITEKEY.
-Capture a new note if it does not exist yet."
+Capture a new note if it does not exist yet.
+
+CITEKEY can be a list of citation keys (for compatibility with
+Bibtex-completion), in which case only the first element of that
+list is used."
   (unwind-protect
       ;; Group functions together to avoid inconsistent state on quit
       (atomic-change-group
-        (let* ((title
+        (let* ((citekey (cl-typecase citekey
+                          (string citekey)
+                          (list (car citekey))
+                          (t (user-error "Invalid citation key data type: %s.  \
+String or list of strings expected" citekey))))
+               (title
                 (bibtex-completion-get-value
                  "title" (bibtex-completion-get-entry citekey) ""))
                (node (or (orb-note-exists-p citekey)
@@ -700,12 +709,12 @@ Capture a new note if it does not exist yet."
                               orb-insert-lowercase))
                (description (--> (or (orb-plist-get :link-description)
                                      orb-insert-link-description)
-                              (cl-case it
-                                (title (org-roam-node-title node))
-                                (citekey citekey)
-                                (citation nil))
-                              (or region-text it)
-                              (if (and it lowercase) (downcase it) it)))
+                                 (cl-case it
+                                   (title (org-roam-node-title node))
+                                   (citekey citekey)
+                                   (citation nil))
+                                 (or region-text it)
+                                 (if (and it lowercase) (downcase it) it)))
                (info (list :citekey citekey
                            :description description
                            :region-text region-text
