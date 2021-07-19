@@ -40,9 +40,16 @@ Here is a selection of articles that you may find interesting.
 Important news 
 ---------------------------------
 
-Org Roam BibTeX v0.5.2 (this version) is the last version of ORB that works
-with Org-roam v1.  Releases of ORB starting with v0.6 work only with Org-roam
-v2 and are not be backwards compatible with ORB < v0.6.
+**Org Roam BibTeX has been upgraded to v0.6, which is compatible with Org-roam
+v2.  Please read carefully this README file and [the
+manual](doc/orb-manual.org) and adjust your configuration files accordingly.
+In particular, pay attention that the variable `orb-templates` has been
+deprecated in favour of `org-roam-capture-templates`, which in Org-roam v2 has
+a different list structure.  Consult [the manual](doc/orb-manual.org) for more
+details**
+
+Org Roam BibTeX v0.5.2 is the last version of ORB that works with Org-roam v1.
+It can be found on the branch `orb-v0.5`.
 
 A word of warning 🚧
 ---------------
