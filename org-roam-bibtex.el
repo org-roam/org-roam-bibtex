@@ -523,7 +523,7 @@ created.  PROPS are additional properties for `org-roam-capture-'."
             ;; whole template list, we must do the conversion of the entry
             ;; ourselves
             (props (--> (or props (list :finalize 'find-file))
-                     (plist-put it :call-location (point-marker))))
+                        (plist-put it :call-location (point-marker))))
             (org-capture-entry
              (org-roam-capture--convert-template template props))
             (citekey-formatted (format (or orb-citekey-format "%s") citekey))
@@ -646,35 +646,34 @@ Returns the new plist."
   "Insert a link to NODE.
 INFO contains additional information."
   ;; citekey &optional description lowercase region-text beg end
-  (-let (((&plist :region-text :beg :end :description :citekey) info))
-    (when region-text
-      (delete-region beg end)
-      (set-marker beg nil)
-      (set-marker end nil))
-    (if description
+  (-let (((&plist :region :orb-link-description :orb-citekey) info))
+    (when region
+      (org-roam-unshield-region (car region) (cdr region))
+      (delete-region (car region) (cdr region))
+      (set-marker (car region) nil)
+      (set-marker (cdr region) nil))
+    (if orb-link-description
         (insert (org-link-make-string
-                 (concat "id:" (org-roam-node-id node)) description))
+                 (concat "id:" (org-roam-node-id node)) orb-link-description))
       (let ((cite-link (if (boundp 'org-ref-default-citation-link)
                            (concat org-ref-default-citation-link ":")
                          "cite:")))
-        (insert (concat cite-link citekey))))))
+        (insert (concat cite-link orb-citekey))))))
 
 (defun org-roam-capture--finalize-orb-insert-link ()
   "Insert a link to a just captured note.
 This function is used by ORB calls to `org-roam-capture-' instead
 of `org-roam-capture--finalize-insert-link'."
   (let* ((mkr (org-roam-capture--get :call-location))
-              (buf (marker-buffer mkr))
-              (region (org-roam-capture--get :region))
-              (node (org-roam-populate (org-roam-node-create :id (org-roam-capture--get :id)))))
+         (buf (marker-buffer mkr))
+         (region (org-roam-capture--get :region))
+         (node (org-roam-populate (org-roam-node-create :id (org-roam-capture--get :id)))))
     (with-current-buffer buf
       (org-with-point-at mkr
         (orb-insert--link node (list
-                                :beg (car region)
-                                :end (cdr region)
-                                :citekey (org-roam-capture--get :citekey)
-                                :region-text (org-roam-capture--get :region-text)
-                                :description (org-roam-capture--get :link-description)))))))
+                                :region region
+                                :orb-citekey (org-capture-get :orb-citekey)
+                                :orb-link-description (org-capture-get :orb-link-description)))))))
 
 (defvar orb-insert-lowercase nil)
 
@@ -707,7 +706,7 @@ String or list of strings expected" citekey))))
                           (buffer-substring-no-properties beg end))))
                (lowercase (or (orb-plist-get :link-lowercase)
                               orb-insert-lowercase))
-               (description (--> (or (orb-plist-get :link-description)
+               (description (--> (or (orb-plist-get :link-type)
                                      orb-insert-link-description)
                                  (cl-case it
                                    (title (org-roam-node-title node))
@@ -715,19 +714,15 @@ String or list of strings expected" citekey))))
                                    (citation nil))
                                  (or region-text it)
                                  (if (and it lowercase) (downcase it) it)))
-               (info (list :citekey citekey
-                           :description description
-                           :region-text region-text
-                           :beg beg :end end)))
+               (info (--> (list :orb-link-description description
+                                :orb-citekey citekey
+                                :finalize 'orb-insert-link)
+                          (if (and beg end)
+                              (append it (list :region (cons beg end)))
+                            it))))
           (if (org-roam-node-id node)
               (orb-insert--link node info)
-            (orb--new-note citekey
-                           (list :region (when (and beg end)
-                                           (cons beg end))
-                                 :link-description description
-                                 :region-text region-text
-                                 :citekey citekey
-                                 :finalize 'orb-insert-link))))
+            (orb--new-note citekey info)))
         (deactivate-mark)))
   (when (and orb-insert-follow-link
              (looking-at org-link-any-re))
@@ -818,14 +813,14 @@ choosing a candidate the appropriate link will be inserted."
   ;; C-3 force inserting the link as Org-ref citation
   (let* ((lowercase (or (equal arg '(4))
                         (equal arg '(64))))
-         (description (cl-case arg
+         (link-type (cl-case arg
                         (1 'title)
                         (2 'citekey)
                         (0 'citation)))
          (clear-cache (or (equal arg '(16))
                           (equal arg '(64)))))
-    (orb-plist-put :link-description
-                   (or description orb-insert-link-description)
+    (orb-plist-put :link-type
+                   (or link-type orb-insert-link-description)
                    :link-lowercase
                    (or lowercase orb-insert-lowercase))
     (orb-make-notes-cache)
