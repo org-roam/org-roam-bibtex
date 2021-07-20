@@ -682,8 +682,10 @@ list otherwise."
                   (title (car heading))
                   (type (cadr heading))
                   (pos (make-marker)))
-        (unless (bobp)
-          (org-N-empty-lines-before-current 1))
+        ;; NOTE: Investigate
+        ;; The behaviour of org-insert-heading has changed at some point:
+        ;; If in an empty buffer, e.g. temp-buffer, the function fails messaging "beginning of buffer"
+        (org-N-empty-lines-before-current 1)
         (org-insert-heading '(16) nil t)
         ;; insert heading
         (insert (format "%s\n" title))
@@ -1163,6 +1165,10 @@ TYPE is type of data.  PROPERTIES are additional export properties."
     (with-temp-buffer
       ;; get the desired position
       ;; insert parent heading
+      ;; NOTE: Investigate
+      ;; The behaviour of org-insert-heading has changed at some point:
+      ;; If in an empty buffer, e.g. temp-buffer, the function fails messaging "beginning of buffer"
+      (org-N-empty-lines-before-current 1)
       (org-insert-heading nil nil t)
       (insert name)
       ;; insert properties
