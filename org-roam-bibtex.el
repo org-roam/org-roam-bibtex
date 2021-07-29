@@ -174,6 +174,25 @@ Org-ref citation, which will be then set in :ROAM_REFS: property."
   :type 'string
   :group 'org-roam-bibtex)
 
+(defcustom orb-bibtex-entry-get-value-function #'bibtex-completion-apa-get-value
+  "Function to be used by ORB for values from a BibTeX entry.
+
+The default value of this variable is `bibtex-completion-apa-get-value',
+which offers some post-formatting for author fields.
+
+Another possible choice available out of the box is
+`bibtex-completion-get-value', which returns a verbatim value.
+
+Set this to a custom function if you need more flexibility.
+This function should take two arguments FIELD-NAME and ENTRY.
+FIELD-NAME is the name of the field whose value should be retrieved.
+ENTRY is a BibTeX entry as returned by `bibtex-completion-get-entry'."
+  :risky t
+  :group 'org-roam-bibtex
+  :type '(radio (function-item bibtex-completion-apa-get-value)
+                (function-item bibtex-completion-get-value)
+                (function :tag "Custom function")))
+
 (defcustom orb-persp-project `("notes" . ,org-roam-directory)
   "Perspective name and path to the project with bibliography notes.
 A cons cell (PERSP-NAME . PROJECT-PATH).  Only relevant when
@@ -441,14 +460,14 @@ Keyword \"%s\" has invalid type (string was expected)" keyword))))
               (or (if (and file-keyword (string= field-name file-keyword))
                       (prog1
                           (orb-process-file-field
-                           (bibtex-completion-apa-get-value "=key=" entry))
+                           (funcall orb-bibtex-entry-get-value-function "=key=" entry))
                         ;; we're done so don't even compare file-name with
                         ;; file-keyword in the successive cycles
                         (setq file-keyword nil))
                     ;; do the usual processing otherwise
                     ;; condition-case to temporary workaround an upstream bug
                     (condition-case nil
-                        (bibtex-completion-apa-get-value field-name entry)
+                        (funcall orb-bibtex-entry-get-value-function field-name entry)
                       (error "")))
                   ""))
              ;; org-capture prompt wildcard
@@ -528,11 +547,12 @@ created.  PROPS are additional properties for `org-roam-capture-'."
              (org-roam-capture--convert-template template props))
             (citekey-formatted (format (or orb-citekey-format "%s") citekey))
             (title
-             (or (bibtex-completion-apa-get-value "title" entry)
-                 (orb-warning "Title not found for this entry")
-                 ;; this is not critical, the user may input their own
-                 ;; title
-                 "No title"))
+             (or (funcall orb-bibtex-entry-get-value-function "title" entry)
+                 (and
+                  (orb-warning "Title not found for this entry")
+                  ;; this is not critical, the user may input their own
+                  ;; title
+                  "No title")))
             (node (org-roam-node-create :title title)))
       (org-roam-capture-
        :node node
@@ -693,7 +713,7 @@ list is used."
                           (t (user-error "Invalid citation key data type: %s.  \
 String or list of strings expected" citekey))))
                (title
-                (bibtex-completion-get-value
+                (funcall orb-bibtex-entry-get-value-function
                  "title" (bibtex-completion-get-entry citekey) ""))
                (node (or (orb-note-exists-p citekey)
                          (org-roam-node-create :title title)))

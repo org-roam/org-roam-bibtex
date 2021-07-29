@@ -260,6 +260,7 @@ sensitive."
 The key will be stripped of these characters."
   :type 'string
   :group 'orb-autokey)
+
 (defun orb--autokey-format-field (field &rest specs)
   "Return BibTeX FIELD formatted according to plist SPECS.
 
