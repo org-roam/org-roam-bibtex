@@ -281,7 +281,7 @@ Community
 For help, support, or if you just want to
 hang out with us, you can find us here:
 
-* **IRC**: channel **#org-roam** on [freenode](https://freenode.net/kb/answer/chat)
+* **IRC**: channel **#org-roam** on [Libera Chat](https://libera.chat/guides/connect)
 * **Slack**: channel **#org-roam-bibtex** on [Org Roam](https://join.slack.com/t/orgroam/shared_invite/zt-deoqamys-043YQ~s5Tay3iJ5QRI~Lxg)
 * **Discourse**: [Org Roam Discourse group](https://org-roam.discourse.group)
 
