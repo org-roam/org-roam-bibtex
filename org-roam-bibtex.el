@@ -695,6 +695,12 @@ of `org-roam-capture--finalize-insert-link'."
                                 :orb-citekey (org-capture-get :orb-citekey)
                                 :orb-link-description (org-capture-get :orb-link-description)))))))
 
+(defun orb--insert-captured-ref-h ()
+  "Insert value of `:ref' key from `org-roam-capture--info'.
+Internal function.  To be installed in `org-roam-capture-new-node-hook'."
+  (when-let ((ref (plist-get org-roam-capture--info :ref)))
+    (org-roam-ref-add ref)))
+
 (defvar orb-insert-lowercase nil)
 
 (defun orb-insert-edit-note (citekey)
@@ -1037,6 +1043,7 @@ interactively."
                       #'orb-find-note-file)
          (setq bibtex-completion-edit-notes-function #'orb-edit-notes)
          (add-hook 'org-capture-after-finalize-hook #'orb-make-notes-cache)
+         (add-hook 'org-roam-capture-new-node-hook #'orb--insert-captured-ref-h)
          (orb-make-notes-cache))
         (t
          (setq org-ref-notes-function 'org-ref-notes-function-one-file)
@@ -1045,8 +1052,8 @@ interactively."
                      bibtex-completion-find-note-functions))
          (setq bibtex-completion-edit-notes-function
                #'bibtex-completion-edit-notes-default)
-         (remove-hook 'org-capture-after-finalize-hook
-                        #'orb-make-notes-cache))))
+         (remove-hook 'org-roam-capture-new-node-hook #'orb--insert-captured-ref-h)
+         (remove-hook 'org-capture-after-finalize-hook #'orb-make-notes-cache))))
 
 (provide 'org-roam-bibtex)
 
