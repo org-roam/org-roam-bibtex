@@ -475,7 +475,8 @@ Keyword \"%s\" has invalid type (string was expected)" keyword))))
              ;; org-roam-capture prompt wildcard
              (roam-wildcard (concat "${" (or keyword "citekey") "}"))
              ;; org-roam-capture :if-new property
-             (roam-template (plist-get plst :if-new))
+             (roam-template (or (plist-get plst :if-new)
+                                (plist-get plst :target)))
              (i 1)                      ; match counter
              pos)
         ;; Search for org-wildcard, set flag m if found
