@@ -1011,10 +1011,18 @@ intended for use with Org-ref."
 
 ;;;###autoload
 (defun orb-edit-notes (keys)
-  "Open or create an Org-roam note associated with the first key from KEYS.
-This function replaces `bibtex-completion-edit-notes'.  Only the
-first key from KEYS will actually be used."
-  (orb-edit-note (car keys)))
+  "Open or create an Org-roam note.
+
+This function is meant to be used with:
+- `bibtex-completion-edit-notes-function'
+- `bibtex-actions-file-open-note-function'
+
+Only the first KEY of the list KEYS will actually be used.  KEY
+must be a string or a list whose car is a string."
+  (let ((key (car keys)))
+    (cl-etypecase key
+      (string (orb-edit-note key))
+      (list (orb-edit-note (car key))))))
 
 (defvar org-roam-bibtex-mode-map
   (make-sparse-keymap)
