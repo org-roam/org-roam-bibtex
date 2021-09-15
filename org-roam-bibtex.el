@@ -78,20 +78,25 @@
 (declare-function orb-note-actions-helm "orb-helm")
 (declare-function orb-ivy-insert "orb-ivy")
 (declare-function orb-note-actions-ivy "orb-ivy")
+(declare-function orb-pdf-scrapper-run "orb-pdf-scrapper" (key))
 
 ;; declare external functions and variables
 
-(declare-function projectile-relevant-open-projects "projectile")
-(declare-function persp-switch "persp-mode")
-(declare-function persp-names "persp-mode")
+;; Projectile, Perspective-mode
+(declare-function projectile-relevant-open-projects "ext:projectile")
+(declare-function persp-switch "ext:persp-mode")
+(declare-function persp-names "ext:persp-mode")
 
+;; Org-ref
 (defvar org-ref-notes-function)
-(declare-function org-ref-find-bibliography "org-ref-core")
-
-(declare-function defhydra "ext:hydra")
+(declare-function org-ref-find-bibliography "ext:org-ref-core")
 (declare-function org-ref-format-entry "ext:org-ref-bibtex" (key))
+;;
+;; Bibtex-actions
+(defvar bibtex-actions-file-open-note-function)
 
-(declare-function orb-pdf-scrapper-run "orb-pdf-scrapper" (key))
+;; Hydra
+(declare-function defhydra "ext:hydra")
 
 ;; ============================================================================
 ;;;; Customize definitions
@@ -602,7 +607,10 @@ have a dedicated workspace to work with your Org-roam collection,
 you may want to set the perspective name and project path in
 `orb-persp-project' and `orb-switch-persp' to t.  In this case,
 the perspective will be switched to the Org-roam notes project
-before calling any Org-roam functions."
+before calling any Org-roam functions.
+
+If optional argument ENTRY is non-nil, use it to fetch the
+bibliographic information."
   ;; Optionally switch to the notes perspective
   (when orb-switch-persp
     (orb--switch-perspective))
@@ -1010,10 +1018,22 @@ intended for use with Org-ref."
       (orb-edit-note citekey))))
 
 ;;;###autoload
-(defun orb-edit-notes (keys)
-  "Open or create an Org-roam note associated with the first key from KEYS.
-This function replaces `bibtex-completion-edit-notes'.  Only the
-first key from KEYS will actually be used."
+(defun orb-bibtex-actions-edit-note (citekey _entry)
+  "Open an Org-roam note associated with the CITEKEY or create a new one.
+This is a wrapper function around `orb-edit-note' meant to be used with
+`bibtex-actions-file-open-note-function'.
+Argument ENTRY is ignored."
+  (orb-edit-note citekey))
+
+;;;###autoload
+(defun orb-bibtex-completion-edit-note (keys)
+  "Open or create an Org-roam note.
+
+This is a wrapper function around `orb-edit-note' meant to be
+used with `bibtex-completion-edit-notes-function'.
+
+Only the first KEY of the list KEYS will actually be used.  KEY
+must be a string."
   (orb-edit-note (car keys)))
 
 (defvar org-roam-bibtex-mode-map
@@ -1022,8 +1042,8 @@ first key from KEYS will actually be used."
 
 ;;;###autoload
 (define-minor-mode org-roam-bibtex-mode
-  "Sets `orb-edit-note' as a function for editing bibliography notes.
-Affects Org-ref and Helm-bibtex/Ivy-bibtex.
+  "Sets an appropriate function for editing bibliography notes.
+Supports Org-ref, Helm-bibtex/Ivy-bibtex, and Bibtex-actions.
 
 When called interactively, toggle `org-roam-bibtex-mode'. with
 prefix ARG, enable `org-roam-bibtex-mode' if ARG is positive,
@@ -1038,21 +1058,23 @@ interactively."
   :group 'org-roam-bibtex
   :require 'orb
   :global t
+  ;; TODO: Revert external variables to their original values rather than to
+  ;; their defaults
   (cond (org-roam-bibtex-mode
          (setq org-ref-notes-function 'orb-org-ref-edit-note)
-         (add-to-list 'bibtex-completion-find-note-functions
-                      #'orb-find-note-file)
-         (setq bibtex-completion-edit-notes-function #'orb-edit-notes)
+         (setq bibtex-actions-file-open-note-function #'orb-bibtex-actions-edit-note)
+         (setq bibtex-completion-edit-notes-function #'orb-bibtex-completion-edit-note)
+         (add-to-list 'bibtex-completion-find-note-functions #'orb-find-note-file)
          (add-hook 'org-capture-after-finalize-hook #'orb-make-notes-cache)
          (add-hook 'org-roam-capture-new-node-hook #'orb--insert-captured-ref-h)
          (orb-make-notes-cache))
         (t
          (setq org-ref-notes-function 'org-ref-notes-function-one-file)
+         (setq bibtex-actions-file-open-note-function #'bibtex-actions-file-open-notes-default-org)
          (setq bibtex-completion-find-note-functions
                (delq #'orb-find-note-file
                      bibtex-completion-find-note-functions))
-         (setq bibtex-completion-edit-notes-function
-               #'bibtex-completion-edit-notes-default)
+         (setq bibtex-completion-edit-notes-function #'bibtex-completion-edit-notes-default)
          (remove-hook 'org-roam-capture-new-node-hook #'orb--insert-captured-ref-h)
          (remove-hook 'org-capture-after-finalize-hook #'orb-make-notes-cache))))
 
