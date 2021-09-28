@@ -31,7 +31,7 @@ Here's an example of how to add a basic template for a bibliography note to
       '(;; ... other templates
         ;; bibliography note template
         ("r" "bibliography reference" plain "%?"
-        :if-new
+        :target
         (file+head "references/${citekey}.org" "#+title: ${title}\n")
         :unnarrowed t)))
 #+end_src
@@ -58,7 +58,7 @@ Usage example:
       '(("r" "bibliography reference" plain
          "%?
 %^{author} published %^{entry-type} in %^{date}: fullcite:%\\1."
-         :if-new
+         :target
          (file+head "references/${citekey}.org" "#+title: ${title}\n")
          :unnarrowed t)))
 #+end_src
@@ -73,7 +73,7 @@ Special cases:
   `orb-process-file-keyword' is non-nil. See its docstring for an
   explanation.
 - The "title" keyword needs not to be set for preformatting if it is used only
-  within the =:if-new= section of a template.
+  within the =:target= section of a template.
 
 This variable takes effect when =orb-preformat-templates= is set to t
 (default). See also =orb-edit-note= for further details.
@@ -147,7 +147,7 @@ of BibTeX fields working as usual:
 (setq org-roam-capture-templates
       '(("r" "bibliography reference" plain
          (file "/path/to/template.org") ; <-- template store in a separate file
-         :if-new
+         :target
          (file+head "references/${citekey}.org" "#+title: ${title}\n")
          :unnarrowed t)))
 #+end_src
@@ -192,7 +192,7 @@ Below shows how this can be used to integrate with [[https://github.com/weirdNox
 (setq org-roam-capture-templates
       '(("r" "bibliography reference" plain
          (file "/path/to/template")
-         :if-new
+         :target
          (file+head "references/${citekey}.org" "#+title: ${title}\n"))))
 #+end_src
 
