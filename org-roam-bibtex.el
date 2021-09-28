@@ -127,7 +127,7 @@ Usage example:
       '((\"r\" \"reference\" plain
          \"#+ROAM_KEY: %^{citekey}%?
 %^{author} published %^{entry-type} in %^{date}: fullcite:%\\1.\"
-         :if-new
+         :target
          (file+head \"references/${citekey.org}\" \"#+title: ${title}\n\")
          :unnarrowed t)))
 
@@ -429,7 +429,7 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
                            (or (and (stringp orb-process-file-keyword)
                                     orb-process-file-keyword)
                                "file")))
-           ;; inline function to handle :if-new list expansion
+           ;; inline function to handle :target list expansion
            (expand-roam-template
             (lambda (roam-template-list old new)
               (let (elements)
@@ -479,9 +479,8 @@ Keyword \"%s\" has invalid type (string was expected)" keyword))))
              (org-wildcard (concat "%^{" (or keyword "citekey") "}"))
              ;; org-roam-capture prompt wildcard
              (roam-wildcard (concat "${" (or keyword "citekey") "}"))
-             ;; org-roam-capture :if-new property
-             (roam-template (or (plist-get plst :if-new)
-                                (plist-get plst :target)))
+             ;; org-roam-capture :target property
+             (roam-template (plist-get plst :target))
              (i 1)                      ; match counter
              pos)
         ;; Search for org-wildcard, set flag m if found
@@ -493,7 +492,7 @@ Keyword \"%s\" has invalid type (string was expected)" keyword))))
                   (cl-pushnew (list org-wildcard field-value i) lst ))
               (setq pos (match-end 1)
                     i (1+ i)))))
-        ;; Replace placeholders in org-roam-capture-templates :if-new property
+        ;; Replace placeholders in org-roam-capture-templates :target property
         (when roam-template
           (setcdr roam-template
                   (funcall expand-roam-template
