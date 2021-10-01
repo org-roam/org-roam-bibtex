@@ -100,6 +100,10 @@ field names.
 Interface to use with =orb-insert=. Supported interfaces are =helm-bibtex=,
 =ivy-bibtex=, and =generic= (=orb-insert-generic=)
 
+NOTE: This variable should be set using the Customize interface,
+=use-package='s =:custom= keyword, or Doom's =setq!= macro.  Simple =setq= will
+not work.
+
 ** User option =orb-insert-link-description=
 :PROPERTIES:
 :CUSTOM_ID: orb-insert-link-description
@@ -251,6 +255,10 @@ citation key:
 #+begin_example
   (setq orb-note-actions-interface #'my-orb-note-actions-interface)
 #+end_example
+
+NOTE: This variable should be set using the Customize interface,
+=use-package='s =:custom= keyword, or Doom's =setq!= macro.  Simple =setq= will
+not work.
 
 #+begin_src org
 :PROPERTIES:

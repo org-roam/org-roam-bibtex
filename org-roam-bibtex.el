@@ -250,15 +250,26 @@ used to store a link to the BibTeX buffer.  See
 
 (defcustom orb-insert-interface 'generic
   "Interface frontend to use with `orb-insert-link'.
-Possible values are the symbols `helm-bibtex', `ivy-bibtex' and
-`generic'.  In the first two cases the respective commands will
-be used, while in the latter case the command
-`orb-insert-generic' will be used."
+Possible values are the symbols `helm-bibtex', `ivy-bibtex', or
+`generic' (default).  In the first two cases the respective
+commands will be used, while in the latter case the command
+`orb-insert-generic' will be used.
+
+This variable should be set using the Customize interface,
+`use-package''s `:custom' keyword, or Doom's `setq!' macro.
+Simple `setq' will not work."
   :group 'org-roam-bibtex
-  :type '(choice
+  :type '(radio
           (const helm-bibtex)
           (const ivy-bibtex)
-          (const generic)))
+          (const generic))
+  :set (lambda (var value)
+         (cond
+          ((eq value 'ivy-bibtex)
+           (require 'orb-ivy))
+          ((eq value 'helm-bibtex)
+           (require 'orb-helm)))
+         (set-default var value)))
 
 (defcustom orb-insert-link-description 'title
   "Link description source for links created with `orb-insert-link'.
@@ -303,7 +314,8 @@ Possible values are `key' and `entry'."
 
 (defcustom orb-note-actions-interface 'default
   "Interface frontend for `orb-note-actions'.
-Supported values (interfaces) are 'default, 'ido, 'hydra, 'ivy and 'helm.
+Supported values (interfaces) are symbols `default', `ido',
+`hydra', `ivy' and `helm'.
 
 Alternatively, it can be set to a function, in which case the
 function should expect one argument CITEKEY, which is a list
@@ -313,7 +325,11 @@ of `orb-note-actions-default', `orb-note-actions-extra' and
 `orb-note-actions-user' for providing an interactive interface,
 through which the combined set of note actions is presented as a
 list of candidates and the function associated with the candidate
-is executed upon selecting it."
+is executed upon selecting it.
+
+This variable should be set using the Customize interface,
+`use-package''s `:custom' keyword, or Doom's `setq!' macro.
+Simple `setq' will not work."
   :risky t
   :type '(radio
           (const :tag "Default" default)
@@ -861,15 +877,14 @@ choosing a candidate the appropriate link will be inserted."
     (cl-case orb-insert-interface
       (helm-bibtex
        (cond
-        ((featurep 'helm-bibtex)
+        ((fboundp 'orb-helm-insert)
          (orb-helm-insert clear-cache))
         (t
          (orb-warning "helm-bibtex not available; using generic completion")
          (orb-insert-generic clear-cache))))
       (ivy-bibtex
        (cond
-        ((featurep 'ivy-bibtex)
-         (require 'orb-ivy)
+        ((fboundp 'orb-ivy-insert)
          (orb-ivy-insert clear-cache))
         (t
          (orb-warning "ivy-bibtex not available; using generic completion")
