@@ -92,8 +92,8 @@
 (declare-function org-ref-find-bibliography "ext:org-ref-core")
 (declare-function org-ref-format-entry "ext:org-ref-bibtex" (key))
 ;;
-;; Bibtex-actions
-(defvar bibtex-actions-file-open-note-function)
+;; Citar
+(defvar citar-open-note-function)
 
 ;; Hydra
 (declare-function defhydra "ext:hydra")
@@ -1032,10 +1032,10 @@ intended for use with Org-ref."
       (orb-edit-note citekey))))
 
 ;;;###autoload
-(defun orb-bibtex-actions-edit-note (citekey _entry)
+(defun orb-citar-edit-note (citekey _entry)
   "Open an Org-roam note associated with the CITEKEY or create a new one.
 This is a wrapper function around `orb-edit-note' meant to be used with
-`bibtex-actions-file-open-note-function'.
+`citar-file-open-note-function'.
 Argument ENTRY is ignored."
   (orb-edit-note citekey))
 
@@ -1057,7 +1057,7 @@ must be a string."
 ;;;###autoload
 (define-minor-mode org-roam-bibtex-mode
   "Sets an appropriate function for editing bibliography notes.
-Supports Org-ref, Helm-bibtex/Ivy-bibtex, and Bibtex-actions.
+Supports Org-ref, Helm-bibtex/Ivy-bibtex, and Citar.
 
 When called interactively, toggle `org-roam-bibtex-mode'. with
 prefix ARG, enable `org-roam-bibtex-mode' if ARG is positive,
@@ -1076,7 +1076,7 @@ interactively."
   ;; their defaults
   (cond (org-roam-bibtex-mode
          (setq org-ref-notes-function 'orb-org-ref-edit-note)
-         (setq bibtex-actions-file-open-note-function #'orb-bibtex-actions-edit-note)
+         (setq citar-open-note-function #'orb-citar-edit-note)
          (setq bibtex-completion-edit-notes-function #'orb-bibtex-completion-edit-note)
          (add-to-list 'bibtex-completion-find-note-functions #'orb-find-note-file)
          (add-hook 'org-capture-after-finalize-hook #'orb-make-notes-cache)
@@ -1084,7 +1084,7 @@ interactively."
          (orb-make-notes-cache))
         (t
          (setq org-ref-notes-function 'org-ref-notes-function-one-file)
-         (setq bibtex-actions-file-open-note-function #'bibtex-actions-file-open-notes-default-org)
+         (setq citar-open-note-function #'citar-org-open-notes-default)
          (setq bibtex-completion-find-note-functions
                (delq #'orb-find-note-file
                      bibtex-completion-find-note-functions))
