@@ -36,7 +36,7 @@ Here's an example of how to add a basic template for a bibliography note to
         :unnarrowed t)))
 #+end_src
 
-If there are more than one template in =orb-roam-capture-templates=, you will
+If there are more than one template in =org-roam-capture-templates=, you will
 be prompted for the key of the template you want to use (=r= in the example
 above).  Otherwise, the only template will be used without prompting.
 
