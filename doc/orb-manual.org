@@ -200,6 +200,8 @@ Below shows how this can be used to integrate with [[https://github.com/weirdNox
          (file+head "references/${citekey}.org" "#+title: ${title}\n"))))
 #+end_src
 
+Content of =path/to/template.org=:
+
 #+begin_src org
 - tags ::
 - keywords :: %^{keywords}
