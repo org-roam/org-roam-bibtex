@@ -49,7 +49,7 @@
 
 (require 'warnings)
 
-(defvar org-ref-cite-re)
+(defvar org-ref-cite-types)
 
 ;; ============================================================================
 ;;;; Macros
@@ -224,6 +224,36 @@ the value of `orb--temp-dir'."
 ;;;; Document properties
 ;; ============================================================================
 
+(defvar orb-utils-citekey-re
+  "Universal regexp to match citations in `ROAM_REFS'.
+Supports Org-ref v2 and v3 and Org-cite."
+  ;; NOTE: Not tested thoroughly
+  (rx
+   (or
+    (seq (group-n 2 (regexp
+                     ;; If Org-ref is available, use its types
+                     ;; default to "cite"
+                     (if (boundp 'org-ref-cite-types)
+                         (regexp-opt
+                          (mapcar
+                           (lambda (el)
+                             ;; Org-ref v3 cite type is a list of strings
+                             ;; Org-ref v2 cite type is a plain string
+                             (or (car-safe el) el))
+                           org-ref-cite-types))
+                       "cite")))
+         ":"
+         (or
+          ;; Org-ref v2 style `cite:links'
+          (group-n 1 (+ (any "a-zA-Z0-9_:.-")))
+          ;; Org-ref v3 style `cite:Some&key'
+          (seq (*? (not "&")) "&"
+               (group-n 1 (+ (any "!#-+./:<>-@^-`{-~-" word))))))
+    ;; Org-cite [cite/@citations]
+    (seq "cite" (*? (not ":")) ":"
+         (*? (not "@")) "@"
+         (group-n 1 (+ (any "!#-+./:<>-@^-`{-~-" word)))))))
+
 (defun orb-get-db-cite-refs ()
   "Get a list of `cite` refs from Org Roam database."
   (let* ((types "cite")
@@ -296,8 +326,8 @@ If optional NODE is nil, return the citekey for node at point."
              (prop-list (when prop (split-string-and-unquote prop))))
         (catch 'found
           (dolist (p prop-list)
-            (when (string-match org-ref-cite-re p)
-              (throw 'found (match-string 2 p)))))))))
+            (when (string-match orb-utils-citekey-re p)
+              (throw 'found (match-string 1 p)))))))))
 
 (provide 'orb-utils)
 ;;; orb-utils.el ends here
