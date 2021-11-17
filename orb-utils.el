@@ -67,12 +67,11 @@ Return result of evaluating the BODY."
 
 (defmacro orb-note-actions-defun (interface &rest body)
   "Return a function definition for INTERFACE.
-Function name takes a form of orb-note-actions--INTERFACE.
-A simple docstring is constructed and BODY is injected into a
-`let' form, which has two variables bound, NAME and
-CANDIDATES.  NAME is a string formatted with
-`org-ref-format-entry' and CANDIDATES is a cons cell alist
-constructed from `orb-note-actions-default',
+Function name takes a form of orb-note-actions--INTERFACE.  A
+simple docstring is constructed and BODY is injected into a `let'
+form, which has two variables bound, NAME and CANDIDATES.  NAME
+is a string formatted with `orb-format-entry' and CANDIDATES
+is a cons cell alist constructed from `orb-note-actions-default',
 `orb-note-actions-extra', and `orb-note-actions-user'."
   (declare (indent 1) (debug (symbolp &rest form)))
   (let* ((interface-name (symbol-name interface))
@@ -80,7 +79,7 @@ constructed from `orb-note-actions-default',
     `(defun ,fun-name (citekey)
        ,(format "Provide note actions using %s interface.
 CITEKEY is the citekey." (capitalize interface-name))
-       (let ((name (org-ref-format-entry citekey)) ;; TODO: make a native format function
+       (let ((name (orb-format-entry citekey)) ;; TODO: make a native format function
              (candidates
               ,(unless (eq interface 'hydra)
                  '(append  orb-note-actions-default
@@ -328,6 +327,16 @@ If optional NODE is nil, return the citekey for node at point."
           (dolist (p prop-list)
             (when (string-match orb-utils-citekey-re p)
               (throw 'found (match-string 1 p)))))))))
+
+(defun orb-format-entry (citekey)
+  "Format a BibTeX entry for display, whose citation key is CITEKEY.
+Uses `bibtex-completion-format-entry' internally and so the
+display can be tweaked in the `bibtex-completion-display-formats'
+variable."
+  ;; NOTE: A drop-in replacement for `org-ref-format-entry' which was removed
+  ;; in Org-ref v3.  Still waiting for a native solution.
+  (bibtex-completion-format-entry
+   (bibtex-completion-get-entry citekey) (1- (frame-width))))
 
 (provide 'orb-utils)
 ;;; orb-utils.el ends here
