@@ -35,8 +35,6 @@
 
 (require 'ivy-bibtex)
 
-(declare-function org-ref-format-entry "ext:org-ref-bibtex" (key))
-
 (declare-function orb-insert-edit-note "org-roam-bibtex" (citekey))
 
 (defvar orb-note-actions-default)
