@@ -171,11 +171,19 @@ file names based on file extensions."
           (const :tag "No" nil)
           (string :tag "Custom wildcard keyword")))
 
-(defcustom orb-citekey-format "cite:%s"
-  "Format string for the citation key.
-This string will be prepended to the citation key to obtained an
-Org-ref citation, which will be then set in :ROAM_REFS: property."
-  :type 'string
+(defcustom orb-roam-ref-format 'org-ref-v2
+  "Defines the format of citation key in the `ROAM_REFS' property.
+Should be one of the following symbols:
+- `org-ref-v2': Old Org-ref `cite:links'
+- `org-ref-v3': New Org-ref `cite:&links'
+- `org-cite'  : Org-cite `cite:@elements'
+
+This can also be a custom `format' string with a single `%s' specifier."
+  :type '(radio
+          (const :tag "Org-ref v2" org-ref-v2)
+          (const :tag "Org-ref v3" org-ref-v3)
+          (const :tag "Org-cite" org-cite)
+          (string :tag "Custom format string"))
   :group 'org-roam-bibtex)
 
 (defcustom orb-bibtex-entry-get-value-function #'bibtex-completion-apa-get-value
@@ -565,7 +573,14 @@ created.  PROPS are additional properties for `org-roam-capture-'."
                         (plist-put it :call-location (point-marker))))
             (org-capture-entry
              (org-roam-capture--convert-template template props))
-            (citekey-formatted (format (or orb-citekey-format "%s") citekey))
+            (citekey-ref (format
+                          (pcase orb-roam-ref-format
+                            ('org-ref-v2 "cite:%s")
+                            ('org-ref-v3 "cite:&%s")
+                            ('org-cite "[cite:@%s]")
+                            ((pred stringp) orb-roam-ref-format)
+                            (_ (user-error "Invalid format `orb-roam-ref-format'")))
+                          citekey))
             (title
              (or (funcall orb-bibtex-entry-get-value-function "title" entry)
                  (and
@@ -576,7 +591,7 @@ created.  PROPS are additional properties for `org-roam-capture-'."
             (node (org-roam-node-create :title title)))
       (org-roam-capture-
        :node node
-       :info (list :ref citekey-formatted))
+       :info (list :ref citekey-ref))
     (user-error "Abort")))
 
 ;;;###autoload

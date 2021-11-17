@@ -31,6 +31,9 @@
 
 ;; * org-roam-bibtex.el
 
+(make-obsolete-variable 'orb-citekey-format
+                        'orb-roam-ref-format "0.6.1")
+
 (provide 'orb-compat)
 ;;; orb-compat.el ends here
 ;; Local Variables:

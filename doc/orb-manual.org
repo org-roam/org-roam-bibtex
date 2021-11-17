@@ -40,6 +40,20 @@ If there are more than one template in =org-roam-capture-templates=, you will
 be prompted for the key of the template you want to use (=r= in the example
 above).  Otherwise, the only template will be used without prompting.
 
+** User option =orb-roam-ref-format=
+
+This option defines the format style of a citation key in the =ROAM_REFS=
+property.  Supported are Org-ref v2, Org-ref v3 and Org-cite styles:
+
+- =org-ref-v2= (default): use the old Org-ref =cite:link= format
+- =org-ref-v3=: use the new Org-ref =cite:&link= format
+- =org-cite=: use the Org-cite =cite:@element= format
+
+This can also be a custom =format= string.
+
+It should be noted that for a typical Org-roam use these styles are mostly
+cosmetic.
+
 ** User option =orb-preformat-keywords=
 :PROPERTIES:
 :CUSTOM_ID: orb-preformat-keywords
@@ -87,7 +101,6 @@ field names.
 :END:
 
 ** Command =orb-insert-link=
-
 ** =orb-insert= configuration
 :PROPERTIES:
 :CUSTOM_ID: orb-insert-configuration
