@@ -47,7 +47,7 @@ property.  Supported are Org-ref v2, Org-ref v3 and Org-cite styles:
 
 - =org-ref-v2= (default): use the old Org-ref =cite:link= format
 - =org-ref-v3=: use the new Org-ref =cite:&link= format
-- =org-cite=: use the Org-cite =cite:@element= format
+- =org-cite=: use the Org-cite =@element= format
 
 This can also be a custom =format= string.
 
