@@ -249,9 +249,7 @@ Supports Org-ref v2 and v3 and Org-cite."
           (seq (*? (not "&")) "&"
                (group-n 1 (+ (any "!#-+./:<>-@^-`{-~-" word))))))
     ;; Org-cite [cite/@citations]
-    (seq "cite" (*? (not ":")) ":"
-         (*? (not "@")) "@"
-         (group-n 1 (+ (any "!#-+./:<>-@^-`{-~-" word)))))))
+    (seq "@" (group-n 1 (+ (any "!#-+./:<>-@^-`{-~-" word)))))))
 
 (defun orb-get-db-cite-refs ()
   "Get a list of `cite` refs from Org Roam database."
