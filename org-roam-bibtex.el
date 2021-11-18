@@ -176,7 +176,7 @@ file names based on file extensions."
 Should be one of the following symbols:
 - `org-ref-v2': Old Org-ref `cite:links'
 - `org-ref-v3': New Org-ref `cite:&links'
-- `org-cite'  : Org-cite `cite:@elements'
+- `org-cite'  : Org-cite `@elements'
 
 This can also be a custom `format' string with a single `%s' specifier."
   :type '(radio
@@ -577,7 +577,7 @@ created.  PROPS are additional properties for `org-roam-capture-'."
                           (pcase orb-roam-ref-format
                             ('org-ref-v2 "cite:%s")
                             ('org-ref-v3 "cite:&%s")
-                            ('org-cite "[cite:@%s]")
+                            ('org-cite "@%s")
                             ((pred stringp) orb-roam-ref-format)
                             (_ (user-error "Invalid format `orb-roam-ref-format'")))
                           citekey))
