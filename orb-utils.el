@@ -224,8 +224,6 @@ the value of `orb--temp-dir'."
 ;; ============================================================================
 
 (defvar orb-utils-citekey-re
-  "Universal regexp to match citations in `ROAM_REFS'.
-Supports Org-ref v2 and v3 and Org-cite."
   ;; NOTE: Not tested thoroughly
   (rx
    (or
@@ -249,7 +247,9 @@ Supports Org-ref v2 and v3 and Org-cite."
           (seq (*? (not "&")) "&"
                (group-n 1 (+ (any "!#-+./:<>-@^-`{-~-" word))))))
     ;; Org-cite [cite/@citations]
-    (seq "@" (group-n 1 (+ (any "!#-+./:<>-@^-`{-~-" word)))))))
+    (seq "@" (group-n 1 (+ (any "!#-+./:<>-@^-`{-~-" word))))))
+  "Universal regexp to match citations in `ROAM_REFS'.
+Supports Org-ref v2 and v3 and Org-cite.")
 
 (defun orb-get-db-cite-refs ()
   "Get a list of `cite` refs from Org Roam database."
