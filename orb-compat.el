@@ -31,11 +31,8 @@
 
 ;; * org-roam-bibtex.el
 
-(defvar orb-citekey-format nil
-  "This variable has no effect, use `orb-roam-ref-format' instead.")
-
-(make-obsolete-variable 'orb-citekey-format
-                        'orb-roam-ref-format "0.6.1" 'set)
+(define-obsolete-variable-alias
+  'orb-citekey-format 'orb-roam-ref-format "0.6.1")
 
 (provide 'orb-compat)
 ;;; orb-compat.el ends here

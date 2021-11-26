@@ -106,26 +106,25 @@ more casual alternatives."
           (cons (string :tag "Field name")
                 (string :tag "Alias name"))))
 
-(defcustom orb-file-field-extensions '("pdf")
-  "When processing the file field, keep file names only with these extensions.
+(defcustom orb-attached-file-extensions '("pdf")
+  "When retrieving an attached file, keep files with only these extensions.
 This is a list of file extensions without a dot as case-insensitive
 strings.
 
-Set it to nil to keep all file names regardless of their extensions.
-
-The name of the BibTeX file field is determined by
-`bibtex-completion-pdf-field' and defaults to \"file\"."
+Set it to nil to keep all file names regardless of their extensions."
   :group 'org-roam-bibtex
   :type '(repeat :tag "List of extensions" (string)))
 
 (defcustom orb-abbreviate-file-name t
-  "Non-nil to force abbreviation of file names by `orb-process-file-field'.
+  "Non-nil to force abbreviation of file names by `orb-get-attached-file'.
 
-When this option is set to a non-nil value, the file name
-returned by expanding the file keyword or looking up in
-`bibtex-completion-library-path' will get the home directory part
-abbreviated to '~/'.  Otherwise, the as-is value will be used,
-which may or may not be abbreviated."
+When this option is set to a non-nil value, the filename returned
+by `orb-get-attached-file' will get the home directory part
+abbreviated to `~/'.  Symlinked directories will be abbreviated
+according to `directory-abbrev-alist', see `abbreviate-file-name'
+for details.
+
+An as-is value will be used otherwise."
   :group 'org-roam-bibtex
   :type '(choice
           (const :tag "Yes" t)
