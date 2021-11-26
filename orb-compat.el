@@ -34,6 +34,12 @@
 (define-obsolete-variable-alias
   'orb-citekey-format 'orb-roam-ref-format "0.6.1")
 
+(define-obsolete-variable-alias
+  'orb-file-field-extensions 'orb-attached-file-extensions "0.6.1")
+
+(define-obsolete-function-alias
+  'orb-process-file-field 'orb-get-attached-file "0.6.1")
+
 (provide 'orb-compat)
 ;;; orb-compat.el ends here
 ;; Local Variables:

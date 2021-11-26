@@ -1764,7 +1764,7 @@ KEY is note's citation key."
                            :current-key key
                            :new-key nil
                            :pdf-file (file-truename
-                                      (orb-process-file-field key))
+                                      (orb-get-attached-file key))
                            :running t
                            :prevent-concurring nil
                            :global-bib bibtex-completion-bibliography
