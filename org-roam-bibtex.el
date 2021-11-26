@@ -7,7 +7,7 @@
 ;;      Leo Vivier <leo.vivier+dev@gmail.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: bib, hypermedia, outlines, wp
-;; Version: 0.6.0
+;; Version: 0.6.1
 ;; Package-Requires: ((emacs "27.2") (org-roam "2.0.0") (bibtex-completion "2.0.0") (org-ref "3.0"))
 
 ;; Soft dependencies: projectile, persp-mode, helm, ivy, hydra
@@ -162,7 +162,7 @@ single file name by expanding the %^{my-file} and ${my-file}
 wildcards.  The keyword, e.g. \"my-file\", must be set for
 pre-expanding in `orb-preformat-keywords' as usual.
 
-The variable `orb-file-field-extensions' controls filtering of
+The variable `orb-attached-file-extensions' controls filtering of
 file names based on file extensions."
   ;; TODO: check if a custom string is really working as described
   :group 'org-roam-bibtex

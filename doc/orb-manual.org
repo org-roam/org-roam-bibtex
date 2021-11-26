@@ -193,7 +193,7 @@ If =orb-process-file-keyword= is non-nil, the "file" field will be treated
 specially. If the field contains only one file name, its value will be used for
 template expansion. If it contains several file names, the user will be
 prompted to choose one. The file names can be filtered based on their
-extensions by setting the =orb-file-field-extensions= variable, so that only
+extensions by setting the =orb-attached-file-extensions= variable, so that only
 those matching the extension or extensions will be considered for
 retrieval. The "file" keyword must be set for preformatting as usual. Consult
 the docstrings of these variables for additional customization options.
@@ -204,7 +204,7 @@ Below shows how this can be used to integrate with [[https://github.com/weirdNox
 (setq orb-preformat-keywords
       '("citekey" "title" "url" "author-or-editor" "keywords" "file")
       orb-process-file-keyword t
-      orb-file-field-extensions '("pdf"))
+      orb-attached-file-extensions '("pdf"))
 
 (setq org-roam-capture-templates
       '(("r" "bibliography reference" plain
