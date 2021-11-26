@@ -111,13 +111,16 @@ more casual alternatives."
 This is a list of file extensions without a dot as case-insensitive
 strings.
 
-Set it to nil to keep all file names regardless of their extensions."
+Set it to nil to keep all file names regardless of their extensions.
+
+BibTeX entries are searched for attached files according to
+`bibtex-completion-pdf-field' (default `file') and in
+BibDesk-specific `Bdsk-File-N' fields."
   :group 'org-roam-bibtex
   :type '(repeat :tag "List of extensions" (string)))
 
 (defcustom orb-abbreviate-file-name t
   "Non-nil to force abbreviation of file names by `orb-get-attached-file'.
-
 When this option is set to a non-nil value, the filename returned
 by `orb-get-attached-file' will get the home directory part
 abbreviated to `~/'.  Symlinked directories will be abbreviated
@@ -130,32 +133,102 @@ An as-is value will be used otherwise."
           (const :tag "Yes" t)
           (const :tag "No" nil)))
 
-;;;###autoload
-(defun orb-process-file-field (citekey)
-  "Look up documents associated with the BibTeX entry and choose one.
-Process the BibTeX 'file' field (`bibtex-completion-pdf-field')
-or search in the `bibtex-completion-library-path' for a file or files with
-the CITEKEY as filename sans extension.
+(defcustom orb-use-bibdesk-attachments nil
+  "Whether to look up BibDesk-specific file fields `Bdsk-File.
+If this is non-nil, attachments given in BibDesk-specific file
+fields will be considered in addition to those found through the
+`bibtex-completion-find-pdf' mechanism when performing a template
+expansion, opening an attachment with `orb-note-actions' or
+scraping a PDF with `orb-pdf-scrapper'.
 
-If `orb-file-field-extensions' is non-nil, return only file paths
+Duplicates will be resolved, but since duplicate comparison is
+performed using `file-truename', this will lead to expansion of
+symlink paths if such are used in the normal BibTeX `file' field,
+for example.  See also `orb-abbreviate-file-name' on how to
+abbreviate the retrieved filenames.
+
+Set this to symbol `only' to look up only BibDesk attachments and
+do not use `bibtex-completion-find-pdf'."
+  :group 'org-roam-bibtex
+  :type '(choice
+          (const :tag "Yes" t)
+          (const :tag "BibDesk only" only)
+          (const :tag "No" nil)))
+
+(defun orb-get-bibdesk-filenames (entry)
+  "Return filenames stored in BibDesk file fields \"Bdsk-File-N\".
+ENTRY is a BibTeX entry as returned by `bibtex-completion-get-entry'.
+
+The variable `orb-attached-file-extensions' is respected."
+  ;; NOTE: Mac-specific, hard-coded
+  (let* ((bdsk-file-fields
+          (seq-filter (lambda (cell)
+                        (string-match-p "Bdsk-File" (car cell)))
+                      entry))
+         (strip-value-rx
+          (rx (seq (opt (in  "\"{"))
+                   (group (* (not (in "\"{}"))))
+                   (opt (in  "\"}")))))
+         (filename-rx
+          (concat
+           (rx (seq "Users/" (* anychar)))
+           (if orb-attached-file-extensions
+               (regexp-opt orb-attached-file-extensions t)
+             "pdf")))
+         (bdsk-files
+          (mapcar
+           (lambda (cell)
+             (let ((val (cdr cell))
+                   file)
+               (when (string-match strip-value-rx val)
+                 (setq file (base64-decode-string (match-string 1 val)))
+                 (when (string-match filename-rx file)
+                   (concat "/" (match-string 0 file))))))
+           bdsk-file-fields)))
+    (seq-filter (lambda (val) val) bdsk-files)))
+
+;;;###autoload
+(defun orb-get-attached-file (citekey)
+  "Look up files associated with a BibTeX entry identified by CITEKEY.
+Files are searched for using `bibtex-completion-find-pdf',
+meaning that Mendeley, Zotero and plain file paths are all
+supported, and variables `bibtex-completion-pdf-field' and
+`bibtex-completion-library-path' are respected.  Additionally,
+the BibTeX entry is searched for BibDesk-specific file fields
+`Bdsk-File-N'.
+
+If `orb-attached-file-extensions' is non-nil, return only file paths
 matching the respective extensions.
 
 If `orb-abbreviate-file-name' is non-nil, force an abbreviated
 file name.
 
-Mendeley, Zotero, normal paths are all supported.  If there are
-multiple files found, the user will be prompted to select one."
+Depending on the value of `orb-use-bibdesk-attachments', the
+BibDesk-specific file fields `Bdsk-File-N' may or may not be used
+for the lookup.
+
+If multiple files have been found, the user will be prompted to
+select one."
   (condition-case err
       (when-let* ((entry (bibtex-completion-get-entry citekey))
                   (paths
-                   (--> (bibtex-completion-find-pdf entry)
-                     (if (not orb-file-field-extensions)
-                         it             ; do not filter by extensions
-                       ;; filter by extensions
-                       (--filter
-                        (when-let ((ext (file-name-extension it)))
-                          (member-ignore-case ext orb-file-field-extensions))
-                        it))))
+                   (--> (pcase orb-use-bibdesk-attachments
+                          (`nil (bibtex-completion-find-pdf
+                                 entry bibtex-completion-find-additional-pdfs))
+                          (`only (orb-get-bibdesk-filenames entry))
+                          (_
+                           (-->
+                            (nconc (bibtex-completion-find-pdf entry)
+                                   (orb-get-bibdesk-filenames entry))
+                            (-map #'file-truename it)
+                            (-uniq it))))
+                        (if (not orb-attached-file-extensions)
+                            it          ; do not filter by extensions
+                          ;; filter by extensions
+                          (--filter
+                           (when-let ((ext (file-name-extension it)))
+                             (member-ignore-case ext orb-attached-file-extensions))
+                           it))))
                   (path (if (cdr paths)
                             (completing-read "File to use: " paths)
                           (car paths))))
@@ -166,8 +239,26 @@ multiple files found, the user will be prompted to select one."
     ;; don't stop the capture process
     (error
      (orb-warning
-      (format "error in `orb-process-file-field`: %s %s"
+      (format "error in `orb-get-attached-file`: %s %s"
               (car err) (cdr err))))))
+
+;;;###autoload
+(defun orb-open-attached-file (citekey)
+  "Open a file associated with CITEKEY.
+CITEKEY must be a list for compatibility with `bibtex-completion'
+functions, which also expect a list.
+
+This is a modified and simplified version of `bibtex-completion-open-pdf',
+which uses `orb-get-bibdesk-filenames' under the hood and is therefore
+compatible with BibDesk.  The file is opened with the function set in
+`bibtex-completion-pdf-open-function'.
+
+The intended primary use is with `orb-note-actions'."
+  (let* ((key (car citekey))
+         (attachment (orb-get-attached-file key)))
+    (if attachment
+        (funcall bibtex-completion-pdf-open-function attachment)
+      (message "No PDF(s) found for this entry: %s" key))))
 
 ;; ============================================================================
 ;;;; Orb autokey

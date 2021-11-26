@@ -357,7 +357,7 @@ Simple `setq' will not work."
   :group 'orb-note-actions)
 
 (defcustom orb-note-actions-default
-  '(("Open PDF file(s)" . bibtex-completion-open-pdf)
+  '(("Open PDF file(s)" . orb-open-attached-file)
     ("Add PDF to library" . bibtex-completion-add-pdf-to-library)
     ("Open URL or DOI in browser" . bibtex-completion-open-url-or-doi)
     ("Show record in the bibtex file" . bibtex-completion-show-entry))
@@ -487,7 +487,7 @@ Keyword \"%s\" has invalid type (string was expected)" keyword))))
               ;; maybe process file keyword
               (or (if (and file-keyword (string= field-name file-keyword))
                       (prog1
-                          (orb-process-file-field
+                          (orb-get-attached-file
                            (funcall orb-bibtex-entry-get-value-function "=key=" entry))
                         ;; we're done so don't even compare file-name with
                         ;; file-keyword in the successive cycles
