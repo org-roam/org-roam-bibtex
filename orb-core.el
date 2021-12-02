@@ -257,7 +257,7 @@ The intended primary use is with `orb-note-actions'."
   (let* ((key (car citekey))
          (attachment (orb-get-attached-file key)))
     (if attachment
-        (funcall bibtex-completion-pdf-open-function attachment)
+        (funcall bibtex-completion-pdf-open-function (file-truename attachment))
       (message "No PDF(s) found for this entry: %s" key))))
 
 ;; ============================================================================
