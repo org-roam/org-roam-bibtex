@@ -1,6 +1,6 @@
 #+TITLE: Org Roam BibTeX manual
 #+STARTUP: entitiesplain noindent
-#+OPTIONS: ^:nil todo:nil tags:nil num:4 H:6 prop:nil p:t broken-links:mark
+#+OPTIONS: ^:nil todo:nil tags:nil num:2 H:1 prop:nil p:t broken-links:mark
 
 This manual is work in progress and is not complete.  For basic commands see
 [[file:../README.md]].
@@ -24,7 +24,7 @@ Org Roam BibTeX makes it possible to automatically pre-expand Org-capture
 field or fields of a BibTeX entry for which the note is being created.
 
 Here's an example of how to add a basic template for a bibliography note to
-`org-roam-capture-templates`:
+=org-roam-capture-templates=:
 
 #+begin_src elisp
 (setq org-roam-capture-templates
@@ -40,7 +40,7 @@ If there are more than one template in =org-roam-capture-templates=, you will
 be prompted for the key of the template you want to use (=r= in the example
 above).  Otherwise, the only template will be used without prompting.
 
-** User option =orb-roam-ref-format=
+*** User option =orb-roam-ref-format=
 
 This option defines the format style of a citation key in the =ROAM_REFS=
 property.  Supported are Org-ref v2, Org-ref v3 and Org-cite styles:
@@ -54,7 +54,7 @@ This can also be a custom =format= string.
 It should be noted that for a typical Org-roam use these styles are mostly
 cosmetic.
 
-** User option =orb-preformat-keywords=
+*** User option =orb-preformat-keywords=
 :PROPERTIES:
 :CUSTOM_ID: orb-preformat-keywords
 :END:
@@ -95,10 +95,64 @@ This variable takes effect when =orb-preformat-templates= is set to t
 Consult the [[https://github.com/tmalsburg/helm-bibtex][=bibtex-completion=]] package for additional information about BibTeX
 field names.
 
-** User option =orb-bibtex-field-aliases=
+*** User option =orb-bibtex-field-aliases=
 :PROPERTIES:
 :CUSTOM_ID: orb-bibtex-field-aliases
 :END:
+
+** Handling BibTeX attachments
+*** User option =orb-process-file-keyword=
+
+If =orb-process-file-keyword= is non-nil, the "file" field will be treated
+specially. If the field contains only one file name, its value will be used for
+template expansion. If it contains several file names, the user will be
+prompted to choose one. The file names can be filtered based on their
+extensions by setting the =orb-attached-file-extensions= variable, so that only
+those matching the extension or extensions will be considered for
+retrieval. The "file" keyword must be set for preformatting as usual. Consult
+the docstrings of these variables for additional customization options.
+
+*** User option =orb-abbreviate-file-name=
+
+Non-nil to force abbreviation of file names by orb-get-attached-file.
+
+When this option is set to a non-nil value, the filename returned
+by =orb-get-attached-file= will get the home directory part
+abbreviated to ~/.  Symlinked directories will be abbreviated
+according to directory-abbrev-alist, see abbreviate-file-name
+for details.
+
+An as-is value will be used otherwise.
+
+*** User option =orb-attached-file-extensions=
+
+When retrieving an attached file, keep files with only these extensions.
+
+This is a list of file extensions without a dot as case-insensitive
+strings.
+
+Set it to nil to keep all file names regardless of their extensions.
+
+BibTeX entries are searched for attached files according to
+=bibtex-completion-pdf-field= (default file) and in
+BibDesk-specific =Bdsk-File-N= fields.
+
+*** User option =orb-use-bibdesk-attachments=
+
+Whether to look up BibDesk-specific file fields `Bdsk-File'.
+
+If this is non-nil, attachments given in BibDesk-specific file fields will be
+considered in addition to those found through the =bibtex-completion-find-pdf=
+mechanism when performing a template expansion, opening an attachment with
+=orb-note-actions= or scraping a PDF with ORB PDF Scrapper.
+
+Duplicates will be resolved, but since duplicate comparison is performed using
+file-truename, this will lead to expansion of symlink paths if such are used in
+the normal BibTeX file field, for example.  See also =orb-abbreviate-file-name=
+on how to abbreviate the retrieved filenames.
+
+Set this to symbol only to look up only BibDesk attachments and
+do not use =bibtex-completion-find-pdf=.
 
 ** Command =orb-insert-link=
 ** =orb-insert= configuration
@@ -189,16 +243,7 @@ You can also use a function to generate the template on the fly, see
 :CUSTOM_ID: org-noter-integration.-special-treatment-of-the-file-keyword
 :END:
 
-If =orb-process-file-keyword= is non-nil, the "file" field will be treated
-specially. If the field contains only one file name, its value will be used for
-template expansion. If it contains several file names, the user will be
-prompted to choose one. The file names can be filtered based on their
-extensions by setting the =orb-attached-file-extensions= variable, so that only
-those matching the extension or extensions will be considered for
-retrieval. The "file" keyword must be set for preformatting as usual. Consult
-the docstrings of these variables for additional customization options.
-
-Below shows how this can be used to integrate with [[https://github.com/weirdNox/org-noter][org-noter]] or [[https://github.com/rudolfochrist/interleave][interleave]]:
+Below is an example of a template ready for use with [[https://github.com/weirdNox/org-noter][org-noter]] or [[https://github.com/rudolfochrist/interleave][interleave]]:
 
 #+begin_src elisp
 (setq orb-preformat-keywords

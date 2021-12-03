@@ -134,7 +134,7 @@ An as-is value will be used otherwise."
           (const :tag "No" nil)))
 
 (defcustom orb-use-bibdesk-attachments nil
-  "Whether to look up BibDesk-specific file fields `Bdsk-File.
+  "Whether to look up BibDesk-specific file fields `Bdsk-File'.
 If this is non-nil, attachments given in BibDesk-specific file
 fields will be considered in addition to those found through the
 `bibtex-completion-find-pdf' mechanism when performing a template
