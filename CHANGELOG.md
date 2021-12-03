@@ -8,15 +8,54 @@ Well, at least we try!
 
 ## [Unreleased]
 
+## [0.6.1] - 2021-12-03
+
+### Added
+- Support for Citar (formerly Bibtex-actions)
+- Support for Org-ref v3
+- Support Org-cite
+- Support for BibDesk attachments
+
 ### Changed
+- Internals of how BibTeX attachments are handled
+- Deprecate `orb-process-file-field` in favour of `orb-get-attached-file`
+- Deprecate `orb-citekey-format` in favour of `orb-roam-ref-format`
+- Deprecate `orb-file-field-extensions` in favour of `orb-attached-file-extensions`
+
+## Fixed
+- Delayed loading of dependencies (custom setter for `orb-insert-interface`)
+- Incompatibilities resulting from Org-roam upstream changes: `:target`
+  template keyword
+- Docs.  A little bit.
+
+## Thanks
+
+@klorophatu, @zaeph, @paulhaider, @chuxubank
+
+## [0.6.0] - 2021-07-19
+
+This is the first version of ORB that supports with Org-roam v2.
+
+### Changed
+- Internal changes to support Org-roam v2.  Incompatible with Org-roam v1 and
+  previous ORB configurations!
+- User option `orb-templates` was removed.  ORB templates are now stored in
+  `org-roam-capture-templates` along with other Org-roam templates.
 - Remove keybindigns in `org-roam-bibtex-mode-map`.
+
+## [0.5.2] - 2021-07-19
+
+This is the last version of ORB that works with Org-roam v1. 
+
+### Changed
+- Version number
+- Updated docs
 
 ## [0.5.1] - 2021-05-07
 ### Added
-- This is the last version of ORB that works with Org-roam v1.  Future releases
-  of ORB starting with v0.6 will work only with Org-roam v2 and will not be
-  backwords compatible with ORB < v0.6.  There will be no deprecation notices
-  on functions and variables!
+- Future releases of ORB starting with v0.6 will work only with Org-roam v2 and
+  will not be backwords compatible with ORB < v0.6.  There will be no
+  deprecation notices on functions and variables!
 - Update README with the above notice.
 - A basic setup for Eldev was added.  No tests yet.
 
@@ -264,7 +303,10 @@ and fruitful discussions on export, reference grouping and reference numbers!
 [org-roam]: https://github.com/jethrokuan/org-roam
 [helm-bibtex/bibtex-completion]: https://github.com/tmalsburg/helm-bibtex
 
-[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/org-roam/org-roam-bibtex/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.5.2...v0.6.0
+[0.5.2]: https://github.com/org-roam/org-roam-bibtex/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/org-roam/org-roam-bibtex/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.3.1...v0.4.0
