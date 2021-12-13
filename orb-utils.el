@@ -86,7 +86,7 @@ CITEKEY is the citekey." (capitalize interface-name))
                            orb-note-actions-extra
                            orb-note-actions-user))))
          ,@body))))
- 
+
 ;; ============================================================================
 ;;;; General utilities
 ;; ============================================================================
@@ -268,13 +268,17 @@ Supports Org-ref v2 and v3 and Org-cite.")
 (defvar orb-notes-cache nil
   "Cache of ORB notes.")
 
+(defun orb--normalize-ref (ref)
+  "Return normalized form of REF, i.e remove leading & for org-ref v3 format."
+  (replace-regexp-in-string "^&" "" ref))
+
 (defun orb-make-notes-cache ()
   "Update ORB notes hash table `orb-notes-cache'."
   (let* ((db-entries (orb-get-db-cite-refs))
          (size (round (/ (length db-entries) 0.8125))) ;; ht oversize
          (ht (make-hash-table :test #'equal :size size)))
     (dolist (entry db-entries)
-      (puthash (plist-get entry :ref)
+      (puthash (orb--normalize-ref (plist-get entry :ref))
                (org-roam-node-create
                 :id (plist-get entry :id)
                 :file (plist-get entry :file)
