@@ -280,19 +280,24 @@ Simple `setq' will not work."
 
 (defcustom orb-insert-link-description 'title
   "Link description source for links created with `orb-insert-link'.
-Possible values are the symbols `title', `citekey' and
-`citation'.  When the value of this variable is `title' or
-`citekey', then the title of the note the link points to or
+Possible values are the symbols `title' and `citekey' as well as
+symbols `citation-org-ref-2', `citation-org-ref-3' and
+`citation-org-cite'.  When the value of this variable is `title'
+or `citekey', then the title of the note the link points to or
 respectively the citekey associated with it will be used as the
 link's description:
 
-[[file:path/to/note.org][title]] or [[file:path/to/note.org][citekey]]
+[[id:note_id][title]] or [[id:note_id][citekey]]
 
-When the value of this variable is `citation', instead of an
-Org-mode link create an Org-ref link by appending the citation
-key to `org-ref-default-citation-link' \(with a colon inbetween)
-or \"cite:\", if the latter variable is not defined, for example
-when Org-ref is not loaded.
+When the value of this variable is either `citation-org-ref-2',
+`citation-org-ref-3' instead of an Org-mode link, create an
+Org-ref link in Org-ref 2 or Org-ref 3 format, respectively,
+using the citation link format defined in
+`org-ref-default-citation-link'.  If `org-ref-default-citation-link'
+is not defined, use the default \"cite:\" format.
+
+Similarly, if the value of this variable is `citation-org-cite',
+create an Org-cite citation instead of an Org-mode link.
 
 The default value set by this variable can be overriden by
 calling `orb-insert-link' with an appropriated numerical prefix
@@ -302,7 +307,9 @@ information."
   :type '(choice
           (const :tag "Title" title)
           (const :tag "Citation key" citekey)
-          (const :tag "Citation link" citation)))
+          (const :tag "Citation link" citation-org-ref-2)
+          (const :tag "Citation link" citation-org-ref-3)
+          (const :tag "Citation link" citation-org-cite)))
 
 (defcustom orb-insert-follow-link nil
   "Whether to follow a newly inserted link."
@@ -710,13 +717,19 @@ INFO contains additional information."
       (delete-region (car region) (cdr region))
       (set-marker (car region) nil)
       (set-marker (cdr region) nil))
-    (if orb-link-description
-        (insert (org-link-make-string
-                 (concat "id:" (org-roam-node-id node)) orb-link-description))
-      (let ((cite-link (if (boundp 'org-ref-default-citation-link)
-                           (concat org-ref-default-citation-link ":")
-                         "cite:")))
-        (insert (concat cite-link orb-citekey))))))
+    (pcase orb-link-description
+      ((pred stringp)
+       (insert (org-link-make-string
+                (concat "id:" (org-roam-node-id node)) orb-link-description)))
+      (`citation-org-cite
+       (insert (format "[cite:@%s]" orb-citekey)))
+      (ref-format
+       (let ((cite-link (if (boundp 'org-ref-default-citation-link)
+                            (concat org-ref-default-citation-link ":")
+                          "cite:")))
+         (insert (concat cite-link
+                         (when (eq ref-format 'citation-org-ref-3) "&")
+                         orb-citekey)))))))
 
 (defun org-roam-capture--finalize-orb-insert-link ()
   "Insert a link to a just captured note.
@@ -775,7 +788,7 @@ String or list of strings expected" citekey))))
                                  (cl-case it
                                    (title (org-roam-node-title node))
                                    (citekey citekey)
-                                   (citation nil))
+                                   (t it))
                                  (or region-text it)
                                  (if (and it lowercase) (downcase it) it)))
                (info (--> (list :orb-link-description description
@@ -832,11 +845,15 @@ If the note does not exist yet, it will be created using
 \\<universal-argument-map>\\<org-roam-bibtex-mode-map> The
 customization option `orb-insert-link-description' determines
 what will be used as the link's description.  It is possible to
-override the default value with numerical prefix ARG:
+override the default value of the variable with a numerical
+prefix ARG:
 
 `C-1' \\[orb-insert-link] will force `title'
 `C-2' \\[orb-insert-link] will force `citekey'
-`C-0' \\[orb-insert-link] will force `citation'
+
+`C-0' \\[orb-insert-link] will force `citation-org-ref-2'
+`C-9' \\[orb-insert-link] will force `citation-org-ref-3'
+`C-8' \\[orb-insert-link] will force `citation-org-cite'
 
 If a region of text is active (selected) when calling `orb-insert-link',
 the text in the region will be replaced with the link and the
@@ -874,13 +891,15 @@ choosing a candidate the appropriate link will be inserted."
   ;; C-u C-u or C-u C-u C-u => force `bibtex-completion-clear-cache'
   ;; C-1 force title in description
   ;; C-2 force citekey in description
-  ;; C-3 force inserting the link as Org-ref citation
+  ;; C-0,C-9,C-8 force inserting the link as Org-ref org Org-cite citation
   (let* ((lowercase (or (equal arg '(4))
                         (equal arg '(64))))
          (link-type (cl-case arg
-                        (1 'title)
-                        (2 'citekey)
-                        (0 'citation)))
+                      (1 'title)
+                      (2 'citekey)
+                      (0 'citation-org-ref-2)
+                      (9 'citation-org-ref-3)
+                      (8 'citation-org-cite)))
          (clear-cache (or (equal arg '(16))
                           (equal arg '(64)))))
     (orb-plist-put :link-type

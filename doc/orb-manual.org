@@ -175,21 +175,37 @@ not work.
 :PROPERTIES:
 :CUSTOM_ID: orb-insert-link-description
 :END:
-What piece of information should be used as link description by default:
 
-- =title= - entry's title
-- =citekey= - entry's citation key
-- =citation= - insert Org-ref citation (default "cite:") instead of a file
-  link.
+This variable determines what piece of information should be used as link
+description when creating a link with =orb-insert-link=:
 
-This setting can be overriden for a single invocation of =orb-insert-link= with
+- =title= - entry's title, =[[id:note-id][title]]=
+- =citekey= - entry's citation key, =[[id:note-id][citation-key]]=
+
+When this is set to one of the following symbols, create a citation instead of
+an Org-mode link:
+
+- =citation-org-ref-2= - insert an Org-ref v2 citation link, use
+  =org-ref-default-citation-link=, default "cite:citation-key"
+- =citation-org-ref-3= - insert an Org-ref v3 citation link, use
+  =org-ref-default-citation-link=, default "cite:&citation-key"
+- =citation-org-cite= - insert an Org-cite citation [cite:@citation-key]
+
+This option can be overriden for a single invocation of =orb-insert-link= with
 a numerical prefix.
+
+- =C-1 M-x orb-insert-link= forces =title=
+- =C-2 M-x orb-insert-link= forces =citekey=
+- =C-8 M-x orb-insert-link= forces =citation-org-cite=
+- =C-9 M-x orb-insert-link= forces =citation-org-ref-3=
+- =C-0 M-x orb-insert-link= forces =citation-org-ref-2=
 
 ** User option =orb-insert-follow-link=
 :PROPERTIES:
 :CUSTOM_ID: orb-insert-follow-link
 :END:
-Whether to follow a newly created link.
+
+Whether to follow the newly created link.
 
 ** User option =orb-insert-generic-candidates-format=
 :PROPERTIES:
