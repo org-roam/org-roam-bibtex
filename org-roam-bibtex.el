@@ -279,32 +279,32 @@ Simple `setq' will not work."
          (set-default var value)))
 
 (defcustom orb-insert-link-description 'title
-  "Link description source for links created with `orb-insert-link'.
-Possible values are the symbols `title' and `citekey' as well as
-symbols `citation-org-ref-2', `citation-org-ref-3' and
-`citation-org-cite'.  When the value of this variable is `title'
-or `citekey', then the title of the note the link points to or
-respectively the citekey associated with it will be used as the
-link's description:
+  "Link description format for links created with `orb-insert-link'.
+The command `orb-insert-link' can be used to create Org-mode
+links to bibliographic notes of type [[id:note_id][Description]].
+This variable determines the 'Description' part from the example
+above.  It is an `s-format' string, where special placeholders of
+form '%^{field}' will be expanded with data from the respective
+BibTeX field of the associated BibTeX entry.  If the field value
+cannot be retrieved, the user will be prompted to input a value
+interactively.  When retrieving BibTeX data, the user options
+`orb-bibtex-field-aliases' and `orb-bibtex-entry-get-value-function'
+are respected.
 
-[[id:note_id][title]] or [[id:note_id][citekey]]
+This variable can also be one of the following symbols:
 
-When the value of this variable is either `citation-org-ref-2',
-`citation-org-ref-3' instead of an Org-mode link, create an
-Org-ref link in Org-ref 2 or Org-ref 3 format, respectively,
-using the citation link format defined in
-`org-ref-default-citation-link'.  If `org-ref-default-citation-link'
-is not defined, use the default \"cite:\" format.
-
-Similarly, if the value of this variable is `citation-org-cite',
-create an Org-cite citation instead of an Org-mode link.
+`title'              - equivalent to \"${title}\"
+`citekey'            - equivalent to \"${citekey}\"
+`citation-org-ref-2' - create Org-ref v2 'cite:citekey' citation instead
+`citation-org-ref-3' - create Org-ref v3 'cite:&citekey' citation instead
+`citation-org-cite'  - create Org-cite '[cite:@citekey]' citation instead
 
 The default value set by this variable can be overriden by
 calling `orb-insert-link' with an appropriated numerical prefix
-argument.  See the docstring of the function for more
-information."
+argument.  See its docstring for more information."
   :group 'org-roam-bibtex
   :type '(choice
+          (string :tag "Format string")
           (const :tag "Title" title)
           (const :tag "Citation key" citekey)
           (const :tag "Citation link" citation-org-ref-2)
@@ -487,8 +487,7 @@ is a BibTeX entry as returned by `bibtex-completion-get-entry'."
                        (t (user-error "Error in `orb-preformat-keywords': \
 Keyword \"%s\" has invalid type (string was expected)" keyword))))
              ;; bibtex field name
-             (field-name (or (car (rassoc keyword orb-bibtex-field-aliases))
-                             keyword))
+             (field-name (orb-resolve-field-alias keyword))
              ;; get the bibtex field value
              (field-value
               ;; maybe process file keyword
@@ -719,8 +718,14 @@ INFO contains additional information."
       (set-marker (cdr region) nil))
     (pcase orb-link-description
       ((pred stringp)
-       (insert (org-link-make-string
-                (concat "id:" (org-roam-node-id node)) orb-link-description)))
+       (let ((description
+              (s-format orb-link-description
+                        (lambda (template entry)
+                          (funcall orb-bibtex-entry-get-value-function
+                                   (orb-resolve-field-alias template) entry))
+                        (bibtex-completion-get-entry orb-citekey))))
+         (insert (org-link-make-string
+                  (concat "id:" (org-roam-node-id node)) description))))
       (`citation-org-cite
        (insert (format "[cite:@%s]" orb-citekey)))
       (ref-format
@@ -786,8 +791,8 @@ String or list of strings expected" citekey))))
                (description (--> (or (orb-plist-get :link-type)
                                      orb-insert-link-description)
                                  (cl-case it
-                                   (title (org-roam-node-title node))
-                                   (citekey citekey)
+                                   (title "${title}")
+                                   (citekey "${citekey}")
                                    (t it))
                                  (or region-text it)
                                  (if (and it lowercase) (downcase it) it)))
