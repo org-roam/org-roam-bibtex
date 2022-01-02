@@ -155,6 +155,11 @@ do not use `bibtex-completion-find-pdf'."
           (const :tag "BibDesk only" only)
           (const :tag "No" nil)))
 
+(defsubst orb-resolve-field-alias (alias)
+  "Return ALIAS association from `orb-bibtex-field-aliases'.
+Return ALIAS if association was not found."
+  (or (car (rassoc alias orb-bibtex-field-aliases)) alias))
+
 (defun orb-get-bibdesk-filenames (entry)
   "Return filenames stored in BibDesk file fields \"Bdsk-File-N\".
 ENTRY is a BibTeX entry as returned by `bibtex-completion-get-entry'.
