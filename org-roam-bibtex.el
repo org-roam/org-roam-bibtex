@@ -651,8 +651,6 @@ bibliographic information."
     (orb--switch-perspective))
   (orb-make-notes-cache)
   (if-let ((node (orb-note-exists-p citekey)))
-      ;; Find org-roam reference with the CITEKEY and collect data into
-      ;; `orb-plist'
       (ignore-errors (org-roam-node-visit node))
     ;; fix some Org-ref related stuff
     (orb--store-link-functions-advice 'add)
@@ -693,18 +691,8 @@ bibliographic information."
 ;; ============================================================================
 ;;;; Orb insert
 ;; ============================================================================
-(defvar orb-plist nil
-  "Communication channel for `orb-edit-note' and related functions.")
-
-(defun orb-plist-put (&rest props)
-  "Add properties PROPS to `orb-plist'.
-Returns the new plist."
-  (while props
-    (setq orb-plist (plist-put orb-plist (pop props) (pop props)))))
-
-(defun orb-plist-get (prop)
-  "Get PROP from `orb-plist'."
-  (plist-get orb-plist prop))
+(defvar orb-insert-lowercase nil
+  "Internal.  Dynamic variable for `orb-insert-link' and `orb-insert--link'.")
 
 (defun orb-insert--link (node info)
   "Insert a link to NODE.
@@ -719,11 +707,13 @@ INFO contains additional information."
     (pcase orb-link-description
       ((pred stringp)
        (let ((description
-              (s-format orb-link-description
-                        (lambda (template entry)
-                          (funcall orb-bibtex-entry-get-value-function
-                                   (orb-resolve-field-alias template) entry))
-                        (bibtex-completion-get-entry orb-citekey))))
+              (-->
+               (s-format orb-link-description
+                         (lambda (template entry)
+                           (funcall orb-bibtex-entry-get-value-function
+                                    (orb-resolve-field-alias template) entry))
+                         (bibtex-completion-get-entry orb-citekey))
+               (if (and it orb-insert-lowercase) (downcase it) it))))
          (insert (org-link-make-string
                   (concat "id:" (org-roam-node-id node)) description))))
       (`citation-org-cite
@@ -757,8 +747,6 @@ Internal function.  To be installed in `org-roam-capture-new-node-hook'."
   (when-let ((ref (plist-get org-roam-capture--info :ref)))
     (org-roam-ref-add ref)))
 
-(defvar orb-insert-lowercase nil)
-
 (defun orb-insert-edit-note (citekey)
   "Insert a link to a note with citation key CITEKEY.
 Capture a new note if it does not exist yet.
@@ -786,16 +774,12 @@ String or list of strings expected" citekey))))
                     (setq end (set-marker (make-marker) (region-end)))
                     (setq region-text
                           (buffer-substring-no-properties beg end))))
-               (lowercase (or (orb-plist-get :link-lowercase)
-                              orb-insert-lowercase))
-               (description (--> (or (orb-plist-get :link-type)
-                                     orb-insert-link-description)
+               (description (--> orb-insert-link-description
                                  (cl-case it
                                    (title "${title}")
                                    (citekey "${citekey}")
                                    (t it))
-                                 (or region-text it)
-                                 (if (and it lowercase) (downcase it) it)))
+                                 (or region-text it)))
                (info (--> (list :orb-link-description description
                                 :orb-citekey citekey
                                 :finalize 'orb-insert-link)
@@ -899,18 +883,18 @@ choosing a candidate the appropriate link will be inserted."
   ;; C-0,C-9,C-8 force inserting the link as Org-ref org Org-cite citation
   (let* ((lowercase (or (equal arg '(4))
                         (equal arg '(64))))
+         (clear-cache (or (equal arg '(16))
+                          (equal arg '(64))))
          (link-type (cl-case arg
                       (1 'title)
                       (2 'citekey)
                       (0 'citation-org-ref-2)
                       (9 'citation-org-ref-3)
-                      (8 'citation-org-cite)))
-         (clear-cache (or (equal arg '(16))
-                          (equal arg '(64)))))
-    (orb-plist-put :link-type
-                   (or link-type orb-insert-link-description)
-                   :link-lowercase
-                   (or lowercase orb-insert-lowercase))
+                      (8 'citation-org-cite)
+                      (t nil)))
+         (orb-insert-link-description
+          (or link-type orb-insert-link-description))
+         (orb-insert-lowercase (or lowercase orb-insert-lowercase)))
     (orb-make-notes-cache)
     (cl-case orb-insert-interface
       (helm-bibtex
