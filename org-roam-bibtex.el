@@ -698,7 +698,7 @@ bibliographic information."
   "Insert a link to NODE.
 INFO contains additional information."
   ;; citekey &optional description lowercase region-text beg end
-  (-let (((&plist :region :orb-link-description :orb-citekey) info))
+  (-let (((&plist :region :orb-link-description :orb-citekey :orb-entry) info))
     (when region
       (org-roam-unshield-region (car region) (cdr region))
       (delete-region (car region) (cdr region))
@@ -712,7 +712,7 @@ INFO contains additional information."
                          (lambda (template entry)
                            (funcall orb-bibtex-entry-get-value-function
                                     (orb-resolve-field-alias template) entry))
-                         (bibtex-completion-get-entry orb-citekey))
+                         orb-entry)
                (if (and it orb-insert-lowercase) (downcase it) it))))
          (insert (org-link-make-string
                   (concat "id:" (org-roam-node-id node)) description))))
@@ -733,12 +733,15 @@ of `org-roam-capture--finalize-insert-link'."
   (let* ((mkr (org-roam-capture--get :call-location))
          (buf (marker-buffer mkr))
          (region (org-roam-capture--get :region))
-         (node (org-roam-populate (org-roam-node-create :id (org-roam-capture--get :id)))))
+         (node (org-roam-populate (org-roam-node-create :id (org-roam-capture--get :id))))
+         (citekey (org-capture-get :orb-citekey))
+         (entry (bibtex-completion-get-entry citekey)))
     (with-current-buffer buf
       (org-with-point-at mkr
         (orb-insert--link node (list
                                 :region region
-                                :orb-citekey (org-capture-get :orb-citekey)
+                                :orb-citekey citekey
+                                :orb-entry entry
                                 :orb-link-description (org-capture-get :orb-link-description)))))))
 
 (defun orb--insert-captured-ref-h ()
@@ -762,9 +765,9 @@ list is used."
                           (list (car citekey))
                           (t (user-error "Invalid citation key data type: %s.  \
 String or list of strings expected" citekey))))
+               (entry (bibtex-completion-get-entry citekey))
                (title
-                (funcall orb-bibtex-entry-get-value-function
-                 "title" (bibtex-completion-get-entry citekey) ""))
+                (funcall orb-bibtex-entry-get-value-function "title" entry ""))
                (node (or (orb-note-exists-p citekey)
                          (org-roam-node-create :title title)))
                region-text
@@ -782,6 +785,7 @@ String or list of strings expected" citekey))))
                                  (or region-text it)))
                (info (--> (list :orb-link-description description
                                 :orb-citekey citekey
+                                :orb-entry entry
                                 :finalize 'orb-insert-link)
                           (if (and beg end)
                               (append it (list :region (cons beg end)))
