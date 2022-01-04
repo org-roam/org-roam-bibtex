@@ -262,9 +262,26 @@ Possible values are the symbols `helm-bibtex', `ivy-bibtex', or
 commands will be used, while in the latter case the command
 `orb-insert-generic' will be used.
 
-This variable should be set using the Customize interface,
-`use-package''s `:custom' keyword, or Doom's `setq!' macro.
-Simple `setq' will not work."
+When using `helm-bibtex' or `ivy-bibtex' as `orb-insert-interface',
+choosing the action \"Edit note & insert a link\" will insert the
+desired link.  For convenience, this action is made default for
+the duration of an `orb-insert-link' session.  It will not
+persist when `helm-bibtex' or `ivy-bibtex' proper are run.
+Otherwise, the command is just the usual `helm-bibtex'/`ivy-bibtex'.
+For example, it is possible to run other `helm-bibtex' or
+`ivy-bibtex' actions.  When action other than \"Edit note &
+insert a link\" is run, no link will be inserted, although the
+session can be resumed later with `helm-resume' or `ivy-resume',
+respectively, where it will be possible to select the \"Edit note
+& insert a link\" action.
+
+When using the `generic' interface, a simple list of available
+citation keys is presented using `completion-read' and after
+choosing a candidate the appropriate link will be inserted.
+
+Please note that this variable should be set using the Customize
+interface, `use-package''s `:custom' keyword, or Doom's `setq!'
+macro.  Simple `setq' will not work."
   :group 'org-roam-bibtex
   :type '(radio
           (const helm-bibtex)
@@ -284,12 +301,12 @@ The command `orb-insert-link' can be used to create Org-mode
 links to bibliographic notes of type [[id:note_id][Description]].
 This variable determines the 'Description' part from the example
 above.  It is an `s-format' string, where special placeholders of
-form '%^{field}' will be expanded with data from the respective
-BibTeX field of the associated BibTeX entry.  If the field value
-cannot be retrieved, the user will be prompted to input a value
-interactively.  When retrieving BibTeX data, the user options
-`orb-bibtex-field-aliases' and `orb-bibtex-entry-get-value-function'
-are respected.
+form '${field}' will be expanded with data from the respective
+BibTeX field of the associated BibTeX entry.  If the field's
+value cannot be retrieved, the user will be prompted to input a
+value interactively.  When retrieving BibTeX data, the user
+options `orb-bibtex-field-aliases' and
+`orb-bibtex-entry-get-value-function' are respected.
 
 This variable can also be one of the following symbols:
 
@@ -851,7 +868,7 @@ prefix ARG:
 If a region of text is active (selected) when calling `orb-insert-link',
 the text in the region will be replaced with the link and the
 text string will be used as the link's description — similar to
-`org-roam-insert'.
+`org-roam-node-insert'.
 
 Normally, the case of the link description will be preserved.  It
 is possible to force lowercase by supplying either one or three
@@ -861,23 +878,7 @@ Finally, `bibtex-completion-cache' will be re-populated if either
 two or three universal arguments `\\[universal-argument]' are supplied.
 
 The customization option `orb-insert-interface' allows to set the
-completion interface backend for the candidates list.  Available
-interfaces are `helm-bibtex', `ivy-bibtex' and `orb-insert-generic'.
-
-With `helm-bibtex' or `ivy-bibtex', choosing the action \"Edit
-note & insert a link\" will insert the desired link.  For
-convenience, this action is made default for the duration of an
-`orb-insert-link' session.  It will not persist when `helm-bibtex' or
-`ivy-bibtex' proper are run.  It is possible to run other
-`helm-bibtex' or `ivy-bibtex' actions.  When action other than
-\"Edit note & insert a link\" is run, no link will be inserted,
-although the session can be resumed later with `helm-resume' or
-`ivy-resume', respectively, where it will be possible to select
-the \"Edit note & insert a link\" action.
-
-When using `orb-insert-generic', a simple list of available
-citation keys is presented using `completion-read' and after
-choosing a candidate the appropriate link will be inserted."
+completion interface backend for the candidates list."
   (interactive "P")
   ;; parse arg
   ;; C-u or C-u C-u C-u => force lowercase
