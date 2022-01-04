@@ -50,8 +50,6 @@
   (require 'cl-macs)
   (require 'subr-x))
 
-(declare-function bibtex-set-field "org-ref" (field value &optional nodelim))
-
 
 ;; ============================================================================
 ;;; Customize definitions
@@ -523,8 +521,23 @@ This is an auxiliary function for command
         (insert new-key)
         ;; set the bibtex fields
         (when fields-to-set
-          (dolist (field fields-to-set)
-            (bibtex-set-field (car field) (cdr field))))))
+          (save-excursion
+            (dolist (field fields-to-set)
+              (let ((name (car field))
+                    (value (cdr field))
+                    bound)
+                ;; (bibtex-set-field name value)
+                (bibtex-beginning-of-entry)
+                (when (setq bound (bibtex-search-forward-field name t))
+                  (goto-char (car (cdr bound)))
+                  (bibtex-kill-field nil t))
+                (bibtex-make-field (list name "" value) t t)))
+            ;; Some hard-set cosmetic changes
+            (let ((bibtex-entry-format
+                   '(whitespace realign unify-case braces sort-fields))
+                  (bibtex-field-indentation 2)
+                  (fill-column 160))
+              (bibtex-clean-entry))))))
     ;; return the result ((NEW-KEY . ENTRY) . VALIDP)
     ;; TODO: for testing until implemented
     (when natural-order

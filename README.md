@@ -12,13 +12,15 @@ Description
 ---------------
 
 Org Roam BibTeX (ORB) is an Org Roam extension that integrates [Org
-Roam](https://github.com/jethrokuan/org-roam) with [Helm and Ivy
-BibTeX](https://github.com/tmalsburg/helm-bibtex) and [Org
-Ref](https://github.com/jkitchin/org-ref).
+Roam](https://github.com/jethrokuan/org-roam) with bibliography/citation
+management software: [Org Ref](https://github.com/jkitchin/org-ref), [Helm and
+Ivy BibTeX](https://github.com/tmalsburg/helm-bibtex) and
+[Citar](https://github.com/bdarcus/citar).
 
 It allows users to manage their bibliographical notes using Org Roam and access
-the notes in `org-roam-directory` via `helm-bibtex`, `ivy-bibtex`, or by
-opening `org-ref`’s `cite:` links.
+the notes in `org-roam-directory` via `helm-bibtex`, `ivy-bibtex`,
+`citar-open-notes` or by activation Org-ref `cite:` links and Org-cite
+citations.
 
 Quick Demonstration 🎬
 ---------------
@@ -97,22 +99,25 @@ Installation
 
 ### Hard dependencies
 
-Org Roam BibTeX depends on [Org Roam](https://github.com/org-roam/org-roam),
-[BibTeX Completion](https://github.com/tmalsburg/helm-bibtex), and [Org
-Ref](https://github.com/jkitchin/org-ref).  Users cloning ORB directly from
-GitHub also need to install the above packages and to ensure that
-`bibtex-completion` is autoloaded.  When installing ORB with a package manager
-(MELPA) or from within a configuration framework (Doom, Spacemacs), no
-additional steps are required.
-
-Org Roam BibTeX deliberately does not load Org Ref and delegates this tasks to
-the user.  However, this package _must_ be loaded before running any Org Roam
-BibTeX-related commands.  See below for examples.
+Org Roam BibTeX depends on [Org Roam](https://github.com/org-roam/org-roam) and
+[BibTeX Completion](https://github.com/tmalsburg/helm-bibtex).  Users cloning
+ORB directly from GitHub also need to install the above packages.  When
+installing ORB with a package manager (MELPA) or from within a configuration
+framework (Doom, Spacemacs), no additional steps are required.
 
 ### Soft dependencies
 
 Some parts of Org Roam BibTeX will not work without: 
 
+* [Org Ref](https://github.com/jkitchin/org-ref) — namely when Org-ref v2 or v3
+  citation citation links are used as ROAM_REFS.  Org-roam and ORB now support
+  the built-in Org-cite citation keys (Org-mode 9.5+), so Org-ref is
+  not a strict requirement anymore.
+* [Helm/Ivy-bibtex](https://github.com/tmalsburg/helm-bibtex) — these packages
+  are required by Org-ref and provide native interfaces for Bibtex-completion,
+  although the latter can be installed separately without them.
+* [Citar](https://github.com/bdarcus/citar) — this package provides an extended
+  support for Org-cite citations.
 * [AnyStyle CLI](https://github.com/inukshuk/anystyle-cli) — ORB PDF Scrapper
 requires this external tool, see [Orb Anystyle](#orb-anystyle) for more
 details.
@@ -147,13 +152,13 @@ The package is on [MELPA](https://github.com/melpa/melpa).
     (use-package org-roam-bibtex
       :after org-roam
       :config
-      (require 'org-ref)) ; optional: if Org Ref is not loaded anywhere else, load it here
+      (require 'org-ref)) ; optional: if using Org-ref v2 or v3 citation links
     ```
 
     b) Alternatively, require the package if you don't use `use-package`:
 
     ``` emacs-lisp
-    (require 'org-ref) ; optional: if Org Ref is not loaded anywhere else, load it here
+    (require 'org-ref) ; optional: if using Org-ref v2 or v3 citation links
     (require 'org-roam-bibtex)
     ```
 
@@ -180,13 +185,13 @@ To do that:
       :after org-roam
       :load-path "~/projects/org-roam-bibtex/" ; Modify with your own path where you cloned the repository
       :config
-      (require 'org-ref)) ; optional: if Org Ref is not loaded anywhere else, load it here
+      (require 'org-ref)) ; optional: if using Org-ref v2 or v3 citation links
     ```
 
     b) Alternatively, if you don't use `use-package`: 
 
     ```emacs-lisp
-    (require 'org-ref) ; optional: if Org Ref is not loaded anywhere else, load it here
+    (require 'org-ref) ; optional: if using Org-ref v2 or v3 citation links
     (add-to-list 'load-path "~/projects/org-roam-bibtex/") ; Modify with your own path where you cloned the repository
     (require 'org-roam-bibtex)
     ```
@@ -205,7 +210,7 @@ If you have a private `org-roam` layer, modify it as follows:
   (use-package org-roam-bibtex
     :after org-roam
     :config
-    (require 'org-ref)) ; optional: if Org Ref is not loaded anywhere else, load it here
+    (require 'org-ref)) ; optional: if using Org-ref v2 or v3 citation links
 ```
 
 If you don't have a private `org-roam` layer, configure it first, see examples
@@ -239,7 +244,7 @@ use the approach described in the above mentioned resources.
 (use-package! org-roam-bibtex
   :after org-roam
   :config
-  (require 'org-ref)) ; optional: if Org Ref is not loaded anywhere else, load it here
+  (require 'org-ref)) ; optional: if using Org-ref v2 or v3 citation links
 ```
 
 3. Run `bin/doom sync` and restart Emacs.

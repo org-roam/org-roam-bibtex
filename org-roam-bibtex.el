@@ -1,6 +1,6 @@
 ;;; org-roam-bibtex.el --- Org Roam meets BibTeX -*- lexical-binding: t -*-
 
-;; Copyright © 2020-2021 Mykhailo Shevchuk
+;; Copyright © 2020-2022 Mykhailo Shevchuk
 ;; Copyright © 2020 Leo Vivier
 
 ;; Author: Mykhailo Shevchuk <mail@mshevchuk.com>
@@ -8,9 +8,7 @@
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: bib, hypermedia, outlines, wp
 ;; Version: 0.6.1
-;; Package-Requires: ((emacs "27.2") (org-roam "2.0.0") (bibtex-completion "2.0.0") (org-ref "3.0"))
-
-;; Soft dependencies: projectile, persp-mode, helm, ivy, hydra
+;; Package-Requires: ((emacs "27.2") (org-roam "2.0.0") (bibtex-completion "2.0.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -30,35 +28,27 @@
 
 ;;; Commentary:
 ;;
-;; This library offers an integration between Bibtex-completion and
-;; Org-roam by delegating the tasks of note's creation, editing and
-;; retrieval to Org-roam.  From the Org-roam's perspective, the
-;; library provides a means to populate Org-roam templates with
-;; bibliographic information secured through Bibtex-completion,.
+;; Org-roam-bibtex, ORB for short, offers integration of Org-roam with BibTeX
+;; Emacs software: Org-ref, Helm/Ivy-bibtex and Citar.  The main task of ORB is
+;; to seamlessly expose Org-roam as a note management solution to these
+;; packages, shadowing their native facilities for taking bibliographic
+;; notes. As its main feature, ORB enables expansion of BibTeX keywords in
+;; Org-roam templates.
 ;;
-;; To use it:
+;; Main usage:
 ;;
-;; call interactively `org-roam-bibtex-mode' or call (org-roam-bibtex-mode +1)
-;; from Lisp.
+;; Call interactively `org-roam-bibtex-mode' or call (org-roam-bibtex-mode +1)
+;; from Lisp.  Enabling `org-roam-bitex-mode' sets appropriate functions for
+;; creating and retrieving Org-roam notes from Org-ref, Helm/Ivy-bibtex and
+;; Citar.
 ;;
-;; After enabling `org-roam-bibtex-mode', the function `orb-edit-notes' will be
-;; used as `bibtex-completion-edit-notes-function' in Helm-bibtex, Ivy-bibtex.
+;; Other commands:
 ;;
-;; Additionally, `orb-org-ref-edit-note', which is a simple wrapper around
-;; `orb-edit-note', is installed as Org-ref's `org-ref-notes-function'.  See
-;; Org-ref's documentation for how to setup many-files notes.  Take a notice
-;; that because of its size, Org-ref is not a dependency of Org Roam BibTeX, so
-;; it will not be pulled automatically by your package manager and must be
-;; installed manually.
+;; - `orb-insert-link':  insert a link or citation to an Org-roam note that has
+;;    an associated BibTeX entry
+;; - `orb-note-actions': call a dispatcher of useful note actions
 ;;
-;; As a user option, `org-roam-capture-templates' can be dynamically
-;; pre-expanded with BibTeX field values.  See `orb-preformat-keywords' for
-;; more details.
-;;
-;; Optionally, automatic switching to the perspective (Persp-mode) with the
-;; notes project (Projectile) is possible.  See `orb-edit-note' for more
-;; details.
-;;
+;; Soft dependencies: Org-ref, Citar, Helm, Ivy, Hydra, Projectile, Persp-mode
 
 ;;; Code:
 
@@ -1009,8 +999,6 @@ modified, there is a number of prefined extra actions
 user actions can be set in `orb-note-actions-user'."
   (interactive)
   (if-let ((non-default-interfaces (list 'hydra 'ido 'ivy 'helm))
-           ;; FIXME: this does not work anymore
-           ;; (citekey (cdr (org-roam--extract-ref)))
            (citekey (orb-get-node-citekey)))
       (cond ((memq orb-note-actions-interface non-default-interfaces)
              (orb-note-actions--run orb-note-actions-interface citekey))
