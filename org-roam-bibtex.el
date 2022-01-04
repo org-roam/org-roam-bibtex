@@ -1045,6 +1045,10 @@ CITEKEY is a list whose car is a citation key."
 ;; ============================================================================
 ;;
 
+(defvar orb--external-vars-original-values nil
+  "Variable to hold original values of variables from external packages.
+Internal use.")
+
 ;;;###autoload
 (defun orb-org-ref-edit-note (citekey)
   "Open an Org-roam note associated with the CITEKEY or create a new one.
@@ -1052,8 +1056,10 @@ Set `org-ref-notes-function' to this function if your
 bibliography notes are managed by Org-roam and you want some
 extra integration between the two packages.
 
-This is a wrapper function around `orb-edit-note'
-intended for use with Org-ref."
+This is a wrapper function around `orb-edit-note' intended for
+use with Org-ref.
+
+NOTE: This function is no longer needed for Org-ref v3."
   (when (require 'org-ref nil t)
     (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
       (orb-edit-note citekey))))
@@ -1102,20 +1108,31 @@ interactively."
   ;; TODO: Revert external variables to their original values rather than to
   ;; their defaults
   (cond (org-roam-bibtex-mode
-         (setq org-ref-notes-function 'orb-org-ref-edit-note)
-         (setq citar-open-note-function #'orb-citar-edit-note)
-         (setq bibtex-completion-edit-notes-function #'orb-bibtex-completion-edit-note)
+         (setq orb--external-vars-original-values nil)
+         (let ((var-alist
+                '((citar-open-note-function . citar)
+                  (bibtex-completion-edit-notes-function . bibtex-completion)
+                  ;; Only for Org-ref v2
+                  (org-ref-notes-function . org-ref))))
+           (dolist (el var-alist)
+             (let* ((var (car el))
+                    (pkg (cdr el))
+                    (val (and (require pkg nil t)
+                              (boundp var)
+                              (symbol-value var))))
+               (when val
+                 (push (cons var val) orb--external-vars-original-values)
+                 (set var (intern (format "orb-%s-edit-note" pkg)))))))
          (add-to-list 'bibtex-completion-find-note-functions #'orb-find-note-file)
          (add-hook 'org-capture-after-finalize-hook #'orb-make-notes-cache)
          (add-hook 'org-roam-capture-new-node-hook #'orb--insert-captured-ref-h)
          (orb-make-notes-cache))
         (t
-         (setq org-ref-notes-function 'org-ref-notes-function-one-file)
-         (setq citar-open-note-function #'citar-org-open-notes-default)
+         (dolist (var-alist orb--external-vars-original-values)
+           (set (car var-alist) (cdr var-alist)))
          (setq bibtex-completion-find-note-functions
                (delq #'orb-find-note-file
                      bibtex-completion-find-note-functions))
-         (setq bibtex-completion-edit-notes-function #'bibtex-completion-edit-notes-default)
          (remove-hook 'org-roam-capture-new-node-hook #'orb--insert-captured-ref-h)
          (remove-hook 'org-capture-after-finalize-hook #'orb-make-notes-cache))))
 
