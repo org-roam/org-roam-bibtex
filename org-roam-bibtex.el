@@ -1124,6 +1124,7 @@ interactively."
                  (push (cons var val) orb--external-vars-original-values)
                  (set var (intern (format "orb-%s-edit-note" pkg)))))))
          (add-to-list 'bibtex-completion-find-note-functions #'orb-find-note-file)
+         (add-to-list 'bibtex-completion-key-at-point-functions #'orb-get-node-citekey)
          (add-hook 'org-capture-after-finalize-hook #'orb-make-notes-cache)
          (add-hook 'org-roam-capture-new-node-hook #'orb--insert-captured-ref-h)
          (orb-make-notes-cache))
@@ -1133,6 +1134,9 @@ interactively."
          (setq bibtex-completion-find-note-functions
                (delq #'orb-find-note-file
                      bibtex-completion-find-note-functions))
+         (setq bibtex-completion-key-at-point-functions
+               (delq #'orb-get-node-citekey
+                     bibtex-completion-key-at-point-functions))
          (remove-hook 'org-roam-capture-new-node-hook #'orb--insert-captured-ref-h)
          (remove-hook 'org-capture-after-finalize-hook #'orb-make-notes-cache))))
 
