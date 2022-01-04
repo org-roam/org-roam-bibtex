@@ -155,10 +155,41 @@ Set this to symbol only to look up only BibDesk attachments and
 do not use =bibtex-completion-find-pdf=.
 
 ** Command =orb-insert-link=
+
+The command =orb-insert-link= can be used to create Org-mode links to
+bibliographic notes of type =[[id:note_id][Description]]=.  It is similar to
+the Org-roam's command =org-roam-node-insert=.  The difference between the two
+is that the Org-roam's version creates a link to any existing Org-roam note
+("node") or creates a new note if it does not exist.  The ORB's version
+consults the bibliography file and lets you create a link to an existing note
+associated with a BibTeX entry or create a new note for an entry that doesn't
+have one yet.
+
+The =Description= part of the link is controlled by the user option
+=orb-insert-link-description=, which see.  The global setting can be overriden
+for a single invocation with a numerical prefix:
+
+- =C-1 M-x orb-insert-link= forces =title=
+- =C-2 M-x orb-insert-link= forces =citekey=
+- =C-8 M-x orb-insert-link= forces =citation-org-cite=
+- =C-9 M-x orb-insert-link= forces =citation-org-ref-3=
+- =C-0 M-x orb-insert-link= forces =citation-org-ref-2=
+
+If a region of text is active (selected) when calling =orb-insert-link=, the
+text in the region will be replaced with a link and the region's text will be
+used as link description — similar to =org-roam-node-insert=.
+
+Normally, the case of the link description will be preserved.  It is possible
+to force lowercase by supplying either one or three universal arguments =C-u=.
+
+Finally, =bibtex-completion-cache= will be re-populated if either two or three
+universal arguments =C-u= are supplied.
+
 ** =orb-insert= configuration
 :PROPERTIES:
 :CUSTOM_ID: orb-insert-configuration
 :END:
+
 ** User option =orb-insert-interface=
 :PROPERTIES:
 :CUSTOM_ID: orb-insert-interface
@@ -167,7 +198,22 @@ do not use =bibtex-completion-find-pdf=.
 Interface to use with =orb-insert=. Supported interfaces are =helm-bibtex=,
 =ivy-bibtex=, and =generic= (=orb-insert-generic=)
 
-NOTE: This variable should be set using the Customize interface,
+When using =helm-bibtex= or =ivy-bibtex= as =orb-insert-interface=, choosing
+the action \"Edit note & insert a link\" will insert the desired link.  For
+convenience, this action is made default for the duration of an
+=orb-insert-link= session.  It will not persist when =helm-bibtex= or
+=ivy-bibtex= proper are run.  Otherwise, the command is just the usual
+=helm-bibtex=/=ivy-bibtex=.  For example, it is possible to run other
+=helm-bibtex= or =ivy-bibtex= actions.  When action other than \"Edit note &
+insert a link\" is run, no link will be inserted, although the session can be
+resumed later with =helm-resume= or =ivy-resume=, respectively, where it will
+be possible to select the \"Edit note & insert a link\" action.
+
+When using the =generic= interface, a simple list of available citation keys is
+presented using =completion-read= and after choosing a candidate the
+appropriate link will be inserted.
+
+Please note that this variable should be set using the Customize interface,
 =use-package='s =:custom= keyword, or Doom's =setq!= macro.  Simple =setq= will
 not work.
 
@@ -179,8 +225,18 @@ not work.
 This variable determines what piece of information should be used as link
 description when creating a link with =orb-insert-link=:
 
-- =title= - entry's title, =[[id:note-id][title]]=
-- =citekey= - entry's citation key, =[[id:note-id][citation-key]]=
+This variable determines the 'Description' part from the example above.  It is
+an =s-format= string, where special placeholders of form "${field}" will be
+expanded with data from the respective BibTeX field of the associated BibTeX
+entry.  If the value of the field cannot be retrieved, the user will be
+prompted to input a value interactively.  When retrieving BibTeX data, the user
+options =orb-bibtex-field-aliases= and =orb-bibtex-entry-get-value-function=
+are respected.
+
+This variable can also be one of the following symbols:
+
+- =title=              - equivalent to "${title}"
+- =citekey=            - equivalent to "${citekey}"
 
 When this is set to one of the following symbols, create a citation instead of
 an Org-mode link:
@@ -191,8 +247,13 @@ an Org-mode link:
   =org-ref-default-citation-link=, default "cite:&citation-key"
 - =citation-org-cite= - insert an Org-cite citation [cite:@citation-key]
 
-This option can be overriden for a single invocation of =orb-insert-link= with
-a numerical prefix.
+In other words, =orb-insert-link= can behave like a BibTeX-aware version of
+=org-roam-node-insert= and like an Org-roam-aware version of =org-cite-insert=
+(or =org-ref-insert-cite-link= or =citar-insert-citation=) depending on the
+user choice.
+
+The global vale of this option can be overriden for a single invocation of
+=orb-insert-link= with a numerical prefix:
 
 - =C-1 M-x orb-insert-link= forces =title=
 - =C-2 M-x orb-insert-link= forces =citekey=
