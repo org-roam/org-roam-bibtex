@@ -999,7 +999,7 @@ modified, there is a number of prefined extra actions
 user actions can be set in `orb-note-actions-user'."
   (interactive)
   (if-let ((non-default-interfaces (list 'hydra 'ido 'ivy 'helm))
-           (citekey (orb-get-node-citekey)))
+           (citekey (orb-get-node-citekey nil 'assert)))
       (cond ((memq orb-note-actions-interface non-default-interfaces)
              (orb-note-actions--run orb-note-actions-interface citekey))
             ((functionp orb-note-actions-interface)

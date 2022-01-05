@@ -49,6 +49,9 @@
 
 (require 'warnings)
 
+(eval-when-compile
+  (require 'subr-x))
+
 (defvar org-ref-cite-types)
 
 ;; ============================================================================
@@ -313,10 +316,12 @@ Return Org Roam node or nil."
   (gethash citekey (or orb-notes-cache
                        (orb-make-notes-cache))))
 
-(defun orb-get-node-citekey (&optional node)
+(defun orb-get-node-citekey (&optional node assert)
   "Return citation key associated with NODE.
-If optional NODE is nil, return the citekey for node at point."
-  (let ((node (or node (org-roam-node-at-point 'assert))))
+If optional NODE is nil, return the citekey for node at point.
+ASSERT will be passed to `org-roam-node-at-point'.  If it is
+non-nil, an error will be thrown if there is no node at point."
+  (when-let ((node (or node (org-roam-node-at-point assert))))
     (save-excursion
       (goto-char (org-roam-node-point node))
       (let* ((prop (org-entry-get (point) "ROAM_REFS"))
