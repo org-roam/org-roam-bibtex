@@ -8,6 +8,28 @@ Well, at least we try!
 
 ## [Unreleased]
 
+## [0.6.2] - 2022-01-05
+
+### Added
+- Support for `s-format` template placeholders in `orb-insert-link-description`
+- Support for different citation dialects (Org-ref v2 and v3, Org-cite) in
+  `orb-insert-link-description`
+
+### Changed
+- Activating `org-roam-bibtex-mode` adds `orb-get-node-citekey` to
+  `bibtex-completion-key-at-point-functions`
+- Org-ref was removed as a Package-Requires dependency
+- Internals of `orb-insert--link`: it now relies on global variables
+  instead of `orb-plist`, which has now been removed completely
+- Commentary section in `org-roam-bibtex.el` was updated 
+- Copyright year was updated
+
+## Fixed
+- Variables belonging to external packages are now no longer reset to their
+  default values when `org-roam-bibtex-mode` is switched off.  Instead, their
+  original, perhaps user-set value is recorded before `org-roam-bibtex-mode` is
+  switched on and restored when it is switched off.
+
 ## [0.6.1] - 2021-12-03
 
 ### Added
@@ -301,9 +323,11 @@ and fruitful discussions on export, reference grouping and reference numbers!
 
 [MELPA]: http://www.melpa.org/#/org-roam-bibtex
 [org-roam]: https://github.com/jethrokuan/org-roam
-[helm-bibtex/bibtex-completion]: https://github.com/tmalsburg/helm-bibtex
+[helm-bibtex/ivy-bibtex/bibtex-completion]: https://github.com/tmalsburg/helm-bibtex
+[citar]: https://github.com/bdarcus/citar
 
-[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/org-roam/org-roam-bibtex/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/org-roam/org-roam-bibtex/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/org-roam/org-roam-bibtex/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/org-roam/org-roam-bibtex/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/org-roam/org-roam-bibtex/compare/v0.5.1...v0.5.2

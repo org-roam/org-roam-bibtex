@@ -1,6 +1,6 @@
 ;;; org-roam-bibtex-compat.el --- Org Roam BibTeX: obsolete definitions -*- lexical-binding: t -*-
 
-;; Copyright © 2020-2021 Mykhailo Shevchuk
+;; Copyright © 2020-2022 Mykhailo Shevchuk
 ;; Copyright © 2020 Leo Vivier
 
 ;; Author: Mykhailo Shevchuk <mail@mshevchuk.com>

@@ -296,7 +296,7 @@ Changelog is being maintained [here](https://github.com/org-roam/org-roam-bibtex
 
 License
 ---------------
-Copyright © 2020-2021 Mykhailo Shevchuk
+Copyright © 2020-2022 Mykhailo Shevchuk
 
 Copyright © 2020 Leo Vivier
 

@@ -1,6 +1,6 @@
 ;;; orb-helm.el --- ORB support form Helm -*- lexical-binding: t -*-
 
-;; Copyright © 2020-2021 Mykhailo Shevchuk
+;; Copyright © 2020-2022 Mykhailo Shevchuk
 
 ;; Author: Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex

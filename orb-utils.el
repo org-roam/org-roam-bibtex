@@ -1,6 +1,6 @@
 ;;; orb-utils.el --- Org Roam BibTeX: utility macros and functions -*- lexical-binding: t -*-
 
-;; Copyright © 2020-2021 Mykhailo Shevchuk
+;; Copyright © 2020-2022 Mykhailo Shevchuk
 ;; Copyright © 2020 Leo Vivier
 
 ;; Author: Mykhailo Shevchuk <mail@mshevchuk.com>
