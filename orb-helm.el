@@ -5,8 +5,6 @@
 ;; Author: Mykhailo Shevchuk <mail@mshevchuk.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 
-;; Soft dependencies: projectile, persp-mode, helm, ivy, hydra
-
 ;; This file is NOT part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -23,10 +21,8 @@
 ;; this program; see the file LICENSE.  If not, visit
 ;; <https://www.gnu.org/licenses/>.
 
-;;; Commentary:
-
 ;;; Code:
-
+;;
 ;; ============================================================================
 ;;;; Dependencies
 ;; ============================================================================
@@ -36,7 +32,7 @@
 (require 'helm-bibtex)
 (require 'helm-source)
 
-(declare-function orb-insert-edit-note "org-roam-bibtex" (citekey))
+(declare-function orb-insert-edit-note "orb-core" (citekey))
 
 (defvar orb-note-actions-default)
 (defvar orb-note-actions-extra)
