@@ -1,0 +1,434 @@
+#+TITLE: Org Roam BibTeX manual
+#+STARTUP: entitiesplain noindent
+#+OPTIONS: ^:nil todo:nil tags:nil num:2 H:1 prop:nil p:t broken-links:mark
+
+This manual is work in progress and is not complete.  For basic commands see
+[[file:../README.md]].
+
+The following sections use Emacs Lisp examples to configure Org Roam
+BibTeX. User options can also be set via the Customize interface: run =M-x
+customize= or from menu click =Options -> Customize Emacs -> Top Level
+Customization Group= and search for =org-roam-bibtex=.
+
+* Org Roam BibTeX - BibTeX aware capture template expansion
+:PROPERTIES:
+:CUSTOM_ID: org-roam-bibtex---bibtex-aware-capture-template-expansion
+:END:
+** Template pre-expansion
+:PROPERTIES:
+:CUSTOM_ID: templates
+:END:
+
+Org Roam BibTeX makes it possible to automatically pre-expand Org-capture
+=%^{...}= and Org Roam-style =${...}= template placeholders with values of
+field or fields of a BibTeX entry for which the note is being created.
+
+Here's an example of how to add a basic template for a bibliography note to
+=org-roam-capture-templates=:
+
+#+begin_src elisp
+(setq org-roam-capture-templates
+      '(;; ... other templates
+        ;; bibliography note template
+        ("r" "bibliography reference" plain "%?"
+        :target
+        (file+head "references/${citekey}.org" "#+title: ${title}\n")
+        :unnarrowed t)))
+#+end_src
+
+If there are more than one template in =org-roam-capture-templates=, you will
+be prompted for the key of the template you want to use (=r= in the example
+above).  Otherwise, the only template will be used without prompting.
+
+*** User option =orb-roam-ref-format=
+
+This option defines the format style of a citation key in the =ROAM_REFS=
+property.  Supported are Org-ref v2, Org-ref v3 and Org-cite styles:
+
+- =org-ref-v2= (default): use the old Org-ref =cite:link= format
+- =org-ref-v3=: use the new Org-ref =cite:&link= format
+- =org-cite=: use the Org-cite =@element= format
+
+This can also be a custom =format= string.
+
+It should be noted that for a typical Org-roam use these styles are mostly
+cosmetic.
+
+*** User option =orb-preformat-keywords=
+:PROPERTIES:
+:CUSTOM_ID: orb-preformat-keywords
+:END:
+
+A list of template placeholders for pre-expanding. Any BibTeX field can be set
+for preformatting including Bibtex-completion virtual fields such as =key=' and
+'=type='. BibTeX fields can be referred by their aliases defined in
+[[#orb-bibtex-field-aliases][=orb-bibtex-field-aliases=]].
+
+Usage example:
+
+#+begin_src elisp
+(setq orb-preformat-keywords '("citekey" "author" "date"))
+(setq org-roam-capture-templates
+      '(("r" "bibliography reference" plain
+         "%?
+%^{author} published %^{entry-type} in %^{date}: fullcite:%\\1."
+         :target
+         (file+head "references/${citekey}.org" "#+title: ${title}\n")
+         :unnarrowed t)))
+#+end_src
+
+By default, =orb-preformat-keywords= is configured to expand the following
+BibTeX fields: "citekey", "date", "entry-type", "pdf?", "note?", "author",
+"editor", "author-abbrev", "editor-abbrev", "author-or-editor-abbrev".
+
+Special cases:
+
+- The "file" keyword will be treated specially if the value of
+  `orb-process-file-keyword' is non-nil. See its docstring for an
+  explanation.
+- The "title" keyword needs not to be set for preformatting if it is used only
+  within the =:target= section of a template.
+
+This variable takes effect when =orb-preformat-templates= is set to t
+(default). See also =orb-edit-note= for further details.
+
+Consult the [[https://github.com/tmalsburg/helm-bibtex][=bibtex-completion=]] package for additional information about BibTeX
+field names.
+
+*** User option =orb-bibtex-field-aliases=
+:PROPERTIES:
+:CUSTOM_ID: orb-bibtex-field-aliases
+:END:
+
+** Handling BibTeX attachments
+*** User option =orb-process-file-keyword=
+
+If =orb-process-file-keyword= is non-nil, the "file" field will be treated
+specially. If the field contains only one file name, its value will be used for
+template expansion. If it contains several file names, the user will be
+prompted to choose one. The file names can be filtered based on their
+extensions by setting the =orb-attached-file-extensions= variable, so that only
+those matching the extension or extensions will be considered for
+retrieval. The "file" keyword must be set for preformatting as usual. Consult
+the docstrings of these variables for additional customization options.
+
+*** User option =orb-abbreviate-file-name=
+
+Non-nil to force abbreviation of file names by orb-get-attached-file.
+
+When this option is set to a non-nil value, the filename returned
+by =orb-get-attached-file= will get the home directory part
+abbreviated to ~/.  Symlinked directories will be abbreviated
+according to directory-abbrev-alist, see abbreviate-file-name
+for details.
+
+An as-is value will be used otherwise.
+
+*** User option =orb-attached-file-extensions=
+
+When retrieving an attached file, keep files with only these extensions.
+
+This is a list of file extensions without a dot as case-insensitive
+strings.
+
+Set it to nil to keep all file names regardless of their extensions.
+
+BibTeX entries are searched for attached files according to
+=bibtex-completion-pdf-field= (default file) and in
+BibDesk-specific =Bdsk-File-N= fields.
+
+*** User option =orb-use-bibdesk-attachments=
+
+Whether to look up BibDesk-specific file fields `Bdsk-File'.
+
+If this is non-nil, attachments given in BibDesk-specific file fields will be
+considered in addition to those found through the =bibtex-completion-find-pdf=
+mechanism when performing a template expansion, opening an attachment with
+=orb-note-actions= or scraping a PDF with ORB PDF Scrapper.
+
+Duplicates will be resolved, but since duplicate comparison is performed using
+file-truename, this will lead to expansion of symlink paths if such are used in
+the normal BibTeX file field, for example.  See also =orb-abbreviate-file-name=
+on how to abbreviate the retrieved filenames.
+
+Set this to symbol only to look up only BibDesk attachments and
+do not use =bibtex-completion-find-pdf=.
+
+* Command =orb-insert-link=
+
+The command =orb-insert-link= can be used to create Org-mode links to
+bibliographic notes of type =[[id:note_id][Description]]=.  It is similar to
+the Org-roam's command =org-roam-node-insert=.  The difference between the two
+is that the Org-roam's version creates a link to any existing Org-roam note
+("node") or creates a new note if it does not exist.  The ORB's version
+consults the bibliography file and lets you create a link to an existing note
+associated with a BibTeX entry or create a new note for an entry that doesn't
+have one yet.
+
+The =Description= part of the link is controlled by the user option
+=orb-insert-link-description=, which see.  The global setting can be overriden
+for a single invocation with a numerical prefix:
+
+- =C-1 M-x orb-insert-link= forces =title=
+- =C-2 M-x orb-insert-link= forces =citekey=
+- =C-8 M-x orb-insert-link= forces =citation-org-cite=
+- =C-9 M-x orb-insert-link= forces =citation-org-ref-3=
+- =C-0 M-x orb-insert-link= forces =citation-org-ref-2=
+
+If a region of text is active (selected) when calling =orb-insert-link=, the
+text in the region will be replaced with a link and the region's text will be
+used as link description — similar to =org-roam-node-insert=.
+
+Normally, the case of the link description will be preserved.  It is possible
+to force lowercase by supplying either one or three universal arguments =C-u=.
+
+Finally, =bibtex-completion-cache= will be re-populated if either two or three
+universal arguments =C-u= are supplied.
+
+** =orb-insert= configuration
+:PROPERTIES:
+:CUSTOM_ID: orb-insert-configuration
+:END:
+
+** User option =orb-insert-interface=
+:PROPERTIES:
+:CUSTOM_ID: orb-insert-interface
+:END:
+
+Interface to use with =orb-insert=. Supported interfaces are =helm-bibtex=,
+=ivy-bibtex=, and =generic= (=orb-insert-generic=)
+
+When using =helm-bibtex= or =ivy-bibtex= as =orb-insert-interface=, choosing
+the action \"Edit note & insert a link\" will insert the desired link.  For
+convenience, this action is made default for the duration of an
+=orb-insert-link= session.  It will not persist when =helm-bibtex= or
+=ivy-bibtex= proper are run.  Otherwise, the command is just the usual
+=helm-bibtex=/=ivy-bibtex=.  For example, it is possible to run other
+=helm-bibtex= or =ivy-bibtex= actions.  When action other than \"Edit note &
+insert a link\" is run, no link will be inserted, although the session can be
+resumed later with =helm-resume= or =ivy-resume=, respectively, where it will
+be possible to select the \"Edit note & insert a link\" action.
+
+When using the =generic= interface, a simple list of available citation keys is
+presented using =completion-read= and after choosing a candidate the
+appropriate link will be inserted.
+
+Please note that this variable should be set using the Customize interface,
+=use-package='s =:custom= keyword, or Doom's =setq!= macro.  Simple =setq= will
+not work.
+
+** User option =orb-insert-link-description=
+:PROPERTIES:
+:CUSTOM_ID: orb-insert-link-description
+:END:
+
+This variable determines what piece of information should be used as link
+description when creating a link with =orb-insert-link=:
+
+This variable determines the 'Description' part from the example above.  It is
+an =s-format= string, where special placeholders of form "${field}" will be
+expanded with data from the respective BibTeX field of the associated BibTeX
+entry.  If the value of the field cannot be retrieved, the user will be
+prompted to input a value interactively.  When retrieving BibTeX data, the user
+options =orb-bibtex-field-aliases= and =orb-bibtex-entry-get-value-function=
+are respected.
+
+This variable can also be one of the following symbols:
+
+- =title=              - equivalent to "${title}"
+- =citekey=            - equivalent to "${citekey}"
+
+When this is set to one of the following symbols, create a citation instead of
+an Org-mode link:
+
+- =citation-org-ref-2= - insert an Org-ref v2 citation link, use
+  =org-ref-default-citation-link=, default "cite:citation-key"
+- =citation-org-ref-3= - insert an Org-ref v3 citation link, use
+  =org-ref-default-citation-link=, default "cite:&citation-key"
+- =citation-org-cite= - insert an Org-cite citation [cite:@citation-key]
+
+In other words, =orb-insert-link= can behave like a BibTeX-aware version of
+=org-roam-node-insert= and like an Org-roam-aware version of =org-cite-insert=
+(or =org-ref-insert-cite-link= or =citar-insert-citation=) depending on the
+user choice.
+
+The global vale of this option can be overriden for a single invocation of
+=orb-insert-link= with a numerical prefix:
+
+- =C-1 M-x orb-insert-link= forces =title=
+- =C-2 M-x orb-insert-link= forces =citekey=
+- =C-8 M-x orb-insert-link= forces =citation-org-cite=
+- =C-9 M-x orb-insert-link= forces =citation-org-ref-3=
+- =C-0 M-x orb-insert-link= forces =citation-org-ref-2=
+
+** User option =orb-insert-follow-link=
+:PROPERTIES:
+:CUSTOM_ID: orb-insert-follow-link
+:END:
+
+Whether to follow the newly created link.
+
+** User option =orb-insert-generic-candidates-format=
+:PROPERTIES:
+:CUSTOM_ID: orb-insert-generic-candidates-format
+:END:
+How the selection candidates should be presented when using =generic=
+interface:
+
+- =key= - only citation keys. Fast and pretty, but too little contextual
+  information
+- =entry= - formatted entry. More information, but not particluarly
+  pretty. Consider using =helm-bibtex= or =ivy-bibtex= instead.
+
+** Tips and tricks
+:PROPERTIES:
+:CUSTOM_ID: tips-and-tricks
+:END:
+*** Handling long templates
+:PROPERTIES:
+:CUSTOM_ID: handling-long-templates
+:END:
+Long templates can be placed in a separate file, with template expansion
+of BibTeX fields working as usual:
+
+#+begin_src elisp
+(setq org-roam-capture-templates
+      '(("r" "bibliography reference" plain
+         (file "/path/to/template.org") ; <-- template store in a separate file
+         :target
+         (file+head "references/${citekey}.org" "#+title: ${title}\n")
+         :unnarrowed t)))
+#+end_src
+
+Content of =path/to/template.org=:
+
+#+begin_src org
+,#+PROPERTY: type %^{entry-type}
+,#+FILETAGS: %^{keywords}
+,#+PROPERTY: authors %^{author}
+
+In this %\1 %\3 concluded that %?
+
+fullcite:%\1
+#+end_src
+
+You can also use a function to generate the template on the fly, see
+=org-capture-templates= for details.
+
+*** Org-noter integration. Special treatment of the "file" keyword
+:PROPERTIES:
+:CUSTOM_ID: org-noter-integration.-special-treatment-of-the-file-keyword
+:END:
+
+Below is an example of a template ready for use with [[https://github.com/weirdNox/org-noter][org-noter]] or [[https://github.com/rudolfochrist/interleave][interleave]]:
+
+#+begin_src elisp
+(setq orb-preformat-keywords
+      '("citekey" "title" "url" "author-or-editor" "keywords" "file")
+      orb-process-file-keyword t
+      orb-attached-file-extensions '("pdf"))
+
+(setq org-roam-capture-templates
+      '(("r" "bibliography reference" plain
+         (file "/path/to/template")
+         :target
+         (file+head "references/${citekey}.org" "#+title: ${title}\n"))))
+#+end_src
+
+Content of =path/to/template.org=:
+
+#+begin_src org
+- tags ::
+- keywords :: %^{keywords}
+
+,* %^{title}
+:PROPERTIES:
+:Custom_ID: %^{citekey}
+:URL: %^{url}
+:AUTHOR: %^{author-or-editor}
+:NOTER_DOCUMENT: %^{file}  ; <== special file keyword: if more than one filename
+:NOTER_PAGE:               ;     is available, the user will be prompted to choose
+:END:
+#+end_src
+
+* ORB Note Actions - BibTeX record-related commands
+:PROPERTIES:
+:CUSTOM_ID: orb-note-actions---bibtex-record-related-commands
+:END:
+** Overview
+:PROPERTIES:
+:CUSTOM_ID: overview
+:END:
+
+Type =M-x orb-note-actions= or bind this command to a key such as =C-c n a= to
+quickly access additional commands that take the note's BibTeX key as an input
+and process it to perform some useful actions.
+
+Note actions are divided into three groups: =default=, =extra=, and =user= set
+via =orb-note-actions-default=, =orb-note-actions-extra=,
+=orb-note-actions-user=, respectively. There is no big conceptual difference
+between the three except that the =default= note actions are commands provided
+by =bibtex-completion=, =extra= note actions are extra commands provided by
+=org-roam-bibtex=, and =user= note actions are left for user customization.
+
+** Note actions interface
+:PROPERTIES:
+:CUSTOM_ID: note-actions-interface
+:END:
+There is a number of interfaces available for displaying the available
+note actions: =default= (using =completing-read=), =ido=, =ivy=, =helm=
+and =hydra=. The interface can be set via the
+=orb-note-actions-interface= user variable.
+
+#+begin_example
+  (setq orb-note-actions-interface 'hydra)
+#+end_example
+
+Alternatively, =orb-note-actions-interface= can be set to a custom function
+that will provide completion for available note actions. The function must take
+one argument CITEKEY, which is a list whose =car= is the current note's
+citation key:
+
+#+begin_example
+  (setq orb-note-actions-interface #'my-orb-note-actions-interface)
+#+end_example
+
+NOTE: This variable should be set using the Customize interface,
+=use-package='s =:custom= keyword, or Doom's =setq!= macro.  Simple =setq= will
+not work.
+
+#+begin_src org
+:PROPERTIES:
+:ID: uuid1234-...
+:ROAM_REFS: cite:Doe2020
+:END:
+,#+title: My note
+#+end_src
+
+#+begin_example
+  (defun my-orb-note-actions-interface (citekey)
+    ;;; For the above note, (car citekey) => "Doe2020"
+    ...)
+#+end_example
+
+** Adding new note actions
+:PROPERTIES:
+:CUSTOM_ID: adding-new-note-actions
+:END:
+To install a note action, add a cons cell of format
+=(DESCRIPTION . FUNCTION)= to one of the note actions variables:
+
+#+begin_example
+  (with-eval-after-load 'orb-note-actions
+    (add-to-list 'orb-note-actions-user (cons "My note action" #'my-note-action)))
+#+end_example
+
+A note action must take a single argument CITEKEY, which is a list whose
+car is the current note's citation key:
+
+#+begin_example
+  (defun my-note-action (citekey)
+    (let ((key (car citekey)))
+      ...))
+#+end_example
+
