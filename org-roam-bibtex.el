@@ -53,16 +53,8 @@
 
 ;;; Code:
 ;;
-;; ============================================================================
-;;;; Dependencies
-;; ============================================================================
 
 (require 'orb-core)
-
-
-;; ============================================================================
-;;; Org-roam-bibtex minor mode
-;; ============================================================================
 
 (defvar org-roam-bibtex-mode-map
   (make-sparse-keymap)
@@ -70,7 +62,7 @@
 
 ;;;###autoload
 (define-minor-mode org-roam-bibtex-mode
-  "Sets an appropriate function for editing bibliography notes.
+  "Configures integration of Org-roam with BibTeX frontends.
 Supports Org-ref, Helm-bibtex/Ivy-bibtex, and Citar.
 
 When called interactively, toggle `org-roam-bibtex-mode'. with

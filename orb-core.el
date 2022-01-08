@@ -87,9 +87,6 @@
 ;; ============================================================================
 ;;; Customize groups
 ;; ============================================================================
-;;
-;; All modules should put their `defgroup' definitions here
-;; Defcustom definitions should stay in respective files
 
 (defgroup org-roam-bibtex nil
   "Org-roam integration with BibTeX software."
@@ -103,8 +100,68 @@
 
 
 ;; ============================================================================
-;;; BibTeX fields and their special handling
+;;; Customize definitions
 ;; ============================================================================
+
+;; Templates
+
+(defcustom orb-preformat-templates t
+  "Non-nil to enable template pre-expanding.
+See `orb-edit-note' for details."
+  :type '(choice
+          (const :tag "Yes" t)
+          (const :tag "No" nil))
+  :group 'org-roam-bibtex)
+
+(defcustom orb-preformat-keywords
+  '("citekey" "entry-type" "date" "pdf?" "note?" "file"
+    "author" "editor" "author-abbrev" "editor-abbrev"
+    "author-or-editor-abbrev")
+  "A list of template placeholders for pre-expanding.
+Any BibTeX field can be set for pre-expanding including
+Bibtex-completion virtual fields such as '=key=' and '=type='.
+BibTeX fields can be referred to by means of their aliases
+defined in `orb-bibtex-field-aliases'.
+
+Usage example:
+
+\(setq orb-preformat-keywords '(\"citekey\" \"author\" \"date\"))
+\(setq orb-templates
+      '((\"r\" \"reference\" plain
+         \"#+ROAM_KEY: %^{citekey}%?
+%^{author} published %^{entry-type} in %^{date}: fullcite:%\\1.\"
+         :target
+         (file+head \"references/${citekey.org}\" \"#+title: ${title}\n\")
+         :unnarrowed t)))
+
+Special cases:
+
+The \"file\" keyword will be treated specially if the value of
+`orb-process-file-keyword' is non-nil.  See its docstring for an
+explanation.
+
+This variable takes effect when `orb-preformat-templates' is set
+to t (default). See also `orb-edit-note' for further details.
+
+Consult Bibtex-completion documentation for additional
+information on BibTeX field names."
+  :type '(repeat :tag "BibTeX field names" string)
+  :group 'org-roam-bibtex)
+
+(defcustom orb-roam-ref-format 'org-ref-v2
+  "Defines the format of citation key in the `ROAM_REFS' property.
+Should be one of the following symbols:
+- `org-ref-v2': Old Org-ref `cite:links'
+- `org-ref-v3': New Org-ref `cite:&links'
+- `org-cite'  : Org-cite `@elements'
+
+This can also be a custom `format' string with a single `%s' specifier."
+  :type '(radio
+          (const :tag "Org-ref v2" org-ref-v2)
+          (const :tag "Org-ref v3" org-ref-v3)
+          (const :tag "Org-cite" org-cite)
+          (string :tag "Custom format string"))
+  :group 'org-roam-bibtex)
 
 (defcustom orb-bibtex-field-aliases
   '(("=type=" . "entry-type")
@@ -121,6 +178,54 @@ more casual alternatives."
   :type '(repeat
           (cons (string :tag "Field name")
                 (string :tag "Alias name"))))
+
+(defcustom orb-bibtex-entry-get-value-function #'bibtex-completion-apa-get-value
+  "Function to be used by ORB for values from a BibTeX entry.
+
+The default value of this variable is `bibtex-completion-apa-get-value',
+which offers some post-formatting for author fields.
+
+Another possible choice available out of the box is
+`bibtex-completion-get-value', which returns a verbatim value.
+
+Set this to a custom function if you need more flexibility.
+This function should take two arguments FIELD-NAME and ENTRY.
+FIELD-NAME is the name of the field whose value should be retrieved.
+ENTRY is a BibTeX entry as returned by `bibtex-completion-get-entry'."
+  :risky t
+  :group 'org-roam-bibtex
+  :type '(radio (function-item bibtex-completion-apa-get-value)
+                (function-item bibtex-completion-get-value)
+                (function :tag "Custom function")))
+
+;; Handling BibTeX file field and attachments
+
+(defcustom orb-process-file-keyword t
+  "Whether to treat the file keyword specially during template pre-expanding.
+When this variable is non-nil, the \"%^{file}\" and \"${file}\"
+wildcards will be processed by `org-process-file-field' rather
+than simply replaced with the field value.  This may be useful in
+situations when the file field contains several file names and
+only one file name is desirable for retrieval.  The \"file\"
+keyword must be set for pre-expanding in `orb-preformat-keywords'
+as usual.
+
+If this variable is `string', for example \"my-file\", use its
+value as the wildcard keyword instead of the default \"file\"
+keyword.  Thus, it will be possible to get both the raw file
+field value by expanding the %^{file} and ${file} wildcards and a
+single file name by expanding the %^{my-file} and ${my-file}
+wildcards.  The keyword, e.g. \"my-file\", must be set for
+pre-expanding in `orb-preformat-keywords' as usual.
+
+The variable `orb-attached-file-extensions' controls filtering of
+file names based on file extensions."
+  ;; TODO: check if a custom string is really working as described
+  :group 'org-roam-bibtex
+  :type '(choice
+          (const :tag "Yes" t)
+          (const :tag "No" nil)
+          (string :tag "Custom wildcard keyword")))
 
 (defcustom orb-attached-file-extensions '("pdf")
   "When retrieving an attached file, keep files with only these extensions.
@@ -170,6 +275,228 @@ do not use `bibtex-completion-find-pdf'."
           (const :tag "Yes" t)
           (const :tag "BibDesk only" only)
           (const :tag "No" nil)))
+
+;; ORB Insert
+
+(defcustom orb-insert-interface 'generic
+  "Interface frontend to use with `orb-insert-link'.
+Possible values are the symbols `helm-bibtex', `ivy-bibtex', or
+`generic' (default).  In the first two cases the respective
+commands will be used, while in the latter case the command
+`orb-insert-generic' will be used.
+
+When using `helm-bibtex' or `ivy-bibtex' as `orb-insert-interface',
+choosing the action \"Edit note & insert a link\" will insert the
+desired link.  For convenience, this action is made default for
+the duration of an `orb-insert-link' session.  It will not
+persist when `helm-bibtex' or `ivy-bibtex' proper are run.
+Otherwise, the command is just the usual `helm-bibtex'/`ivy-bibtex'.
+For example, it is possible to run other `helm-bibtex' or
+`ivy-bibtex' actions.  When action other than \"Edit note &
+insert a link\" is run, no link will be inserted, although the
+session can be resumed later with `helm-resume' or `ivy-resume',
+respectively, where it will be possible to select the \"Edit note
+& insert a link\" action.
+
+When using the `generic' interface, a simple list of available
+citation keys is presented using `completion-read' and after
+choosing a candidate the appropriate link will be inserted.
+
+Please note that this variable should be set using the Customize
+interface, `use-package''s `:custom' keyword, or Doom's `setq!'
+macro.  Simple `setq' will not work."
+  :group 'org-roam-bibtex
+  :type '(radio
+          (const helm-bibtex)
+          (const ivy-bibtex)
+          (const generic))
+  :set (lambda (var value)
+         (cond
+          ((eq value 'ivy-bibtex)
+           (require 'orb-ivy))
+          ((eq value 'helm-bibtex)
+           (require 'orb-helm)))
+         (set-default var value)))
+
+(defcustom orb-insert-link-description 'title
+  "Link description format for links created with `orb-insert-link'.
+The command `orb-insert-link' can be used to create Org-mode
+links to bibliographic notes of type [[id:note_id][Description]].
+This variable determines the 'Description' part from the example
+above.  It is an `s-format' string, where special placeholders of
+form '${field}' will be expanded with data from the respective
+BibTeX field of the associated BibTeX entry.  If the field's
+value cannot be retrieved, the user will be prompted to input a
+value interactively.  When retrieving BibTeX data, the user
+options `orb-bibtex-field-aliases' and
+`orb-bibtex-entry-get-value-function' are respected.
+
+This variable can also be one of the following symbols:
+
+`title'              - equivalent to \"${title}\"
+`citekey'            - equivalent to \"${citekey}\"
+`citation-org-ref-2' - create Org-ref v2 'cite:citekey' citation instead
+`citation-org-ref-3' - create Org-ref v3 'cite:&citekey' citation instead
+`citation-org-cite'  - create Org-cite '[cite:@citekey]' citation instead
+
+The default value set by this variable can be overriden by
+calling `orb-insert-link' with an appropriated numerical prefix
+argument.  See its docstring for more information."
+  :group 'org-roam-bibtex
+  :type '(choice
+          (string :tag "Format string")
+          (const :tag "Title" title)
+          (const :tag "Citation key" citekey)
+          (const :tag "Citation link" citation-org-ref-2)
+          (const :tag "Citation link" citation-org-ref-3)
+          (const :tag "Citation link" citation-org-cite)))
+
+(defcustom orb-insert-follow-link nil
+  "Whether to follow a newly inserted link."
+  :group 'orb-roam-bibtex
+  :type '(choice
+          (const :tag "Yes" t)
+          (const :tag "No" nil)))
+
+(defcustom orb-insert-generic-candidates-format 'key
+  "Format of selection candidates for `orb-insert-generic' interface.
+Possible values are `key' and `entry'."
+  :group 'org-roam-bibtex
+  :type '(choice
+          (const key)
+          (const entry)))
+
+;; ORB Note Actions
+
+(defcustom orb-note-actions-interface 'default
+  "Interface frontend for `orb-note-actions'.
+Supported values (interfaces) are symbols `default', `ido',
+`hydra', `ivy' and `helm'.
+
+Alternatively, it can be set to a function, in which case the
+function should expect one argument CITEKEY, which is a list
+whose car is the citation key associated with the org-roam note
+the current buffer is visiting.  Also, it should ideally make use
+of `orb-note-actions-default', `orb-note-actions-extra' and
+`orb-note-actions-user' for providing an interactive interface,
+through which the combined set of note actions is presented as a
+list of candidates and the function associated with the candidate
+is executed upon selecting it.
+
+This variable should be set using the Customize interface,
+`use-package''s `:custom' keyword, or Doom's `setq!' macro.
+Simple `setq' will not work."
+  :risky t
+  :type '(radio
+          (const :tag "Default" default)
+          (const :tag "Ido" ido)
+          (const :tag "Hydra" hydra)
+          (const :tag "Ivy" ivy)
+          (const :tag "Helm" helm)
+          (function :tag "Custom function"))
+  :set (lambda (var value)
+         (cond
+          ((eq value 'ivy)
+           (require 'orb-ivy))
+          ((eq value 'helm)
+           (require 'orb-helm))
+          ((eq value 'hydra)
+           (require 'hydra)))
+         (set-default var value))
+  :group 'orb-note-actions)
+
+(defcustom orb-note-actions-default
+  '(("Open PDF file(s)" . orb-open-attached-file)
+    ("Add PDF to library" . bibtex-completion-add-pdf-to-library)
+    ("Open URL or DOI in browser" . bibtex-completion-open-url-or-doi)
+    ("Show record in the bibtex file" . bibtex-completion-show-entry))
+  "Default actions for `orb-note-actions'.
+Each action is a cons cell DESCRIPTION . FUNCTION."
+  :risky t
+  :type '(alist
+          :tag "Default actions for `orb-note-actions'"
+          :key-type (string :tag "Description")
+          :value-type (function :tag "Function"))
+  :group 'orb-note-actions)
+
+(defcustom orb-note-actions-extra
+  '(("Save citekey to kill-ring and clipboard" . orb-note-actions-copy-citekey)
+    ("Run Orb PDF Scrapper" . orb-note-actions-scrape-pdf))
+  "Extra actions for `orb-note-actions'.
+Each action is a cons cell DESCRIPTION . FUNCTION."
+  :risky t
+  :type '(alist
+          :tag "Extra actions for `orb-note-actions'"
+          :key-type (string :tag "Description")
+          :value-type (function :tag "Function"))
+  :group 'orb-note-actions)
+
+(defcustom orb-note-actions-user nil
+  "User actions for `orb-note-actions'.
+Each action is a cons cell DESCRIPTION . FUNCTION."
+  :risky t
+  :type '(alist
+          :tag "User actions for `orb-note-actions'"
+          :key-type (string :tag "Description")
+          :value-type (function :tag "Function"))
+  :group 'orb-note-actions)
+
+;; Miscellaneous
+
+(defcustom orb-ignore-bibtex-store-link-functions
+  '(org-bibtex-store-link)
+  "Functions to override with `ignore' during note creation process.
+
+Org Ref defines function `org-ref-bibtex-store-link' to store
+links to a BibTeX buffer, e.g. with `org-store-link'.  At the
+same time, Org ref requires `ol-bibtex' library, which defines
+`org-bibtex-store-link' to do the same.  When creating a note
+with `orb-edit-note' from a BibTeX buffer, for example by calling
+`org-ref-open-bibtex-notes', the initiated `org-capture' process
+implicitly calls `org-store-link'.  The latter loops through all
+the functions for storing links, and if more than one function
+can store links to the location, the BibTeX buffer in this
+particular case, the user will be prompted to choose one.  This
+is definitely annoying, hence ORB will advise all functions in
+this list to return nil to trick `org-capture' and get rid of the
+prompt.
+
+The default value is `(org-bibtex-store-link)', which means this
+function will be ignored and `org-ref-bibtex-store-link' will be
+used to store a link to the BibTeX buffer.  See
+`org-capture-templates' on how to use the link in your templates."
+  :type '(repeat (function))
+  :risky t
+  :group 'org-roam-bibtex)
+
+(defcustom orb-persp-project `("notes" . ,org-roam-directory)
+  "Perspective name and path to the project with bibliography notes.
+A cons cell (PERSP-NAME . PROJECT-PATH).  Only relevant when
+`orb-switch-persp' is set to t.
+
+PERSP-NAME should be a valid Perspective name, PROJECT-PATH should be
+an open Projectile project.
+
+See `orb-edit-note' for details"
+  :type '(cons (string :tag "Perspective name")
+               (directory :tag "Projectile directory"))
+  :group 'org-roam-bibtex)
+
+(defcustom orb-switch-persp nil
+  "Non-nil to enable switching to the notes perspective.
+Set the name of the perspective and the path to the notes project
+in `orb-persp-project' for this to take effect.
+
+Perspective switching works with Pers-mode and Projectile."
+  :type '(choice
+          (const :tag "Yes" t)
+          (const :tag "No" nil))
+  :group 'org-roam-bibtex)
+
+
+;; ============================================================================
+;;; BibTeX fields and their special handling
+;; ============================================================================
 
 (defsubst orb-resolve-field-alias (alias)
   "Return ALIAS association from `orb-bibtex-field-aliases'.
@@ -280,326 +607,6 @@ The intended primary use is with `orb-note-actions'."
     (if attachment
         (funcall bibtex-completion-pdf-open-function (file-truename attachment))
       (message "No PDF(s) found for this entry: %s" key))))
-
-
-;; ============================================================================
-;;; Customize definitions
-;; ============================================================================
-
-(defcustom orb-preformat-templates t
-  "Non-nil to enable template pre-expanding.
-See `orb-edit-note' for details."
-  :type '(choice
-          (const :tag "Yes" t)
-          (const :tag "No" nil))
-  :group 'org-roam-bibtex)
-
-(defcustom orb-preformat-keywords
-  '("citekey" "entry-type" "date" "pdf?" "note?" "file"
-    "author" "editor" "author-abbrev" "editor-abbrev"
-    "author-or-editor-abbrev")
-  "A list of template placeholders for pre-expanding.
-Any BibTeX field can be set for pre-expanding including
-Bibtex-completion virtual fields such as '=key=' and '=type='.
-BibTeX fields can be referred to by means of their aliases
-defined in `orb-bibtex-field-aliases'.
-
-Usage example:
-
-\(setq orb-preformat-keywords '(\"citekey\" \"author\" \"date\"))
-\(setq orb-templates
-      '((\"r\" \"reference\" plain
-         \"#+ROAM_KEY: %^{citekey}%?
-%^{author} published %^{entry-type} in %^{date}: fullcite:%\\1.\"
-         :target
-         (file+head \"references/${citekey.org}\" \"#+title: ${title}\n\")
-         :unnarrowed t)))
-
-Special cases:
-
-The \"file\" keyword will be treated specially if the value of
-`orb-process-file-keyword' is non-nil.  See its docstring for an
-explanation.
-
-This variable takes effect when `orb-preformat-templates' is set
-to t (default). See also `orb-edit-note' for further details.
-
-Consult Bibtex-completion documentation for additional
-information on BibTeX field names."
-  :type '(repeat :tag "BibTeX field names" string)
-  :group 'org-roam-bibtex)
-
-(defcustom orb-process-file-keyword t
-  "Whether to treat the file keyword specially during template pre-expanding.
-When this variable is non-nil, the \"%^{file}\" and \"${file}\"
-wildcards will be processed by `org-process-file-field' rather
-than simply replaced with the field value.  This may be useful in
-situations when the file field contains several file names and
-only one file name is desirable for retrieval.  The \"file\"
-keyword must be set for pre-expanding in `orb-preformat-keywords'
-as usual.
-
-If this variable is `string', for example \"my-file\", use its
-value as the wildcard keyword instead of the default \"file\"
-keyword.  Thus, it will be possible to get both the raw file
-field value by expanding the %^{file} and ${file} wildcards and a
-single file name by expanding the %^{my-file} and ${my-file}
-wildcards.  The keyword, e.g. \"my-file\", must be set for
-pre-expanding in `orb-preformat-keywords' as usual.
-
-The variable `orb-attached-file-extensions' controls filtering of
-file names based on file extensions."
-  ;; TODO: check if a custom string is really working as described
-  :group 'org-roam-bibtex
-  :type '(choice
-          (const :tag "Yes" t)
-          (const :tag "No" nil)
-          (string :tag "Custom wildcard keyword")))
-
-(defcustom orb-roam-ref-format 'org-ref-v2
-  "Defines the format of citation key in the `ROAM_REFS' property.
-Should be one of the following symbols:
-- `org-ref-v2': Old Org-ref `cite:links'
-- `org-ref-v3': New Org-ref `cite:&links'
-- `org-cite'  : Org-cite `@elements'
-
-This can also be a custom `format' string with a single `%s' specifier."
-  :type '(radio
-          (const :tag "Org-ref v2" org-ref-v2)
-          (const :tag "Org-ref v3" org-ref-v3)
-          (const :tag "Org-cite" org-cite)
-          (string :tag "Custom format string"))
-  :group 'org-roam-bibtex)
-
-(defcustom orb-bibtex-entry-get-value-function #'bibtex-completion-apa-get-value
-  "Function to be used by ORB for values from a BibTeX entry.
-
-The default value of this variable is `bibtex-completion-apa-get-value',
-which offers some post-formatting for author fields.
-
-Another possible choice available out of the box is
-`bibtex-completion-get-value', which returns a verbatim value.
-
-Set this to a custom function if you need more flexibility.
-This function should take two arguments FIELD-NAME and ENTRY.
-FIELD-NAME is the name of the field whose value should be retrieved.
-ENTRY is a BibTeX entry as returned by `bibtex-completion-get-entry'."
-  :risky t
-  :group 'org-roam-bibtex
-  :type '(radio (function-item bibtex-completion-apa-get-value)
-                (function-item bibtex-completion-get-value)
-                (function :tag "Custom function")))
-
-(defcustom orb-persp-project `("notes" . ,org-roam-directory)
-  "Perspective name and path to the project with bibliography notes.
-A cons cell (PERSP-NAME . PROJECT-PATH).  Only relevant when
-`orb-switch-persp' is set to t.
-
-PERSP-NAME should be a valid Perspective name, PROJECT-PATH should be
-an open Projectile project.
-
-See `orb-edit-note' for details"
-  :type '(cons (string :tag "Perspective name")
-               (directory :tag "Projectile directory"))
-  :group 'org-roam-bibtex)
-
-(defcustom orb-switch-persp nil
-  "Non-nil to enable switching to the notes perspective.
-Set the name of the perspective and the path to the notes project
-in `orb-persp-project' for this to take effect.
-
-Perspective switching works with Pers-mode and Projectile."
-  :type '(choice
-          (const :tag "Yes" t)
-          (const :tag "No" nil))
-  :group 'org-roam-bibtex)
-
-(defcustom orb-ignore-bibtex-store-link-functions
-  '(org-bibtex-store-link)
-  "Functions to override with `ignore' during note creation process.
-
-Org Ref defines function `org-ref-bibtex-store-link' to store
-links to a BibTeX buffer, e.g. with `org-store-link'.  At the
-same time, Org ref requires `ol-bibtex' library, which defines
-`org-bibtex-store-link' to do the same.  When creating a note
-with `orb-edit-note' from a BibTeX buffer, for example by calling
-`org-ref-open-bibtex-notes', the initiated `org-capture' process
-implicitly calls `org-store-link'.  The latter loops through all
-the functions for storing links, and if more than one function
-can store links to the location, the BibTeX buffer in this
-particular case, the user will be prompted to choose one.  This
-is definitely annoying, hence ORB will advise all functions in
-this list to return nil to trick `org-capture' and get rid of the
-prompt.
-
-The default value is `(org-bibtex-store-link)', which means this
-function will be ignored and `org-ref-bibtex-store-link' will be
-used to store a link to the BibTeX buffer.  See
-`org-capture-templates' on how to use the link in your templates."
-  :type '(repeat (function))
-  :risky t
-  :group 'org-roam-bibtex)
-
-(defcustom orb-insert-interface 'generic
-  "Interface frontend to use with `orb-insert-link'.
-Possible values are the symbols `helm-bibtex', `ivy-bibtex', or
-`generic' (default).  In the first two cases the respective
-commands will be used, while in the latter case the command
-`orb-insert-generic' will be used.
-
-When using `helm-bibtex' or `ivy-bibtex' as `orb-insert-interface',
-choosing the action \"Edit note & insert a link\" will insert the
-desired link.  For convenience, this action is made default for
-the duration of an `orb-insert-link' session.  It will not
-persist when `helm-bibtex' or `ivy-bibtex' proper are run.
-Otherwise, the command is just the usual `helm-bibtex'/`ivy-bibtex'.
-For example, it is possible to run other `helm-bibtex' or
-`ivy-bibtex' actions.  When action other than \"Edit note &
-insert a link\" is run, no link will be inserted, although the
-session can be resumed later with `helm-resume' or `ivy-resume',
-respectively, where it will be possible to select the \"Edit note
-& insert a link\" action.
-
-When using the `generic' interface, a simple list of available
-citation keys is presented using `completion-read' and after
-choosing a candidate the appropriate link will be inserted.
-
-Please note that this variable should be set using the Customize
-interface, `use-package''s `:custom' keyword, or Doom's `setq!'
-macro.  Simple `setq' will not work."
-  :group 'org-roam-bibtex
-  :type '(radio
-          (const helm-bibtex)
-          (const ivy-bibtex)
-          (const generic))
-  :set (lambda (var value)
-         (cond
-          ((eq value 'ivy-bibtex)
-           (require 'orb-ivy))
-          ((eq value 'helm-bibtex)
-           (require 'orb-helm)))
-         (set-default var value)))
-
-(defcustom orb-insert-link-description 'title
-  "Link description format for links created with `orb-insert-link'.
-The command `orb-insert-link' can be used to create Org-mode
-links to bibliographic notes of type [[id:note_id][Description]].
-This variable determines the 'Description' part from the example
-above.  It is an `s-format' string, where special placeholders of
-form '${field}' will be expanded with data from the respective
-BibTeX field of the associated BibTeX entry.  If the field's
-value cannot be retrieved, the user will be prompted to input a
-value interactively.  When retrieving BibTeX data, the user
-options `orb-bibtex-field-aliases' and
-`orb-bibtex-entry-get-value-function' are respected.
-
-This variable can also be one of the following symbols:
-
-`title'              - equivalent to \"${title}\"
-`citekey'            - equivalent to \"${citekey}\"
-`citation-org-ref-2' - create Org-ref v2 'cite:citekey' citation instead
-`citation-org-ref-3' - create Org-ref v3 'cite:&citekey' citation instead
-`citation-org-cite'  - create Org-cite '[cite:@citekey]' citation instead
-
-The default value set by this variable can be overriden by
-calling `orb-insert-link' with an appropriated numerical prefix
-argument.  See its docstring for more information."
-  :group 'org-roam-bibtex
-  :type '(choice
-          (string :tag "Format string")
-          (const :tag "Title" title)
-          (const :tag "Citation key" citekey)
-          (const :tag "Citation link" citation-org-ref-2)
-          (const :tag "Citation link" citation-org-ref-3)
-          (const :tag "Citation link" citation-org-cite)))
-
-(defcustom orb-insert-follow-link nil
-  "Whether to follow a newly inserted link."
-  :group 'orb-roam-bibtex
-  :type '(choice
-          (const :tag "Yes" t)
-          (const :tag "No" nil)))
-
-(defcustom orb-insert-generic-candidates-format 'key
-  "Format of selection candidates for `orb-insert-generic' interface.
-Possible values are `key' and `entry'."
-  :group 'org-roam-bibtex
-  :type '(choice
-          (const key)
-          (const entry)))
-
-(defcustom orb-note-actions-interface 'default
-  "Interface frontend for `orb-note-actions'.
-Supported values (interfaces) are symbols `default', `ido',
-`hydra', `ivy' and `helm'.
-
-Alternatively, it can be set to a function, in which case the
-function should expect one argument CITEKEY, which is a list
-whose car is the citation key associated with the org-roam note
-the current buffer is visiting.  Also, it should ideally make use
-of `orb-note-actions-default', `orb-note-actions-extra' and
-`orb-note-actions-user' for providing an interactive interface,
-through which the combined set of note actions is presented as a
-list of candidates and the function associated with the candidate
-is executed upon selecting it.
-
-This variable should be set using the Customize interface,
-`use-package''s `:custom' keyword, or Doom's `setq!' macro.
-Simple `setq' will not work."
-  :risky t
-  :type '(radio
-          (const :tag "Default" default)
-          (const :tag "Ido" ido)
-          (const :tag "Hydra" hydra)
-          (const :tag "Ivy" ivy)
-          (const :tag "Helm" helm)
-          (function :tag "Custom function"))
-  :set (lambda (var value)
-         (cond
-          ((eq value 'ivy)
-           (require 'orb-ivy))
-          ((eq value 'helm)
-           (require 'orb-helm))
-          ((eq value 'hydra)
-           (require 'hydra)))
-         (set-default var value))
-  :group 'orb-note-actions)
-
-(defcustom orb-note-actions-default
-  '(("Open PDF file(s)" . orb-open-attached-file)
-    ("Add PDF to library" . bibtex-completion-add-pdf-to-library)
-    ("Open URL or DOI in browser" . bibtex-completion-open-url-or-doi)
-    ("Show record in the bibtex file" . bibtex-completion-show-entry))
-  "Default actions for `orb-note-actions'.
-Each action is a cons cell DESCRIPTION . FUNCTION."
-  :risky t
-  :type '(alist
-          :tag "Default actions for `orb-note-actions'"
-          :key-type (string :tag "Description")
-          :value-type (function :tag "Function"))
-  :group 'orb-note-actions)
-
-(defcustom orb-note-actions-extra
-  '(("Save citekey to kill-ring and clipboard" . orb-note-actions-copy-citekey)
-    ("Run Orb PDF Scrapper" . orb-note-actions-scrape-pdf))
-  "Extra actions for `orb-note-actions'.
-Each action is a cons cell DESCRIPTION . FUNCTION."
-  :risky t
-  :type '(alist
-          :tag "Extra actions for `orb-note-actions'"
-          :key-type (string :tag "Description")
-          :value-type (function :tag "Function"))
-  :group 'orb-note-actions)
-
-(defcustom orb-note-actions-user nil
-  "User actions for `orb-note-actions'.
-Each action is a cons cell DESCRIPTION . FUNCTION."
-  :risky t
-  :type '(alist
-          :tag "User actions for `orb-note-actions'"
-          :key-type (string :tag "Description")
-          :value-type (function :tag "Function"))
-  :group 'orb-note-actions)
 
 
 ;; ============================================================================
