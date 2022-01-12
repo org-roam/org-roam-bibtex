@@ -617,14 +617,17 @@ retrieve bibliographic information from a BibTeX file.
 
 Implementation details and features:
 
-1. This function first calls `org-roam-find-ref' trying to find
-the note file associated with the CITEKEY.  The Org-roam key can
-be set with '#+ROAM_KEY:' in-buffer keyword.
+1. This function first tries to find the note file associated
+with the citation key CITEKEY.  A citation key is an Org-roam
+'ref' set with the '#+ROAM_KEY:' in-buffer keyword or
+':ROAM_REFS:' headline property.  Three types of Org-roam 'ref's
+are recognized by ORB: Org-ref v2 'cite:citekey' and Org-ref v3
+'cite:&citekey' links, and Org-cite '[cite:@citekey]' citations.
 
-2. If the Org-roam reference has not been found, the function
-calls `org-roam-node-find' passing to it the title associated
-with the CITEKEY as retrieved by `bibtex-completion-get-entry'.
-The prompt presented by `org-roam-node-find' will thus be
+2. If the Org-roam reference was found, the function calls
+`org-roam-node-find' passing to it the title associated with the
+CITEKEY as retrieved by `bibtex-completion-get-entry'.  The
+prompt presented by `org-roam-node-find' will thus be
 pre-populated with the record title.
 
 3. Optionally, when `orb-preformat-templates' is non-nil, any
