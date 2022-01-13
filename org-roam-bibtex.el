@@ -698,6 +698,31 @@ bibliographic information."
 ;;                 (v (list :path file-path :title title)))
 ;;             (push (cons k v) completions)))))))
 
+;;;###autoload
+(defun orb-open-associated-note (&optional element)
+  "Open an Org-roam note associated with the Org citation element
+around point or with the optional ELEMENT argument.
+
+When non-nil the ELEMENT argument should be the Org citation or
+Org citation reference element. Providing it allows for quicker
+computation.
+"
+  (let*
+      ((around-point (not element))
+       (element (if around-point (org-element-context) element))
+       (type (org-element-type element))
+       (citekey
+	(cond
+	 ((eq type 'citation)
+	  (org-element-property :key (car (org-cite-get-references element))))
+	 ((eq type 'citation-reference)
+	  (org-element-property :key element))
+	 (around-point
+	  (user-error "Cursor outside a citation element!"))
+	 (t
+	  (user-error "Invalid optional argument ELEMENT!")))))
+    (orb-edit-note citekey)))
+
 ;; ============================================================================
 ;;;; Orb insert
 ;; ============================================================================
