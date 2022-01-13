@@ -699,29 +699,36 @@ bibliographic information."
 ;;             (push (cons k v) completions)))))))
 
 ;;;###autoload
-(defun orb-open-associated-note (&optional element)
-  "Open an Org-roam note associated with the Org citation element
-around point or with the optional ELEMENT argument.
+(defun orb-edit-citation-note (&optional element)
+  "Edit a note for current Org-cite citation or reference.
+If the note does not exist, create a new one.
 
-When non-nil the ELEMENT argument should be the Org citation or
-Org citation reference element. Providing it allows for quicker
-computation.
-"
-  (let*
-      ((around-point (not element))
-       (element (if around-point (org-element-context) element))
-       (type (org-element-type element))
-       (citekey
-	(cond
-	 ((eq type 'citation)
-	  (org-element-property :key (car (org-cite-get-references element))))
-	 ((eq type 'citation-reference)
-	  (org-element-property :key element))
-	 (around-point
-	  (user-error "Cursor outside a citation element!"))
-	 (t
-	  (user-error "Invalid optional argument ELEMENT!")))))
-    (orb-edit-note citekey)))
+When used from LISP, if optional ELEMENT is non-nil, use it
+instead of the element at point.  ELEMENT should be the Org-cite
+citation or reference element.  Providing it allows for quicker
+computation."
+  (interactive)
+  (cond
+   ((derived-mode-p 'org-mode)
+    (let* ((around-point (not element))
+           (element (if around-point (org-element-context) element))
+           (type (org-element-type element))
+           (citekey
+            (cond
+             ((eq type 'citation)
+              (org-element-property
+               :key (car (org-cite-get-references element))))
+             ((eq type 'citation-reference)
+              (org-element-property :key element))
+             (around-point
+              (user-error "Cursor not in an Org-cite element"))
+             (t
+              (user-error "Invalid optional argument ELEMENT: %s.  Org-cite\
+citation or reference expected" element)))))
+      (orb-edit-note citekey)))
+   (t
+    (user-error "This function works only in Org-mode" major-mode))))
+
 
 ;; ============================================================================
 ;;;; Orb insert
