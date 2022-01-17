@@ -54,6 +54,38 @@
 
 (defvar org-ref-cite-types)
 
+;; Adopted from `org-roam-version'
+(defun orb-version (&optional message)
+  "Return `orb-roam' version.
+Interactively, or when MESSAGE is non-nil, show in the echo area."
+  (interactive)
+  (let* ((toplib (or load-file-name buffer-file-name))
+         gitdir topdir version)
+    (unless (and toplib (equal (file-name-nondirectory toplib) "orb-utils.el"))
+      (setq toplib (locate-library "orb-utils.el")))
+    (setq toplib (and toplib (org-roam--straight-chase-links toplib)))
+    (when toplib
+      (setq topdir (file-name-directory toplib)
+            gitdir (expand-file-name ".git" topdir)))
+    (when (file-exists-p gitdir)
+      (setq version
+            (let ((default-directory topdir))
+              (shell-command-to-string
+               "git describe --tags --dirty --always"))))
+    (unless version
+      (setq version (with-temp-buffer
+                      (insert-file-contents-literally
+                       (locate-library "org-roam-bibtex.el"))
+                      (goto-char (point-min))
+                      (save-match-data
+                        (if (re-search-forward
+                             "\\(?:;; Version: \\([^z-a]*?$\\)\\)" nil nil)
+                            (substring-no-properties (match-string 1))
+                          "N/A")))))
+    (if (or message (called-interactively-p 'interactive))
+        (message "%s" version)
+      version)))
+
 ;; ============================================================================
 ;;;; Macros
 ;; ============================================================================

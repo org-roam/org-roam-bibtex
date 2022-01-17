@@ -6,9 +6,9 @@
 ;; Author: Mykhailo Shevchuk <mail@mshevchuk.com>
 ;;      Leo Vivier <leo.vivier+dev@gmail.com>
 ;; URL: https://github.com/org-roam/org-roam-bibtex
-;; Keywords: bib, hypermedia, outlines, wp
+;; Keywords: bib hypermedia outlines wp
 ;; Version: 0.6.1
-;; Package-Requires: ((emacs "27.2") (org-roam "2.0.0") (bibtex-completion "2.0.0"))
+;; Package-Requires: ((emacs "27.1") (org-roam "2.2.0") (bibtex-completion "2.0.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -32,7 +32,7 @@
 ;; Emacs software: Org-ref, Helm/Ivy-bibtex and Citar.  The main task of ORB is
 ;; to seamlessly expose Org-roam as a note management solution to these
 ;; packages, shadowing their native facilities for taking bibliographic
-;; notes. As its main feature, ORB enables expansion of BibTeX keywords in
+;; notes.  As its main feature, ORB enables expansion of BibTeX keywords in
 ;; Org-roam templates.
 ;;
 ;; Main usage:
@@ -60,8 +60,7 @@
 
 (eval-when-compile
   (require 'subr-x)
-  (require 'cl-lib)
-  (require 'cl-macs))
+  (require 'cl-lib))
 
 ;; declare own functions and variables
 (declare-function orb-helm-insert "orb-helm")
@@ -768,7 +767,7 @@ INFO contains additional information."
                          (when (eq ref-format 'citation-org-ref-3) "&")
                          orb-citekey)))))))
 
-(defun org-roam-capture--finalize-orb-insert-link ()
+(defun orb--finalize-insert-link ()
   "Insert a link to a just captured note.
 This function is used by ORB calls to `org-roam-capture-' instead
 of `org-roam-capture--finalize-insert-link'."
@@ -828,7 +827,7 @@ String or list of strings expected" citekey))))
                (info (--> (list :orb-link-description description
                                 :orb-citekey citekey
                                 :orb-entry entry
-                                :finalize 'orb-insert-link)
+                                :finalize #'orb--finalize-insert-link)
                           (if (and beg end)
                               (append it (list :region (cons beg end)))
                             it))))
@@ -1169,4 +1168,5 @@ interactively."
 ;; Local Variables:
 ;; coding: utf-8
 ;; fill-column: 79
+;; package-lint-main-file: "org-roam-bibtex.el"
 ;; End:
