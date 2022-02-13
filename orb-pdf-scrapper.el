@@ -238,7 +238,7 @@ corresponding symbol is present on the list.
 
 TARGET must be one of the symbols `heading' or `path'.  The
 symbol `heading' means export the data under a heading in the
-buffer of origin, the Org-mode buffer where the ORB PDF Scrapper
+buffer of origin, the Org buffer where the ORB PDF Scrapper
 process was started.  The symbol `path' means export the data to
 another file.  It is possible to specify both export targets
 simultaneously for a given export TYPE or multiple targets of the
@@ -254,8 +254,8 @@ LOCATION (HEADLINE) is a string specifying location of the TARGET.
 - If TARGET is `heading', the supplied string will be used as
 headline text.  The data will be exported slightly differently
 depending on TYPE.  Text references will be exported as is.
-BibTeX references will be put into an Org-mode source code block.
-Org-mode references, if grouped under different headings, will be
+BibTeX references will be put into an Org source code block.
+Org references, if grouped under different headings, will be
 exported with the headings demoted by one level.
 
 - If TARGET is `path', the supplied string will be used as a
@@ -293,7 +293,7 @@ data.  It can be a symbol `prepend' or `append'.
 
 When TARGET is `path', text data is simply put at the beginning
 or end of the target file accordingly to the value of the
-`:placement' property.  Org-mode data is placed before the first
+`:placement' property.  Org data is placed before the first
 or after the last heading, respectively.  Similarly, BibTeX data
 is placed or before the first or after the last entry, comments
 and @String entries ignored.
@@ -301,7 +301,7 @@ and @String entries ignored.
 When TARGET is `heading', this property specifies whether the
 parent heading should be put before or after other headings.
 
-When TARGET is `path' and LOCATION is an Org-mode file, the value
+When TARGET is `path' and LOCATION is an Org file, the value
 of the `:placement' property can also be a list of the form
 \(heading HEADLINE PROPERTIES).  In this case the data will be
 put in the target file under a heading with HEADLINE as the
@@ -358,7 +358,7 @@ variable as an unquoted symbol holding a string or a list of
 strings specifying BibTeX file(s), in which cases the entries
 will be filtered also against this/these file(s) in *addition* to
 the TARGET file.  In such instances, filtering will also be
-applied to entries exported to an Org-mode heading.
+applied to entries exported to an Org heading.
 
 Example:
 \(setq orb-pdf-scrapper-export-options
@@ -602,7 +602,7 @@ are further sorted into four groups:
                      numbering-source)))))
 
 (defun orb-pdf-scrapper--insert-org-as-list (ref-alist)
-  "Insert REF-ALIST as Org-mode list."
+  "Insert REF-ALIST as Org list."
   (let* ((numbering-source
           (if (and (eq orb-pdf-scrapper-reference-numbers
                        'citation-number-alnum)
@@ -659,7 +659,7 @@ Similar to `bibtex-completion-get-value' but does some additional cleaning."
      (t value))))
 
 (defun orb-pdf-scrapper--insert-org-as-table (ref-alist)
-  "Insert REF-ALIST as Org-mode table."
+  "Insert REF-ALIST as Org table."
   (insert
    (format "|%s\n" (mapconcat #'identity
                               orb-pdf-scrapper-table-export-fields "|")))
@@ -890,7 +890,7 @@ Pressing the RED button, just in case")
      (orb-pdf-scrapper-dispatcher 'error))))
 
 (defun orb-pdf-scrapper--edit-org ()
-  "Edit generated Org-mode data."
+  "Edit generated Org data."
   (pop-to-buffer orb-pdf-scrapper--buffer)
   (cl-case (orb-pdf-scrapper--get :context)
     ('start
@@ -916,12 +916,12 @@ Generate BibTeX keys? "))
      (write-region (orb-buffer-string)
                    nil (orb-pdf-scrapper--get :temp-bib) nil 1)
      (orb-pdf-scrapper--put :bib-undo-list (copy-tree buffer-undo-list))
-     ;; generate Org-mode buffer
+     ;; generate Org buffer
      (let* ((temp-org (or (orb-pdf-scrapper--get :temp-org)
                           (orb-temp-file "orb-pdf-scrapper-" ".org"))))
        (orb-pdf-scrapper--put :temp-org temp-org
                               :caller 'edit-org)
-       ;; we must change the mode in the beginning to get all the Org-mode
+       ;; we must change the mode in the beginning to get all the Org
        ;; facilities
        (orb-pdf-scrapper--refresh-mode 'org)
        (orb--with-message! "Generating Org data"

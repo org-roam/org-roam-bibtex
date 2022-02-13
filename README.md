@@ -111,7 +111,7 @@ Some parts of Org Roam BibTeX will not work without:
 
 * [Org Ref](https://github.com/jkitchin/org-ref) — namely when Org-ref v2 or v3
   citation citation links are used as ROAM_REFS.  Org-roam and ORB now support
-  the built-in Org-cite citation keys (Org-mode 9.5+), so Org-ref is
+  the built-in Org-cite citation keys (Org mode version 9.5+), so Org-ref is
   not a strict requirement anymore.
 * [Helm/Ivy-bibtex](https://github.com/tmalsburg/helm-bibtex) — these packages
   are required by Org-ref and provide native interfaces for Bibtex-completion,

@@ -326,7 +326,7 @@ Returns the path to the note file, or nil if it doesn’t exist."
     (org-roam-node-file node)))
 
 (defun orb-get-buffer-keyword (keyword &optional buffer)
-  "Return the value of Org-mode KEYWORD in-buffer directive.
+  "Return the value of Org KEYWORD in-buffer directive.
 The KEYWORD should be given as a string without \"#+\", e.g. \"title\".
 
 If optional BUFFER is non-nil, return the value from that buffer

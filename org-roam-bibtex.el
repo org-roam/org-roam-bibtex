@@ -286,8 +286,8 @@ macro.  Simple `setq' will not work."
 
 (defcustom orb-insert-link-description 'title
   "Link description format for links created with `orb-insert-link'.
-The command `orb-insert-link' can be used to create Org-mode
-links to bibliographic notes of type [[id:note_id][Description]].
+The command `orb-insert-link' can be used to create Org links
+to bibliographic notes of type [[id:note_id][Description]].
 This variable determines the 'Description' part from the example
 above.  It is an `s-format' string, where special placeholders of
 form '${field}' will be expanded with data from the respective
@@ -726,7 +726,7 @@ computation."
 citation or reference expected" element)))))
       (orb-edit-note citekey)))
    (t
-    (user-error "This function works only in Org-mode" major-mode))))
+    (user-error "This function works only in Org mode"))))
 
 
 ;; ============================================================================
