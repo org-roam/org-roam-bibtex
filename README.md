@@ -247,7 +247,7 @@ use the approach described in the above mentioned resources.
   (require 'org-ref)) ; optional: if using Org-ref v2 or v3 citation links
 ```
 
-3. Run `bin/doom sync` and restart Emacs.
+3. Run `bin/doom sync -u` and restart Emacs.
 
 Usage
 ---------------
