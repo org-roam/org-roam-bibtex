@@ -1087,11 +1087,11 @@ NOTE: This function is no longer needed for Org-ref v3."
       (orb-edit-note citekey))))
 
 ;;;###autoload
-(defun orb-citar-edit-note (citekey _entry)
+(defun orb-citar-edit-note (citekey &optional _entry)
   "Open an Org-roam note associated with the CITEKEY or create a new one.
 This is a wrapper function around `orb-edit-note' meant to be used with
 `citar-file-open-note-function'.
-Argument ENTRY is ignored."
+Optional argument ENTRY is ignored."
   (orb-edit-note citekey))
 
 ;;;###autoload
