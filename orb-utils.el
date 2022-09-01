@@ -370,6 +370,7 @@ display can be tweaked in the `bibtex-completion-display-formats'
 variable."
   ;; NOTE: A drop-in replacement for `org-ref-format-entry' which was removed
   ;; in Org-ref v3.  Still waiting for a native solution.
+  (bibtex-completion-init)
   (bibtex-completion-format-entry
    (bibtex-completion-get-entry citekey) (1- (frame-width))))
 
