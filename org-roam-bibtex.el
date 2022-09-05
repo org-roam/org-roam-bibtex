@@ -854,7 +854,6 @@ This function is not interactive, set `orb-insert-interface' to
 If ARG is non-nil, rebuild `bibtex-completion-cache'."
   (when arg
     (bibtex-completion-clear-cache))
-  (bibtex-completion-init)
   (let* ((candidates (bibtex-completion-candidates))
          (candidates2
           (if (eq orb-insert-generic-candidates-format 'key)
@@ -1149,6 +1148,7 @@ interactively."
          (add-to-list 'bibtex-completion-key-at-point-functions #'orb-get-node-citekey)
          (add-hook 'org-capture-after-finalize-hook #'orb-make-notes-cache)
          (add-hook 'org-roam-capture-new-node-hook #'orb--insert-captured-ref-h)
+         (bibtex-completion-init)
          (orb-make-notes-cache))
         (t
          (dolist (var-alist orb--external-vars-original-values)
