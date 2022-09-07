@@ -1148,6 +1148,7 @@ interactively."
          (add-to-list 'bibtex-completion-key-at-point-functions #'orb-get-node-citekey)
          (add-hook 'org-capture-after-finalize-hook #'orb-make-notes-cache)
          (add-hook 'org-roam-capture-new-node-hook #'orb--insert-captured-ref-h)
+         ;; HACK: temporary to address #256; see also `orb-format-entry'
          (bibtex-completion-init)
          (orb-make-notes-cache))
         (t
