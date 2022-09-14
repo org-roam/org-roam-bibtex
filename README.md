@@ -117,7 +117,10 @@ Some parts of Org Roam BibTeX will not work without:
   are required by Org-ref and provide native interfaces for Bibtex-completion,
   although the latter can be installed separately without them.
 * [Citar](https://github.com/bdarcus/citar) — this package provides an extended
-  support for Org-cite citations.
+  support for Org-cite citations. You will need to install the companion
+  package [Citar-org-roam](https://github.com/emacs-citar/citar-org-roam), and
+  configure it as described
+  [here](https://github.com/emacs-citar/citar/wiki/Notes-configuration#org-roam-bibtex).
 * [AnyStyle CLI](https://github.com/inukshuk/anystyle-cli) — ORB PDF Scrapper
 requires this external tool, see [Orb Anystyle](#orb-anystyle) for more
 details.
