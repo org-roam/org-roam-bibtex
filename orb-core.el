@@ -133,6 +133,22 @@ An as-is value will be used otherwise."
           (const :tag "Yes" t)
           (const :tag "No" nil)))
 
+(defcustom orb-open-attached-file-as-truename t
+  "Non-nil to open attached files with their true names.
+When this option is set non-nil, `orb-open-attached-file' will
+open files using their true names.  You may want to set it to nil
+if using file symlinks and experiencing problems such as
+discussed here:
+
+https://github.com/org-roam/org-roam-bibtex/issues/259
+
+An as-is value will be used otherwise."
+  :group 'org-roam-bibtex
+  :type '(choice
+          (const :tag "Yes" t)
+          (const :tag "No" nil)))
+
+
 (defcustom orb-use-bibdesk-attachments nil
   "Whether to look up BibDesk-specific file fields `Bdsk-File'.
 If this is non-nil, attachments given in BibDesk-specific file
@@ -262,7 +278,10 @@ The intended primary use is with `orb-note-actions'."
   (let* ((key (car citekey))
          (attachment (orb-get-attached-file key)))
     (if attachment
-        (funcall bibtex-completion-pdf-open-function (file-truename attachment))
+        (funcall bibtex-completion-pdf-open-function
+                 (if orb-open-attached-file-as-truename
+                     (file-truename attachment)
+                   attachment))
       (message "No PDF(s) found for this entry: %s" key))))
 
 ;; ============================================================================
