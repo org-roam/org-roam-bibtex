@@ -278,6 +278,19 @@ Select a bibliography entry and insert a link to a note associated with it.  If
 the note does not exist yet, create it.  Similar to `org-roam-node-insert`, if a
 region is selected, it becomes the link description.
 
+#### `org-roam-buffer` sections
+
+Three bibliography related `org-roam-buffer` sections are available.
+They may be added to the `org-roam-mode-sections` variable.  These
+are:
+
+ - `orb-section-reference` displays a formatted reference for the
+   current entry.
+ - `orb-section-abstract` displays the abstract (if available) of the
+   current entry.
+ - `orb-section-file` displays a link to open the attached file, if
+   such file exists.
+
 Configuration
 ---------------
 
