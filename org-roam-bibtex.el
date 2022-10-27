@@ -69,6 +69,13 @@
 (declare-function orb-note-actions-ivy "orb-ivy")
 (declare-function orb-pdf-scrapper-run "orb-pdf-scrapper" (key))
 
+(declare-function orb-section-abstract "orb-section" (node))
+(declare-function orb-section-file "orb-section" (node))
+(declare-function orb-section-reference "orb-section" (node))
+(autoload #'orb-section-abstract "orb-section")
+(autoload #'orb-section-file "orb-section")
+(autoload #'orb-section-reference "orb-section")
+
 ;; declare external functions and variables
 
 ;; Projectile, Perspective-mode

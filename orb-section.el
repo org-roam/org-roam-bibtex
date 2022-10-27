@@ -42,6 +42,8 @@
 (require 'magit-section)
 (require 'bibtex-completion)
 
+(require 'orb-utils)
+(defvar orb-abbreviate-file-name)
 
 ;; ============================================================================
 ;;; Configuration Variables
@@ -52,28 +54,30 @@
   :group 'org-roam-bibtex
   :prefix "orb-section-")
 
-(defcustom orb-section-reference-format-method 'bibtex-completion-apa-format-reference
-  "How to format the ORB citation.  Either a function taking a
-bibtex key and returning a string, or an alist from type to
-format string.  For formatting information, see
-`bibtex-completion-display-formats'."
-  :type '(choice (const :tag "Use BibTeX-Completion APA Format" 'bibtex-completion-apa-format-reference)
-                 (symbol :tag "Use a function")
-                 (alist :key-type   (choice (string :tag "Type Name    :")
-                                            (const :tag "Default" t))
-                        :value-type (string :tag "Format String:"))))
+(defcustom orb-section-reference-format-method
+  'bibtex-completion-apa-format-reference
+  "How to format the ORB citation.
+Either a function taking a bibtex key and returning a string, or
+an alist from type to format string.  For formatting information,
+see `bibtex-completion-display-formats'."
+  :type '(choice (const :tag "Use BibTeX-Completion APA Format"
+                        'bibtex-completion-apa-format-reference)
+          (symbol :tag "Use a function")
+          (alist :key-type   (choice (string :tag "Type Name    :")
+                                     (const :tag "Default" t))
+                 :value-type (string :tag "Format String:"))))
 
 (defcustom orb-section-abstract-format-method :org-format
-  "How to format ORB abstract.  A function taking a key and
-returning a string, or one of:
+  "How to format ORB abstract.
+A function taking a key and returning a string, or one of:
 
  - `:org-format' Assume that the content is org-formatted, and
    format accordingly.
  - `:pandoc-from-tex' Assume that the content is tex/latex
    formatted and use `pandoc' to format accordingly."
   :type '(choice (const :tag "Format as Org Text" :org-format)
-                 (const :tag "Format from LaTeX" :pandoc-from-tex)
-                 (symbol :tag "Use function.")))
+          (const :tag "Format from LaTeX" :pandoc-from-tex)
+          (symbol :tag "Use function.")))
 
 
 ;; ============================================================================
@@ -87,11 +91,11 @@ returning a string, or one of:
     (when-let ((entry (bibtex-completion-get-entry key))
                (format-string (cdr (or (assoc-string (bibtex-completion-get-value "=type=" entry) orb-section-reference-format-method)
                                        (assoc t orb-section-reference-format-method))))
-               (formated-reference (s-format format-string 'bibtex-completion-apa-get-value entry)))
+               (formatted-reference (s-format format-string 'bibtex-completion-apa-get-value entry)))
       (replace-regexp-in-string "\\([.?!]\\)\\." "\\1" formatted-reference))))
 
 (defun orb-section-unfill-region (beg end)
-  "Unfill the region.
+  "Unfill the region from BEG to END.
 Joining text paragraphs into a single logical line.
 
 Taken from https://www.emacswiki.org/emacs/UnfillRegion"
@@ -161,7 +165,8 @@ Taken from https://www.emacswiki.org/emacs/UnfillRegion"
       (insert "\n\n"))))
 
 (provide 'orb-section)
-
+;;; orb-section.el ends here
+;;
 ;; Local Variables:
 ;; coding: utf-8
 ;; fill-column: 79
