@@ -797,6 +797,75 @@ Check variables =orb-autokey-invalid-symbols=,
 =orb-autokey-empty-field-token=, =orb-autokey-titlewords-ignore= for
 additional settings.
 
+* ORB Section - Org Roam Buffer sections from BibTeX Data
+:PROPERTIES:
+:CUSTOM_ID: orb-section-configuration
+:END:
+
+You may be add each of the below sections to =org-roam-mode-sections=
+to show them information in the =org-roam-buffer=, for example, the
+below configuration will show a formatted BibTeX reference, formatted
+BibTeX abstract, and any backlinks/reflinks to the node in the
+=org-roam-buffer=.
+
+#+begin_src elisp
+  (setf org-roam-mode-sections '(orb-section-reference
+                                 orb-section-abstract
+                                 org-roam-backlinks-section
+                                 org-roam-reflinks-section))
+#+end_src
+
+** =orb-section-reference=
+:PROPERTIES:
+:CUSTOM_ID: orb-section-reference
+:END:
+
+The =orb-section-reference= section shows a formatted reference for
+the current node.
+
+*** =orb-section-reference-format-method=
+:PROPERTIES:
+:CUSTOM_ID: org-section-reference-format-method
+:END:
+
+This variable may be set to a function or an alist.  If set to a
+function, it should take a BibTeX key and return a formatted
+reference.  By default, it is set to the function
+=bibtex-completion-apa-format-reference=.  When setting this to an
+alist, keys should be the various types of BibTeX entry as strings,
+and values should be an =s-format=-compatible format string for the
+BibTeX entry.
+
+** =orb-section-abstract=
+:PROPERTIES:
+:CUSTOM_ID: orb-section-abstract
+:END:
+
+The =orb-section-abstract= section shows a formatted abstract for the
+current node.
+
+*** =orb-section-abstract-format-method=
+:PROPERTIES:
+:CUSTOM_ID: orb-section-abstract-format-method
+:END:
+
+This variable allows configuration of how the abstract is retrieved
+and formatted.  It can be a function which takes a BibTeX key and
+returns a formatted abstract, or it can be one of two symbols.  The
+first is =:org-format=, which will retrieve the org-formatted text
+from the BibTeX record and fontify it as appropriate.  The second is
+=:pandoc-from-tex= which will retrieve a LaTeX-formatted abstract from
+the BibTeX record, use [[https://pandoc.org][pandoc]] to convert it to org-format, and then
+formatted as in =:org-format=.
+
+** =orb-section-file=
+:PROPERTIES:
+:CUSTOM_ID: orb-section-file
+:END:
+
+The =orb-section-file= section shows a link to the PDF or similar file
+for a node.
+
 * Orb Anystyle - Emacs interfeace to Anystyle-CLI
 :PROPERTIES:
 :CUSTOM_ID: orb-anystyle
