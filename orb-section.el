@@ -161,7 +161,7 @@ Taken from https://www.emacswiki.org/emacs/UnfillRegion"
     (magit-insert-section (orb-section-file)
       (magit-insert-heading "File:")
       (insert-text-button (file-name-nondirectory file-name)
-                          'action (lambda (_button) (find-file file-name)))
+                          'action (lambda (_button) (orb-open-attached-file cite-key)))
       (insert "\n\n"))))
 
 (provide 'orb-section)
