@@ -353,15 +353,15 @@ Return Org Roam node or nil."
 If optional NODE is nil, return the citekey for node at point.
 ASSERT will be passed to `org-roam-node-at-point'.  If it is
 non-nil, an error will be thrown if there is no node at point."
-  (when-let ((node (or node (org-roam-node-at-point assert))))
-    (save-excursion
-      (goto-char (org-roam-node-point node))
-      (let* ((prop (org-entry-get (point) "ROAM_REFS"))
-             (prop-list (when prop (split-string-and-unquote prop))))
-        (catch 'found
-          (dolist (p prop-list)
-            (when (string-match orb-utils-citekey-re p)
-              (throw 'found (match-string 1 p)))))))))
+  (when-let ((node (or node (org-roam-node-at-point assert)))
+             (node-refs (cdr (assoc-string
+                              "ROAM_REFS"
+                              (org-roam-node-properties node) t))))
+    (let* ((ref-list (split-string-and-unquote node-refs)))
+      (catch 'found
+        (dolist (ref ref-list)
+          (when (string-match orb-utils-citekey-re ref)
+            (throw 'found (match-string 1 ref))))))))
 
 (defun orb-format-entry (citekey)
   "Format a BibTeX entry for display, whose citation key is CITEKEY.

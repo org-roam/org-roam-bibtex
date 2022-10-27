@@ -90,6 +90,15 @@ returning a string, or one of:
                (formated-reference (s-format format-string 'bibtex-completion-apa-get-value entry)))
       (replace-regexp-in-string "\\([.?!]\\)\\." "\\1" formatted-reference))))
 
+(defun orb-section-unfill-region (beg end)
+  "Unfill the region.
+Joining text paragraphs into a single logical line.
+
+Taken from https://www.emacswiki.org/emacs/UnfillRegion"
+  (interactive "*r")
+  (let ((fill-column (point-max)))
+    (fill-region beg end)))
+
 (defun orb-section-abstract-format (key)
   "Format abstract for KEY per `orb-section-abstract-format-method'."
   (if (functionp orb-section-abstract-format-method)
@@ -102,7 +111,7 @@ returning a string, or one of:
           (with-temp-buffer
             (insert abstract)
             (org-mode)
-            (unfill-region (point-min) (point-max))
+            (orb-section-unfill-region (point-min) (point-max))
             (save-match-data "\n\n" "\n" (string-trim (buffer-string))))))
         (:pandoc-from-tex
          (org-roam-fontify-like-in-org-mode
@@ -111,7 +120,7 @@ returning a string, or one of:
             (shell-command-on-region (point-min) (point-max)
                                      "pandoc -f latex -t org" (current-buffer) t)
             (org-mode)
-            (unfill-region (point-min) (point-max))
+            (orb-section-unfill-region (point-min) (point-max))
             (save-match-data "\n\n" "\n" (string-trim (buffer-string))))))))))
 
 
@@ -119,36 +128,36 @@ returning a string, or one of:
 ;;; Section Implementation
 ;; ============================================================================
 
+;;;###autoload
 (defun orb-section-reference (node)
   "Show BibTeX reference for NODE if it exists."
-  (when-let ((node-refs (org-roam-node-refs node))
-             (cite-key (first node-refs))
+  (when-let ((cite-key (orb-get-node-citekey node))
              (formatted-reference (orb-section-reference-format cite-key)))
     (magit-insert-section (orb-section-reference)
       (magit-insert-heading "Reference:")
       (insert formatted-reference)
       (insert "\n\n"))))
 
+;;;###autoload
 (defun orb-section-abstract (node)
   "Show BibTeX entry abstract for NODE if it exists."
-  (when-let ((node-refs (org-roam-node-refs node))
-             (cite-key (first node-refs))
-             (formatted-abstract (orb-abstract-format cite-key)))
+  (when-let ((cite-key (orb-get-node-citekey node))
+             (formatted-abstract (orb-section-abstract-format cite-key)))
     (magit-insert-section (orb-section-abstract)
       (magit-insert-heading "Abstract:")
       (insert formatted-abstract)
       (insert "\n\n"))))
 
+;;;###autoload
 (defun orb-section-file (node)
   "Show a link to entry file for NODE if it exists."
-  (when-let ((node-refs (org-roam-node-refs node))
-             (cite-key (first node-refs))
+  (when-let ((cite-key (orb-get-node-citekey node))
              (file-name (let ((orb-abbreviate-file-name nil))
-                          (orb-get-atached-file cite-key))))
+                          (orb-get-attached-file cite-key))))
     (magit-insert-section (orb-section-file)
       (magit-insert-heading "File:")
       (insert-text-button (file-name-nondirectory file-name)
-                          'action (lambda (button) (find-file file-name)))
+                          'action (lambda (_button) (find-file file-name)))
       (insert "\n\n"))))
 
 (provide 'orb-section)
