@@ -85,7 +85,7 @@ A function taking a key and returning a string, or one of:
 ;; ============================================================================
 
 (defun orb-section-reference-format (key)
-  "Format reference for KEY according to `orb-section-citation-format-method'."
+  "Format reference for KEY according to `orb-section-reference-format-method'."
   (if (functionp orb-section-reference-format-method)
       (funcall orb-section-reference-format-method key)
     (when-let ((entry (bibtex-completion-get-entry key))
