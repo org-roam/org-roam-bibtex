@@ -353,7 +353,12 @@ Return Org Roam node or nil."
 If optional NODE is nil, return the citekey for node at point.
 ASSERT will be passed to `org-roam-node-at-point'.  If it is
 non-nil, an error will be thrown if there is no node at point."
-  (when-let ((node (or node (org-roam-node-at-point assert)))
+  (when-let ((node (or node
+                       ;; try to get node at point only in Org mode;
+                       ;; can brake other things if not in Org mode, see e.g.
+                       ;; https://github.com/org-roam/org-roam-bibtex/issues/268
+                       (and (derived-mode-p 'org-mode)
+                            (org-roam-node-at-point assert))))
              (node-refs (cdr (assoc-string
                               "ROAM_REFS"
                               (org-roam-node-properties node) t))))
