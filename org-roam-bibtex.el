@@ -588,7 +588,7 @@ created.  PROPS are additional properties for `org-roam-capture-'."
             ;; (by setting `org-capture-entry'), and Org-roam converts the
             ;; whole template list, we must do the conversion of the entry
             ;; ourselves
-            (props (--> (or props (list :finalize 'find-file))
+            (props (--> props
                         (plist-put it :call-location (point-marker))))
             (org-capture-entry
              (org-roam-capture--convert-template template props))
