@@ -62,10 +62,17 @@ an alist from type to format string.  For formatting information,
 see `bibtex-completion-display-formats'."
   :type '(choice (const :tag "Use BibTeX-Completion APA Format"
                         'bibtex-completion-apa-format-reference)
-          (symbol :tag "Use a function")
-          (alist :key-type   (choice (string :tag "Type Name    :")
-                                     (const :tag "Default" t))
-                 :value-type (string :tag "Format String:"))))
+                 (symbol :tag "Use a function")
+                 (alist :key-type   (choice (string :tag "Type Name    :")
+                                            (const :tag "Default" t))
+                        :value-type (string :tag "Format String:"))))
+
+(defcustom orb-section-related-heuristic
+  #'orb-section-related-for-key
+  "How related paper candidates should be collected.
+This should be a function that takes a BibTeX key and returns a
+list of BibTeX keys."
+  :type 'function)
 
 (defcustom orb-section-abstract-format-method :org-format
   "How to format ORB abstract.
@@ -76,8 +83,8 @@ A function taking a key and returning a string, or one of:
  - `:pandoc-from-tex' Assume that the content is tex/latex
    formatted and use `pandoc' to format accordingly."
   :type '(choice (const :tag "Format as Org Text" :org-format)
-          (const :tag "Format from LaTeX" :pandoc-from-tex)
-          (symbol :tag "Use function.")))
+                 (const :tag "Format from LaTeX" :pandoc-from-tex)
+                 (symbol :tag "Use function.")))
 
 
 ;; ============================================================================
@@ -93,6 +100,27 @@ A function taking a key and returning a string, or one of:
                                        (assoc t orb-section-reference-format-method))))
                (formatted-reference (s-format format-string 'bibtex-completion-apa-get-value entry)))
       (replace-regexp-in-string "\\([.?!]\\)\\." "\\1" formatted-reference))))
+
+(defun orb-section--get-authors (author-string)
+  "Parse an AUTHOR-STRING into a list of names."
+  (if (null author-string)
+      nil
+    (split-string (replace-regexp-in-string "[{}]" "" author-string) " and ")))
+
+(defun orb-section-related-for-key (key)
+  "Default related-paper selection heuristic for KEY.
+
+Uses the authors last names to find possibly related papers."
+  (when-let ((entry (bibtex-completion-get-entry key))
+             (author-surnames (orb-section--get-authors (cdr (assoc "author" entry))))
+             (authors-regexp (regexp-opt (mapcar (lambda (name) (car (split-string name ", ")))
+                                                 author-surnames)
+                                         'words)))
+    (mapcar #'cdr (mapcar (apply-partially #'assoc "=key=")
+                          (mapcar #'cdr
+                                  (cl-remove-if-not (lambda (entry)
+                                                      (string-match authors-regexp (car entry)))
+                                                    (bibtex-completion-candidates)))))))
 
 (defun orb-section-unfill-region (beg end)
   "Unfill the region from BEG to END.
@@ -141,6 +169,17 @@ Taken from https://www.emacswiki.org/emacs/UnfillRegion"
       (magit-insert-heading "Reference:")
       (insert formatted-reference)
       (insert "\n\n"))))
+
+;;;###autoload
+(defun orb-section-related (node)
+  "Show related BibTeX entries for NODE."
+  (when-let ((cite-key (orb-get-node-citekey node))
+             (entry-keys (funcall orb-section-related-heuristic cite-key)))
+    (magit-insert-section (orb-section-related)
+      (magit-insert-heading "Related:")
+      (dolist (key entry-keys)
+        (insert (orb-section-reference-format key) "\n"))
+      (insert "\n"))))
 
 ;;;###autoload
 (defun orb-section-abstract (node)
