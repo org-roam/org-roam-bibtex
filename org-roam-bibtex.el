@@ -8,7 +8,7 @@
 ;; URL: https://github.com/org-roam/org-roam-bibtex
 ;; Keywords: bib hypermedia outlines wp
 ;; Version: 0.6.1
-;; Package-Requires: ((emacs "27.1") (org-roam "2.2.0") (bibtex-completion "2.0.0"))
+;; Package-Requires: ((emacs "27.1") (org-roam "2.2.0") (bibtex-completion "1.0.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
