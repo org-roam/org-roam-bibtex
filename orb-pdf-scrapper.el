@@ -504,7 +504,7 @@ If optional argument NATURAL-ORDER is non-nil, set the field
 
 This is an auxiliary function for command
 `orb-pdf-scrapper-generate-keys'."
-  (let* ((entry (parsebib-read-entry (parsebib-find-next-item)))
+  (let* ((entry (parsebib-read-entry))
          (key-plist (orb-pdf-scrapper--get-entry-info entry collect-only))
          (new-key (plist-get key-plist :key))
          (validp (plist-get key-plist :validp))
@@ -1181,6 +1181,7 @@ TYPE is type of data.  PROPERTIES are additional export properties."
       ;; NOTE: Investigate
       ;; The behaviour of org-insert-heading has changed at some point:
       ;; If in an empty buffer, e.g. temp-buffer, the function fails messaging "beginning of buffer"
+      (org-mode)
       (org-N-empty-lines-before-current 1)
       (org-insert-heading nil nil t)
       (insert name)
