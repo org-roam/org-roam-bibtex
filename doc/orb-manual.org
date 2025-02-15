@@ -866,6 +866,23 @@ formatted as in =:org-format=.
 The =orb-section-file= section shows a link to the PDF or similar file
 for a node.
 
+** =orb-section-related=
+:PROPERTIES:
+:CUSTOM_ID: orb-section-related
+:END:
+
+The =orb-section-related= section shows formatted references for
+papers related to the current node.
+
+*** =orb-section-related-heuristic=
+:PROPERTIES:
+:CUSTOM_ID: orb-section-related-heuristic
+:END:
+
+This variable allows configuring how related papers will be selected.
+It should be a function that takes in a BibTeX key, and returns a list
+of related BibTeX keys.  Default behavior is to match on surnames.
+
 * Orb Anystyle - Emacs interfeace to Anystyle-CLI
 :PROPERTIES:
 :CUSTOM_ID: orb-anystyle
